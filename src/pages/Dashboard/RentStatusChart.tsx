@@ -40,7 +40,7 @@ export function RentStatusChart() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[280px] w-full flex items-center justify-center">
+                    <div className="h-[245px] w-full flex items-center justify-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
