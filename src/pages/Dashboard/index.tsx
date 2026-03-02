@@ -7,6 +7,7 @@ import { RentStatusChart } from './RentStatusChart'
 import { RecentActivityCard } from './RecentActivityCard'
 import { yearlyData } from './dashboardData'
 import { BarChart2Icon, BarChartHorizontalIcon, DollarSign, ListOrdered, User, UserPlus } from 'lucide-react'
+import { PieChartComponent } from './PieChart'
 // import { TotalRevenue } from '@/components/common/svg/DashboardSVG'
 
 export default function Dashboard() {
@@ -65,7 +66,7 @@ export default function Dashboard() {
         />
        </div>
        <div className='col-span-4'>
-        <RentStatusChart />
+        <PieChartComponent />
        </div>
       </div>
 
