@@ -40,7 +40,7 @@ export function RentStatusChart() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[245px] w-full flex items-center justify-center">
+                    <div className="h-[270px] w-full flex items-center justify-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -147,7 +147,7 @@ export function RentStatusChart() {
                     </div>
 
                     {/* Legend */}
-                    <div className="flex items-center justify-center gap-6 mt-4">
+                    <div className="flex items-center justify-center gap-6">
                         <div className="flex items-center gap-2">
                             <div className="w-10 h-3 rounded-sm bg-[#06B6D4]"></div>
                             <span className="text-sm text-muted-foreground">Running</span>

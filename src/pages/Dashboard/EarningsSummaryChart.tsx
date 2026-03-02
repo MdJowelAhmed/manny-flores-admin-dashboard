@@ -106,7 +106,7 @@ export function EarningsSummaryChart({ chartData, selectedYear, onYearChange }: 
                     
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[280px] w-full">
+                    <div className="h-[290px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart
                                 data={chartData}
