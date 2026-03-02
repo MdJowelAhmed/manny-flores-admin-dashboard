@@ -26,9 +26,9 @@ export function RentStatusChart() {
             <Card>
                 <CardHeader>
                     <div className="flex items- justify-between">
-                        <CardTitle>Rent Status</CardTitle>
+                        <CardTitle>Orders By Category</CardTitle>
                         <Select defaultValue="week">
-                            <SelectTrigger className="w-[120px] bg-secondary text-white">
+                            <SelectTrigger className="w-[120px] bg-secondary-foreground text-accent border-none">
                                 <SelectValue placeholder="Period" />
                             </SelectTrigger>
                             <SelectContent>

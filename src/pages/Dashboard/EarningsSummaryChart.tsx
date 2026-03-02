@@ -89,9 +89,9 @@ export function EarningsSummaryChart({ chartData, selectedYear, onYearChange }: 
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
-                        <CardTitle>Earnings Summary</CardTitle>
+                        <CardTitle>Revenue Overview</CardTitle>
                         <Select value={selectedYear} onValueChange={onYearChange} >
-                            <SelectTrigger className="w-[120px] bg-secondary text-white">
+                            <SelectTrigger className="w-[120px] bg-secondary-foreground text-accent border-none">
                                 <SelectValue placeholder="Year" />
                             </SelectTrigger>
                             <SelectContent>
@@ -103,11 +103,7 @@ export function EarningsSummaryChart({ chartData, selectedYear, onYearChange }: 
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="mt-2">
-                        <span className="inline-flex items-center px-4 py-2 rounded-sm bg-secondary text-white text-xs font-medium">
-                            Total Earning
-                        </span>
-                    </div>
+                    
                 </CardHeader>
                 <CardContent>
                     <div className="h-[280px] w-full">
@@ -118,8 +114,8 @@ export function EarningsSummaryChart({ chartData, selectedYear, onYearChange }: 
                             >
                                 <defs>
                                     <linearGradient id="earningGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#FF9F43" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#FF9F43" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#F76212" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#F76212" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={true} horizontal={false} stroke="#E5E7EB" />
@@ -143,7 +139,7 @@ export function EarningsSummaryChart({ chartData, selectedYear, onYearChange }: 
                                 <Area
                                     type="natural"
                                     dataKey="revenue"
-                                    stroke="#FF9F43"
+                                    stroke="#F76212"
                                     strokeWidth={3}
                                     fill="url(#earningGradient)"
                                     dot={false}

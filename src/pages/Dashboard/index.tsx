@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react'
 import { formatCurrency, formatCompactNumber } from '@/utils/formatters'
-import { AvailableCars, RentalCars, TotalBooking, TotalRevenue } from '@/components/common/svg/DashboardSVG'
+// import { AvailableCars, RentalCars, TotalBooking, TotalRevenue } from '@/components/common/svg/DashboardSVG'
 import { StatCard } from './StatCard'
 import { EarningsSummaryChart } from './EarningsSummaryChart'
 import { RentStatusChart } from './RentStatusChart'
 import { RecentActivityCard } from './RecentActivityCard'
 import { yearlyData } from './dashboardData'
+import { BarChart2Icon, BarChartHorizontalIcon, DollarSign, ListOrdered, User, UserPlus } from 'lucide-react'
+// import { TotalRevenue } from '@/components/common/svg/DashboardSVG'
 
 export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState('2024')
@@ -14,31 +16,31 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: 'Total Revenue',
+      title: 'Total Orders',
       value: formatCompactNumber(12543),
       change: 12.5,
-      icon: TotalRevenue,
+      icon: ListOrdered,
       description: 'vs last month',
     },
     {
-      title: 'Total Products',
+      title: 'Total Sales',
       value: formatCompactNumber(3420),
       change: 8.2,
-      icon: TotalBooking,
+      icon: DollarSign,
       description: 'vs last month',
     },
     {
-      title: 'Categories',
+      title: 'New Customers',
       value: '156',
       change: 3.1,
-      icon: RentalCars,
+      icon: UserPlus,
       description: 'vs last month',
     },
     {
       title: 'Total Revenue',
       value: formatCurrency(845320),
       change: -2.4,
-      icon: AvailableCars,
+      icon: BarChart2Icon,
       description: 'vs last month',
     },
   ]

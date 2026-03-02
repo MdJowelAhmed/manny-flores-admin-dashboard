@@ -25,7 +25,7 @@ export function StatCard({ title, value, change, icon: Icon, description, index 
             <Card className="overflow-hidden shadow-md hover:shadow-[#CEF8DA]">
                 <CardHeader className="flex flex-row items-center gap-3 pb-2">
                     <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-primary" />
+                        <Icon className="h-8 w-8 text-primary" />
                     </div>
                     <CardTitle className="text-base font-bold text-accent">
                         {title}

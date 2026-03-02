@@ -242,30 +242,19 @@ function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
 
   const linkContent = (
     <NavLink
-      to={item.href}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200',
-          'hover:bg-[#CEF8DA] hover:text-[#0C5822]',
-          collapsed && 'justify-center',
-          isActive
-            ? 'bg-[#CEF8DA] text-[#0C5822] shadow-md'
-            : 'text-[#656565]'
-        )
-      }
-    >
-      {({ isActive }) => (
-        <>
-          <Icon
-            className={cn(
-              'h-5 w-5 flex-shrink-0',
-              isActive && !collapsed ? 'text-[#0C5822]' : isActive && collapsed ? 'text-[#0C5822]' : 'text-[#656565]'
-            )}
-          />
-          {!collapsed && <span className="font-medium">{item.title}</span>}
-        </>
-      )}
-    </NavLink>
+  to={item.href}
+  className={({ isActive }) =>
+    cn(
+      'group flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200',
+      'hover:bg-[#a78133] hover:text-[#fff]',
+      collapsed && 'justify-center',
+      isActive ? 'bg-[#a78133] text-[#fff] shadow-md' : 'text-[#656565]'
+    )
+  }
+>
+  <Icon className="h-5 w-5 flex-shrink-0 text-current" />
+  {!collapsed && <span className="font-medium">{item.title}</span>}
+</NavLink>
   )
 
   if (collapsed) {

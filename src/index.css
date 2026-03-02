@@ -11,12 +11,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
     --primary: #39B15B;
-    --primary-foreground:#3F51B5;
-    --secondary: #F6BB06;
-    --secondary-foreground: #0099DF;
-    --muted: #638FC1;
+    --primary-foreground:#A78133;
+    --secondary: #3F51B5;
+    --secondary-foreground: #F8F1F1;
+    --muted: #F76212;
     --muted-foreground:#364355;
-    --accent: #262626;
+    --accent: #2A2A2A;
     --accent-foreground: #364355;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
