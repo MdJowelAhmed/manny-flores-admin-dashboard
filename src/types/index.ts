@@ -45,6 +45,24 @@ export interface SendMailPayload {
   description: string
 }
 
+// ==================== Push Notification Types ====================
+export type NotificationType = 'Promotion' | 'Order Update' | 'Announcement' | 'Reminder'
+
+export interface PushNotification {
+  id: string
+  title: string
+  message: string
+  type: NotificationType
+  date: string
+  status: 'Sent' | 'Pending' | 'Failed'
+}
+
+export interface SendNotificationPayload {
+  title: string
+  message: string
+  type: NotificationType
+}
+
 // ==================== Product Types ====================
 export interface Product {
   id: string
