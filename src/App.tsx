@@ -5,6 +5,8 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthLayout from '@/components/layout/AuthLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute'
+import { UserRole } from '@/types/roles'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { loadUserFromStorage } from '@/redux/slices/authSlice'
 
@@ -79,105 +81,184 @@ function App() {
           }
         >
           <Route index element={<AppEntryRedirect />} />
-          
-          {/* Super Admin Only Routes */}
-          <Route 
-            path="dashboard" 
-            element={<Dashboard />}
-          />
-          
-          {/* User Management - Super Admin Only */}
-          <Route 
-            path="users" 
-            element={<UserList />}
+
+          {/* Dashboard - All roles */}
+          <Route
+            path="dashboard"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                <Dashboard />
+              </RoleBasedRoute>
+            }
           />
 
-          {/* Subscribers - Super Admin Only */}
-          <Route 
-            path="subscribers" 
-            element={<SubscriberList />}
+          {/* User Management - Super Admin only */}
+          <Route
+            path="users"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                <UserList />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="users/:id"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                <UserDetails />
+              </RoleBasedRoute>
+            }
           />
 
-          {/* Ad Management - Super Admin Only */}
-          <Route 
-            path="ad-management" 
-            element={<AdManagement />}
+          {/* Subscribers - Super Admin, Admin, Marketing */}
+          <Route
+            path="subscribers"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                <SubscriberList />
+              </RoleBasedRoute>
+            }
           />
 
-          {/* Push Notification - Super Admin Only */}
-          <Route 
-            path="push-notification" 
-            element={<PushNotificationList />}
+          {/* Ad Management - Super Admin, Marketing */}
+          <Route
+            path="ad-management"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.MARKETING]}>
+                <AdManagement />
+              </RoleBasedRoute>
+            }
           />
 
-          {/* Controllers - Super Admin Only */}
-          <Route 
-            path="controllers" 
-            element={<ControllerList />}
+          {/* Push Notification - Super Admin, Admin, Marketing */}
+          <Route
+            path="push-notification"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                <PushNotificationList />
+              </RoleBasedRoute>
+            }
           />
-          <Route 
-            path="users/:id" 
-            element={<UserDetails />}
+
+          {/* Controllers - Super Admin only */}
+          <Route
+            path="controllers"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                <ControllerList />
+              </RoleBasedRoute>
+            }
           />
-          
-          {/* Agency Management - Super Admin Only */}
-          <Route 
-            path="agency-management" 
-            element={<AgencyManagement />}
+
+          {/* Agency Management - Super Admin only */}
+          <Route
+            path="agency-management"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                <AgencyManagement />
+              </RoleBasedRoute>
+            }
           />
-          
-          {/* Transactions History - Super Admin Only */}
-          <Route 
-            path="transactions-history" 
-            element={<TransactionsHistory />}
+
+          {/* Revenue - Super Admin, Admin */}
+          <Route
+            path="transactions-history"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <TransactionsHistory />
+              </RoleBasedRoute>
+            }
           />
-          
-          {/* Shared Routes - All roles can access */}
-          <Route 
-            path="booking-management" 
-            element={<BookingManagement />}
+
+          {/* Orders - Super Admin, Admin */}
+          <Route
+            path="orders"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <OrderList />
+              </RoleBasedRoute>
+            }
           />
-          
-          {/* Orders - All roles can access */}
-          <Route 
-            path="orders" 
-            element={<OrderList />}
-          />
-          
-          {/* Calendar - All roles can access */}
-          <Route 
-            path="calender" 
-            element={<Calender />}
-          />
-          
-          {/* Client Management */}
+
+          {/* Super Admin only */}
+          <Route path="booking-management" element={<BookingManagement />} />
+          <Route path="calender" element={<Calender />} />
           <Route path="clients" element={<ClientManagement />} />
-          
-          {/* Product Management */}
           <Route path="products" element={<ProductList />} />
-          
-          {/* Category Management */}
           <Route path="categories" element={<CategoryList />} />
 
-          {/* Shop Management */}
+          {/* Shop Management - Super Admin, Admin (Shop page is super-admin only, handled in Sidebar) */}
           <Route path="shop-management">
             <Route index element={<Navigate to="/shop-management/customise" replace />} />
-            <Route path="customise" element={<Customise />} />
-            <Route path="category" element={<ShopCategory />} />
-            <Route path="shop" element={<ShopList />} />
-            <Route path="products" element={<ShopProducts />} />
-          </Route>
-          
-          {/* Settings */}
-          <Route path="settings">
-            <Route path="profile" element={<ProfileSettings />} />
-            <Route path="password" element={<ChangePassword />} />
-            <Route path="terms" element={<TermsSettings />} />
-            <Route path="privacy" element={<PrivacySettings />} />
-            <Route 
-              path="faq" 
-              element={<FAQ />} 
+            <Route
+              path="customise"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <Customise />
+                </RoleBasedRoute>
+              }
             />
+            <Route
+              path="category"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <ShopCategory />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="shop"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                  <ShopList />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="products"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <ShopProducts />
+                </RoleBasedRoute>
+              }
+            />
+          </Route>
+
+          {/* Settings - Super Admin, Admin (Profile) */}
+          <Route path="settings">
+            <Route
+              path="profile"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <ProfileSettings />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="password"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <ChangePassword />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="terms"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <TermsSettings />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="privacy"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <PrivacySettings />
+                </RoleBasedRoute>
+              }
+            />
+            <Route path="faq" element={<FAQ />} />
           </Route>
         </Route>
 

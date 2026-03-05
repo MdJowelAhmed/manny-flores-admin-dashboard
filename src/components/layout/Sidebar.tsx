@@ -1,11 +1,10 @@
 import React from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { UserRole, hasFeatureAccess, type FeatureKey } from '@/types/roles'
 import {
   LayoutDashboard,
   Users,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown,
   User,
   Lock,
@@ -13,11 +12,7 @@ import {
   Shield,
   ShieldCheck,
   ShoppingBag,
-  Building,
-  Calendar,
   CreditCard,
-  HelpCircle,
-  ListOrdered,
   Store,
   Layers,
   Coffee,
@@ -26,7 +21,6 @@ import {
   Bell,
   ImageIcon,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
@@ -37,7 +31,8 @@ interface NavItem {
   title: string
   href: string
   icon: React.ElementType
-  children?: NavItem[]
+  feature?: FeatureKey
+  children?: (NavItem & { feature?: FeatureKey })[]
 }
 
 const navItems: NavItem[] = [
@@ -45,17 +40,19 @@ const navItems: NavItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+    feature: 'dashboard',
   },
-
   {
     title: 'Orders',
     href: '/orders',
     icon: ShoppingBag,
+    feature: 'orders',
   },
   {
     title: 'Shop Management',
     href: '/shop-management/customise',
     icon: Store,
+    feature: 'shop-management',
     children: [
       {
         title: 'Customise',
@@ -71,6 +68,7 @@ const navItems: NavItem[] = [
         title: 'Shop',
         href: '/shop-management/shop',
         icon: Store,
+        feature: 'shop-management-shop',
       },
       {
         title: 'Products',
@@ -100,31 +98,37 @@ const navItems: NavItem[] = [
     title: 'Revenue',
     href: '/transactions-history',
     icon: CreditCard,
+    feature: 'revenue',
   },
   {
     title: 'User Management',
     href: '/users',
     icon: Users,
+    feature: 'user-management',
   },
   {
     title: 'Subscribers',
     href: '/subscribers',
     icon: Mail,
+    feature: 'subscribers',
   },
   {
     title: 'Ad Management',
     href: '/ad-management',
     icon: ImageIcon,
+    feature: 'ad-management',
   },
   {
     title: 'Push Notification',
     href: '/push-notification',
     icon: Bell,
+    feature: 'push-notification',
   },
   {
     title: 'Controllers',
     href: '/controllers',
     icon: ShieldCheck,
+    feature: 'controllers',
   },
 ]
 
@@ -133,21 +137,25 @@ const settingsItems: NavItem[] = [
     title: 'Profile',
     href: '/settings/profile',
     icon: User,
+    feature: 'profile',
   },
   {
     title: 'Password',
     href: '/settings/password',
     icon: Lock,
+    feature: 'profile',
   },
   {
     title: 'Terms',
     href: '/settings/terms',
     icon: FileText,
+    feature: 'profile',
   },
   {
     title: 'Privacy',
     href: '/settings/privacy',
     icon: Shield,
+    feature: 'profile',
   },
   // {
   //   title: 'FAQ',
@@ -156,10 +164,37 @@ const settingsItems: NavItem[] = [
   // },
 ]
 
+function filterNavByRole(items: NavItem[], userRole: UserRole): NavItem[] {
+  return items
+    .map((item) => {
+      if (!item.children) {
+        const feature = item.feature
+        if (!feature || hasFeatureAccess(userRole, feature)) return item
+        return null
+      }
+      const filteredChildren = item.children.filter((child) => {
+        const childFeature = child.feature ?? item.feature
+        if (!childFeature) return true
+        return hasFeatureAccess(userRole, childFeature)
+      })
+      const hasParentAccess = item.feature
+        ? hasFeatureAccess(userRole, item.feature)
+        : true
+      if (!hasParentAccess || filteredChildren.length === 0) return null
+      return { ...item, children: filteredChildren }
+    })
+    .filter((item): item is NavItem => item !== null)
+}
+
 export function Sidebar() {
   const dispatch = useAppDispatch()
   const { sidebarCollapsed } = useAppSelector((state) => state.ui)
+  const { user } = useAppSelector((state) => state.auth)
   const location = useLocation()
+
+  const userRole = (user?.role as UserRole) ?? UserRole.SUPER_ADMIN
+  const filteredNavItems = filterNavByRole(navItems, userRole)
+  const filteredSettingsItems = filterNavByRole(settingsItems, userRole)
 
   const isSettingsActive = location.pathname.startsWith('/settings')
 
@@ -219,7 +254,7 @@ export function Sidebar() {
                 Main Menu
               </p>
             )}
-            {navItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <SidebarNavItem
                 key={item.href}
                 item={item}
@@ -263,7 +298,7 @@ export function Sidebar() {
                 <TooltipContent side="right">Settings</TooltipContent>
               </Tooltip>
             ) : (
-              settingsItems.map((item) => (
+              filteredSettingsItems.map((item) => (
                 <SidebarNavItem
                   key={item.href}
                   item={item}

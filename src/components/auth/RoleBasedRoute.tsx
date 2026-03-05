@@ -5,11 +5,10 @@ import { UserRole } from '@/types/roles'
 
 interface RoleBasedRouteProps {
   children: ReactNode
-  allowedRoles?: UserRole[]
+  allowedRoles: UserRole[]
 }
 
-// Kept for backward compatibility, but project is now super-admin only.
-export const RoleBasedRoute = ({ children }: RoleBasedRouteProps) => {
+export function RoleBasedRoute({ children, allowedRoles }: RoleBasedRouteProps) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth)
   const location = useLocation()
 
@@ -17,8 +16,8 @@ export const RoleBasedRoute = ({ children }: RoleBasedRouteProps) => {
     return <Navigate to="/auth/login" state={{ from: location }} replace />
   }
 
-  if (user.role !== UserRole.SUPER_ADMIN) {
-    return <Navigate to="/auth/login" replace />
+  if (!allowedRoles.includes(user.role as UserRole)) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return <>{children}</>
@@ -28,7 +27,8 @@ interface RouteGuardProps {
   children: ReactNode
 }
 
-export const RouteGuard = ({ children }: RouteGuardProps) => {
+/** Legacy: allows super-admin only. Prefer RoleBasedRoute with allowedRoles. */
+export function RouteGuard({ children }: RouteGuardProps) {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth)
   const location = useLocation()
 

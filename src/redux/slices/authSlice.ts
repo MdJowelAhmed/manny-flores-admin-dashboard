@@ -1,4 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { UserRole } from '@/types/roles'
+
+export type UserRoleValue = (typeof UserRole)[keyof typeof UserRole]
 
 interface User {
   id: string
@@ -6,7 +9,7 @@ interface User {
   firstName: string
   lastName: string
   avatar?: string
-  role: 'super-admin'
+  role: UserRoleValue
   businessId?: string
   businessName?: string
 }
@@ -27,7 +30,10 @@ function getInitialAuthState(): AuthState {
   let user: User | null = null
   if (token && userStr) {
     try {
-      user = JSON.parse(userStr) as User
+      const parsed = JSON.parse(userStr) as User
+      if (Object.values(UserRole).includes(parsed.role)) {
+        user = parsed
+      }
     } catch {
       // Invalid user data in storage
     }
@@ -91,11 +97,14 @@ const authSlice = createSlice({
       const userStr = localStorage.getItem('user')
       if (token && userStr) {
         try {
-          state.user = JSON.parse(userStr)
-          state.token = token
-          state.isAuthenticated = true
+          const parsed = JSON.parse(userStr) as User
+          if (Object.values(UserRole).includes(parsed.role)) {
+            state.user = parsed
+            state.token = token
+            state.isAuthenticated = true
+          }
         } catch {
-          state.isAuthenticated = false
+          // Invalid user data in storage
         }
       }
     },

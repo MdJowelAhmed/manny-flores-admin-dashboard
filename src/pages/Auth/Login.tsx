@@ -14,6 +14,7 @@ import {
   loginSuccess,
   loginFailure,
 } from "@/redux/slices/authSlice";
+import type { UserRoleValue } from "@/redux/slices/authSlice";
 import { cn } from "@/utils/cn";
 import { motion } from "framer-motion";
 
@@ -44,14 +45,32 @@ export default function Login() {
       remember: false,
     },
   });
-  const demoUser = {
-    id: "1",
-    email: "superadmin@example.com",
-    password: "password",
-    role: "super-admin" as const,
-    firstName: "Super",
-    lastName: "Admin",
-  };
+  const demoUsers = [
+    {
+      id: "1",
+      email: "superadmin@example.com",
+      password: "password",
+      role: "super-admin" as const,
+      firstName: "Super",
+      lastName: "Admin",
+    },
+    {
+      id: "2",
+      email: "admin@example.com",
+      password: "password",
+      role: "admin" as const,
+      firstName: "Admin",
+      lastName: "User",
+    },
+    {
+      id: "3",
+      email: "marketing@example.com",
+      password: "password",
+      role: "marketing" as const,
+      firstName: "Marketing",
+      lastName: "User",
+    },
+  ];
 
   const onSubmit = async (data: LoginFormData) => {
     dispatch(loginStart());
@@ -59,10 +78,11 @@ export default function Login() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      const isValidUser =
-        data.email === demoUser.email && data.password === demoUser.password;
+      const matchedUser = demoUsers.find(
+        (u) => u.email === data.email && u.password === data.password
+      );
 
-      if (!isValidUser) {
+      if (!matchedUser) {
         dispatch(loginFailure("Invalid email or password"));
         return;
       }
@@ -70,11 +90,11 @@ export default function Login() {
       dispatch(
         loginSuccess({
           user: {
-            id: demoUser.id,
-            email: demoUser.email,
-            firstName: demoUser.firstName,
-            lastName: demoUser.lastName,
-            role: demoUser.role,
+            id: matchedUser.id,
+            email: matchedUser.email,
+            firstName: matchedUser.firstName,
+            lastName: matchedUser.lastName,
+            role: matchedUser.role as UserRoleValue,
           },
           token: "mock-jwt-token-" + Date.now(),
         })
@@ -213,10 +233,20 @@ export default function Login() {
       </div>
 
       <div className="p-4 rounded-lg bg-muted/50 border text-sm space-y-3">
-        <div className="space-y-1">
-          <p className="font-semibold text-foreground">Super Admin Account:</p>
-          <p><strong>Email:</strong> superadmin@example.com</p>
-          <p><strong>Password:</strong> password</p>
+        <p className="font-semibold text-foreground">Demo Credentials:</p>
+        <div className="space-y-2">
+          <div>
+            <p className="font-medium">Super Admin:</p>
+            <p className="text-muted-foreground">superadmin@example.com / password</p>
+          </div>
+          <div>
+            <p className="font-medium">Admin:</p>
+            <p className="text-muted-foreground">admin@example.com / password</p>
+          </div>
+          <div>
+            <p className="font-medium">Marketing:</p>
+            <p className="text-muted-foreground">marketing@example.com / password</p>
+          </div>
         </div>
       </div>
     </div>
