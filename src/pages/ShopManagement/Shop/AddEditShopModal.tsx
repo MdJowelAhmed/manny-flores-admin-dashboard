@@ -201,11 +201,11 @@ export function AddEditShopModal({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onClose}>
+          {/* <Button type="button" variant="outline" onClick={onClose}>
             Cancel
-          </Button>
+          </Button> */}
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : isEdit ? 'Save' : 'Save'}
+            {isSubmitting ? 'Saving...' : isEdit ? 'Saving...' : 'Add New Shop'}
           </Button>
         </div>
       </form>
