@@ -79,23 +79,23 @@ const navItems: NavItem[] = [
       },
     ],
   },
-  {
-    title: 'Booking Management',
-    href: '/booking-management',
-    icon: ListOrdered,
-  },
+  // {
+  //   title: 'Booking Management',
+  //   href: '/booking-management',
+  //   icon: ListOrdered,
+  // },
 
 
-  {
-    title: 'Agency Management',
-    href: '/agency-management',
-    icon: Building,
-  },
-  {
-    title: 'Calendar',
-    href: '/calender',
-    icon: Calendar,
-  },
+  // {
+  //   title: 'Agency Management',
+  //   href: '/agency-management',
+  //   icon: Building,
+  // },
+  // {
+  //   title: 'Calendar',
+  //   href: '/calender',
+  //   icon: Calendar,
+  // },
   {
     title: 'Revenue',
     href: '/transactions-history',

@@ -24,7 +24,7 @@ export function SubscriberTable({
             </th>
             <th className="px-6 py-4 text-left text-sm font-bold">Email</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Date</th>
-            <th className="px-6 py-4 text-right text-sm font-bold">Action</th>
+            {/* <th className="px-6 py-4 text-right text-sm font-bold">Action</th> */}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -75,7 +75,7 @@ export function SubscriberTable({
                     {formatDate(sub.date, 'dd-MM-yyyy')}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right">
+                {/* <td className="px-6 py-4 text-right">
                   <Button
                     variant="ghost"
                     size="icon-sm"
@@ -85,7 +85,7 @@ export function SubscriberTable({
                   >
                     <Lock className="h-4 w-4" />
                   </Button>
-                </td>
+                </td> */}
               </motion.tr>
             ))
           )}

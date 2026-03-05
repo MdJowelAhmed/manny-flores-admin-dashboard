@@ -21,18 +21,18 @@ export function UserActionButtons({
         variant="ghost"
         size="icon-sm"
         onClick={() => onView(user)}
-        className="h-8 w-8 hover:bg-green-50"
+        className="h-10 w-10 hover:bg-green-50"
       >
-        <Eye className="h-4 w-4 text-green-600" />
+        <Eye className="h-6 w-6 text-green-600" />
       </Button>
       <Button
         variant="ghost"
         size="icon-sm"
         onClick={() => onLock(user)}
-        className="h-8 w-8 hover:bg-red-50"
+        className="h-10 w-10 hover:bg-red-50"
         title={isBlocked ? 'Unblock user' : 'Block user'}
       >
-        <Lock className="h-4 w-4 text-red-600" />
+        <Lock className="h-6 w-6 text-red-600" />
       </Button>
     </div>
   )

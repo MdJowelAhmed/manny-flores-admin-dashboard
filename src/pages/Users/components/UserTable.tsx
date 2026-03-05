@@ -82,7 +82,7 @@ export function UserTable({ users, onView, onLock }: UserTableProps) {
                 <td className="px-6 py-4">
                   <span
                     className={cn(
-                      'inline-flex items-center px-3 py-1 w-20 text-center rounded-sm text-xs font-medium text-white',
+                      'inline-flex items-center px-3 py-3 w-20 text-center rounded-sm text-xs font-medium text-white',
                       user.status === 'active' && 'bg-green-500',
                       user.status === 'inactive' && 'bg-amber-700',
                       user.status === 'blocked' && 'bg-red-600',

@@ -29,7 +29,7 @@ export function SubscriberFilterDropdown({
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         className={cn(
-          'w-40 bg-primary text-primary-foreground hover:bg-primary/90 border-primary rounded-md',
+          'w-40 bg-secondary text-white hover:bg-primary/90 border-primary rounded-md',
           'focus:ring-primary focus:ring-offset-0',
           className
         )}

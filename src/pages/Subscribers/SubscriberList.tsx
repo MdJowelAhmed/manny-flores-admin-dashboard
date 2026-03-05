@@ -92,16 +92,16 @@ export default function SubscriberList() {
               className="w-[300px]"
             />
 
-            <SubscriberFilterDropdown
+            {/* <SubscriberFilterDropdown
               value={statusFilter}
               onChange={(v) => {
                 setStatusFilter(v)
                 setCurrentPage(1)
               }}
-            />
+            /> */}
 
             <Button
-              className="bg-slate-700 hover:bg-slate-800 text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
               onClick={() => setShowWriteMail(true)}
             >
               <Mail className="h-4 w-4 mr-2" />

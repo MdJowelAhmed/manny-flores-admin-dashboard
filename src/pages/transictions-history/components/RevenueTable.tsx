@@ -95,7 +95,7 @@ export function RevenueTable({ transactions }: RevenueTableProps) {
                 <td className="px-6 py-4">
                   <span
                     className={cn(
-                      'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-white',
+                      'inline-flex items-center gap-1.5 px-3 py-3 rounded-sm w-28 text-xs font-medium text-white',
                       transaction.status === 'Completed'
                         ? 'bg-green-600'
                         : transaction.status === 'Pending'
@@ -106,9 +106,9 @@ export function RevenueTable({ transactions }: RevenueTableProps) {
                     )}
                   >
                     {transaction.status === 'Completed' ? (
-                      <Check className="h-3.5 w-3.5" />
+                      <Check className="h-4 w-4" />
                     ) : (
-                      <RotateCw className="h-3.5 w-3.5" />
+                      <RotateCw className="h-4 w-4" />
                     )}
                     {transaction.status}
                   </span>

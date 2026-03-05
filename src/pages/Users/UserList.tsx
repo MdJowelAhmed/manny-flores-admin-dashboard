@@ -128,13 +128,13 @@ export default function UserList() {
               }}
             />
 
-            <Button
+            {/* <Button
               className="bg-primary-foreground hover:bg-blue-700 text-white"
               onClick={() => toast({ title: 'Add User', description: 'Add user modal coming soon.' })}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add User
-            </Button>
+            </Button> */}
           </div>
         </CardHeader>
 

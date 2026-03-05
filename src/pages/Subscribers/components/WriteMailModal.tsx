@@ -187,22 +187,22 @@ export function WriteMailModal({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button
+          {/* <Button
             type="button"
             variant="outline"
             onClick={handleClose}
             className="border-primary text-primary hover:bg-primary/10"
           >
             Cancel
-          </Button>
+          </Button> */}
           <Button
             type="button"
             onClick={handleSent}
             disabled={isLoading}
             isLoading={isLoading}
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-primary text-white hover:bg-primary/90"
           >
-            Sent
+            Sent Mail
           </Button>
         </div>
       </DialogContent>
