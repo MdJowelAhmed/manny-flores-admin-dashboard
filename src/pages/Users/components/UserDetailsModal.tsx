@@ -1,57 +1,36 @@
-
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Shield, Edit, Trash2 } from 'lucide-react'
+import { Mail, Phone, MapPin, Calendar, Shield, Edit, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { StatusBadge } from '@/components/common'
-import { useAppSelector } from '@/redux/hooks'
+import { ModalWrapper, StatusBadge } from '@/components/common'
 import { formatDate, getInitials } from '@/utils/formatters'
-import { motion } from 'framer-motion'
+import type { User } from '@/types'
 
-export default function UserDetails() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const { list } = useAppSelector((state) => state.users)
+interface UserDetailsModalProps {
+  user: User | null
+  open: boolean
+  onClose: () => void
+}
 
-  const user = list.find((u) => u.id === id)
-
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-lg text-muted-foreground">User not found</p>
-        <Button variant="link" onClick={() => navigate('/users')}>
-          Back to Users
-        </Button>
-      </div>
-    )
-  }
+export function UserDetailsModal({ user, open, onClose }: UserDetailsModalProps) {
+  if (!user) return null
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
+    <ModalWrapper
+      open={open}
+      onClose={onClose}
+      title="User Details"
+      size="xl"
+      className="bg-white"
     >
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => navigate('/users')}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Users
-      </Button>
-
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Profile Card */}
         <Card className="lg:col-span-1">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={user.avatar} />
+                <AvatarImage src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`} />
                 <AvatarFallback className="text-2xl">
                   {getInitials(user.firstName, user.lastName)}
                 </AvatarFallback>
@@ -64,7 +43,7 @@ export default function UserDetails() {
                 <StatusBadge status={user.role} type="role" />
                 <StatusBadge status={user.status} />
               </div>
-              <div className="flex gap-2 w-full">
+              {/* <div className="flex gap-2 w-full">
                 <Button variant="outline" className="flex-1">
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
@@ -72,7 +51,7 @@ export default function UserDetails() {
                 <Button variant="destructive" size="icon">
                   <Trash2 className="h-4 w-4" />
                 </Button>
-              </div>
+              </div> */}
             </div>
           </CardContent>
         </Card>
@@ -104,7 +83,7 @@ export default function UserDetails() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Phone</p>
-                    <p className="font-medium">{user.phone}</p>
+                    <p className="font-medium">{user.phone || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -161,19 +140,6 @@ export default function UserDetails() {
           </CardContent>
         </Card>
       </div>
-    </motion.div>
+    </ModalWrapper>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

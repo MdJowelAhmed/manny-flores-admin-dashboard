@@ -16,7 +16,6 @@ import { Login, ForgotPassword, VerifyEmail, ResetPassword } from '@/pages/Auth'
 // Dashboard Pages
 import Dashboard from '@/pages/Dashboard'
 import UserList from '@/pages/Users/UserList'
-import UserDetails from '@/pages/Users/UserDetails'
 import ProductList from '@/pages/Products/ProductList'
 import CategoryList from '@/pages/Categories/CategoryList'
 import ProfileSettings from '@/pages/Settings/Profile/ProfileSettings'
@@ -98,14 +97,6 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
                 <UserList />
-              </RoleBasedRoute>
-            }
-          />
-          <Route
-            path="users/:id"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
-                <UserDetails />
               </RoleBasedRoute>
             }
           />

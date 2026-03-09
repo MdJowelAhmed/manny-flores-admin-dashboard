@@ -220,7 +220,7 @@ export function Sidebar() {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-36 px-4 border-b">
+        <div className="flex items-center justify-between h-28 px-4 border-b">
           <div className="flex items-center gap-3">
             <div className="">
               <div className="text-primary text-white font-bold text-lg">
@@ -313,7 +313,7 @@ export function Sidebar() {
         <div className="p-4 border-t">
           {!sidebarCollapsed && (
             <p className="text-xs text-muted-foreground text-center">
-              © 2026 Motly v1.0
+              © 2026 coffecito v1.0
             </p>
           )}
         </div>

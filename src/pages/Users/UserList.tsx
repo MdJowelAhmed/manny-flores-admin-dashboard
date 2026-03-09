@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SearchInput } from '@/components/common/SearchInput'
@@ -7,6 +6,7 @@ import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { UserFilterDropdown } from './components/UserFilterDropdown'
 import { UserTable } from './components/UserTable'
+import { UserDetailsModal } from './components/UserDetailsModal'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { setFilters, setPage, setLimit, updateUserStatus } from '@/redux/slices/userSlice'
 import { useUrlString, useUrlNumber } from '@/hooks/useUrlState'
@@ -14,12 +14,14 @@ import { toast } from '@/utils/toast'
 import type { User, UserStatus } from '@/types'
 
 export default function UserList() {
-  const navigate = useNavigate()
   const dispatch = useAppDispatch()
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isConfirmLoading, setIsConfirmLoading] = useState(false)
+
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [selectedViewUser, setSelectedViewUser] = useState<User | null>(null)
 
   const [searchQuery, setSearchQuery] = useUrlString('search', '')
   const [statusFilter, setStatusFilter] = useUrlString('status', 'all')
@@ -53,7 +55,8 @@ export default function UserList() {
   }, [filteredList, pagination.page, pagination.limit])
 
   const handleView = (user: User) => {
-    navigate(`/users/${user.id}`)
+    setSelectedViewUser(user)
+    setIsViewModalOpen(true)
   }
 
   const handleLock = (user: User) => {
@@ -177,6 +180,15 @@ export default function UserList() {
           isLoading={isConfirmLoading}
         />
       )}
+
+      <UserDetailsModal
+        open={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false)
+          setSelectedViewUser(null)
+        }}
+        user={selectedViewUser}
+      />
     </motion.div>
   )
 }

@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { UserActionButtons } from './UserActionButtons'
@@ -13,12 +12,6 @@ interface UserTableProps {
 }
 
 export function UserTable({ users, onView, onLock }: UserTableProps) {
-  const navigate = useNavigate()
-
-  const handleView = (user: User) => {
-    navigate(`/users/${user.id}`)
-  }
-
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[800px]">
@@ -46,7 +39,7 @@ export function UserTable({ users, onView, onLock }: UserTableProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 * index }}
                 className="hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={() => handleView(user)}
+                onClick={() => onView(user)}
               >
                 {/* User Name Column */}
                 <td className="px-6 py-4">
