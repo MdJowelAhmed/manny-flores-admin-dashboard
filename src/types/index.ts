@@ -701,3 +701,30 @@ export interface Employee {
   workSchedule: string
   projects?: EmployeeProject[]
 }
+
+// ==================== Vehicle Maintenance Types ====================
+export type VehicleStatus = 'Available' | 'In Use' | 'Maintenance'
+
+export interface VehicleAssignedEmployee {
+  name: string
+  project: string
+  startDate: string
+  location: string
+}
+
+export interface Vehicle {
+  id: string
+  vehicleName: string
+  type: string
+  assignedTo: string
+  usage: string
+  nextService: string
+  status: VehicleStatus
+  model: string
+  year: string
+  purchaseDate: string
+  purchaseCost: string
+  insuranceExpiry: string
+  assignedEmployee?: VehicleAssignedEmployee
+  lastService: string
+}

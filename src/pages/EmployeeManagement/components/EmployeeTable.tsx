@@ -92,7 +92,7 @@ export function EmployeeTable({
                         variant="outline"
                         size="icon-sm"
                         onClick={() => onView(employee)}
-                        className="h-8 w-8 rounded-full border-blue-500 text-blue-500 hover:bg-blue-50"
+                        className="h-8 w-8 border-none text-blue-500 hover:bg-blue-50"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -100,7 +100,7 @@ export function EmployeeTable({
                         variant="outline"
                         size="icon-sm"
                         onClick={(e) => onEdit(employee, e)}
-                        className="h-8 w-8 rounded-full border-blue-500 text-blue-500 hover:bg-blue-50"
+                        className="h-8 w-8 border-none text-blue-500 hover:bg-blue-50"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -108,7 +108,7 @@ export function EmployeeTable({
                         variant="outline"
                         size="icon-sm"
                         onClick={() => onDelete(employee)}
-                        className="h-8 w-8 rounded-full border-red-500 text-red-500 hover:bg-red-50"
+                        className="h-8 w-8 border-none text-red-500 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

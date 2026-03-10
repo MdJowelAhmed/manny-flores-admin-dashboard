@@ -42,6 +42,7 @@ import ControllerList from './pages/Controllers/ControllerList'
 import CompanyProjects from './pages/CompanyProjects/CompanyProjects'
 import CustomerManagement from './pages/CustomerManagement/CustomerManagement'
 import EmployeeManagement from './pages/EmployeeManagement/EmployeeManagement'
+import VehicleMaintenance from './pages/VehicleMaintenance/VehicleMaintenance'
 
 function AppEntryRedirect() {
   const { user } = useAppSelector((state) => state.auth)
@@ -180,6 +181,16 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
                 <EmployeeManagement />
+              </RoleBasedRoute>
+            }
+          />
+
+          {/* Vehicle Maintenance - Super Admin, Admin */}
+          <Route
+            path="vehicle-maintenance"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <VehicleMaintenance />
               </RoleBasedRoute>
             }
           />

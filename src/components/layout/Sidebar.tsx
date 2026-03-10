@@ -23,6 +23,7 @@ import {
   Building2,
   UserCircle,
   UserCog,
+  Truck,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -114,6 +115,12 @@ const navItems: NavItem[] = [
     href: '/employee-management',
     icon: UserCog,
     feature: 'employee-management',
+  },
+  {
+    title: 'Vehicle Maintenance',
+    href: '/vehicle-maintenance',
+    icon: Truck,
+    feature: 'vehicle-maintenance',
   },
   {
     title: 'Revenue',
