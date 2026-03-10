@@ -63,6 +63,7 @@ export function Chatbot() {
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-[#2F8DF5] rounded-full flex items-center justify-center text-white">
                                     <MessageCircle className="w-6 h-6" />
+                                   
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-gray-800 text-lg">Stone Assistant</h3>

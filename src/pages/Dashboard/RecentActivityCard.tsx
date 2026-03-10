@@ -39,18 +39,18 @@ export function RecentActivityCard() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: 0.1 * index }}
-                                        className="hover:bg-gray-50/50"
+                                        className="hover:bg-gray-50/50 shadow"
                                     >
-                                        <td className="px-6 py-4 text-sm font-medium">
+                                        <td className="px-6 py-5 text-sm font-medium">
                                             {project.id}
                                         </td>
-                                        <td className="px-6 py-4 text-sm">
+                                        <td className="px-6 py-5 text-sm">
                                             {project.customerName}
                                         </td>
-                                        <td className="px-6 py-4 text-sm">
+                                        <td className="px-6 py-5 text-sm">
                                             {project.project}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-5">
                                             <span
                                                 className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium ${
                                                     project.status === 'In Progress'
@@ -61,7 +61,7 @@ export function RecentActivityCard() {
                                                 {project.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-2 w-24 rounded-full bg-gray-100 overflow-hidden">
                                                     <div 
@@ -72,10 +72,10 @@ export function RecentActivityCard() {
                                                 <span className="text-sm font-medium text-gray-600">{project.progress}%</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium">
+                                        <td className="px-6 py-5 text-sm font-medium">
                                             {project.value}
                                         </td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
                                                 <button className="text-gray-400 hover:text-gray-600 transition-colors">
                                                     <Eye className="h-4 w-4" />

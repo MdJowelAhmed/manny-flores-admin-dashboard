@@ -6,7 +6,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from 'recharts'
-
+import { motion } from 'framer-motion'
 const projectStatusData = [
     { name: 'Completed', value: 182, color: '#10B981' },
     { name: 'Pending', value: 65, color: '#F59E0B' },
@@ -16,7 +16,13 @@ const projectStatusData = [
 
 export function PieChartComponent() {
     return (
-        <Card className="h-full border-none shadow-sm bg-white ">
+       <motion.div
+       initial={{ opacity: 0, y: 20 }}
+       animate={{ opacity: 1, y: 0 }}
+       transition={{ duration: 0.3, delay: 0.6 }}
+    
+       >
+ <Card className="h-full border-none shadow-sm bg-white ">
             <CardHeader className="pb-0">
                 <CardTitle className="text-lg font-semibold text-gray-800">Project Status</CardTitle>
                 <p className="text-sm text-gray-400 mt-1">Current distribution</p>
@@ -79,5 +85,6 @@ export function PieChartComponent() {
                 </div>
             </CardContent>
         </Card>
+        </motion.div>
     )
 }
