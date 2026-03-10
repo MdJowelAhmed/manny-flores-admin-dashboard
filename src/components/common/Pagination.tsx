@@ -142,16 +142,16 @@ export function Pagination({
           size="icon-sm"
           onClick={() => onPageChange(1)}
           disabled={!canGoPrevious}
-          className="hidden sm:flex"
+          className="hidden sm:flex rounded-full"
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
         <Button
           variant="outline"
-          size="sm"
+          size="icon-sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canGoPrevious}
-          className={variant === 'revenue' ? 'gap-1' : ''}
+          className={variant === 'revenue' ? 'gap-1 rounded-full' : 'rounded-full'}
         >
           <ChevronLeft className="h-4 w-4" />
           {/* {variant === 'revenue' && <span>Prev</span>} */}
@@ -165,7 +165,7 @@ export function Pagination({
                 variant={currentPage === page ? 'default' : 'outline'}
                 size="icon-sm"
                 onClick={() => onPageChange(page)}
-                className="w-8 h-8"
+                className="w-8 h-8 rounded-full"
               >
                 {page}
               </Button>
@@ -179,10 +179,10 @@ export function Pagination({
 
         <Button
           variant="outline"
-          size="sm"
+          size="icon-sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={!canGoNext}
-          className={variant === 'revenue' ? 'gap-1' : ''}
+          className={variant === 'revenue' ? 'gap-1 rounded-full' : 'rounded-full'}
         >
           {/* {variant === 'revenue' && <span>Next</span>} */}
           <ChevronRight className="h-4 w-4" />
@@ -192,7 +192,7 @@ export function Pagination({
           size="icon-sm"
           onClick={() => onPageChange(totalPages)}
           disabled={!canGoNext}
-          className="hidden sm:flex"
+          className="hidden sm:flex rounded-full"
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>

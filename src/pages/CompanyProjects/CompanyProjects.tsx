@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, Filter, Pencil, FilterIcon, SlidersHorizontal } from 'lucide-react'
+import { Plus, Pencil, SlidersHorizontal } from 'lucide-react'
 import { SearchInput } from '@/components/common/SearchInput'
+import { Pagination } from '@/components/common/Pagination'
 import {
   Select,
   SelectContent,
@@ -20,8 +22,37 @@ import { cn } from '@/utils/cn'
 import { STATUS_COLORS } from '@/utils/constants'
 
 export default function CompanyProjects() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const searchQuery = searchParams.get('search') ?? ''
+  const statusFilter = searchParams.get('status') ?? 'all'
+  const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+  const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
+
+  const setSearch = (v: string) => {
+    const next = new URLSearchParams(searchParams)
+    v ? next.set('search', v) : next.delete('search')
+    next.delete('page')
+    setSearchParams(next, { replace: true })
+  }
+  const setStatus = (v: string) => {
+    const next = new URLSearchParams(searchParams)
+    v && v !== 'all' ? next.set('status', v) : next.delete('status')
+    next.delete('page')
+    setSearchParams(next, { replace: true })
+  }
+  const setPage = (p: number) => {
+    const next = new URLSearchParams(searchParams)
+    p > 1 ? next.set('page', String(p)) : next.delete('page')
+    setSearchParams(next, { replace: true })
+  }
+  const setLimit = (l: number) => {
+    const next = new URLSearchParams(searchParams)
+    l !== 10 ? next.set('limit', String(l)) : next.delete('limit')
+    next.delete('page')
+    setSearchParams(next, { replace: true })
+  }
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -46,6 +77,24 @@ export default function CompanyProjects() {
       return matchesSearch && matchesStatus
     })
   }, [projects, searchQuery, statusFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / itemsPerPage))
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages >= 1) setPage(1)
+  }, [totalPages, currentPage])
+
+  const paginatedProjects = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return filteredProjects.slice(start, start + itemsPerPage)
+  }, [filteredProjects, currentPage, itemsPerPage])
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatus(value)
+  }
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+  }
 
   const handleViewDetails = (project: Project) => {
     setSelectedProject(project)
@@ -140,9 +189,10 @@ export default function CompanyProjects() {
           <div className="flex items-center gap-3">
             <SearchInput
               value={searchQuery}
-              onChange={setSearchQuery}
+              onChange={handleSearchChange}
               placeholder="Search project...."
               className="w-[280px] bg-white"
+              debounceMs={150}
             />
             <Button
               onClick={handleAddProject}
@@ -152,7 +202,7 @@ export default function CompanyProjects() {
               Add Project
             </Button>
             <div className="w-[120px]">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-full bg-primary text-white hover:bg-primary/90">
                   <SlidersHorizontal className="h-4 w-4 mr-2" />
                   {/* <SlidersHorizontal /> */}
@@ -174,7 +224,7 @@ export default function CompanyProjects() {
           {filteredProjects.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">No projects found</div>
           ) : (
-            filteredProjects.map((project) => {
+            paginatedProjects.map((project) => {
               const statusColors = STATUS_COLORS[project.status] ?? { bg: 'bg-gray-100', text: 'text-gray-800' }
               return (
                 <motion.div
@@ -231,6 +281,20 @@ export default function CompanyProjects() {
                 </motion.div>
               )
             })
+          )}
+
+          {/* Pagination */}
+          {filteredProjects.length > 0 && (
+            <div className="border-t border-gray-100 pt-4">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredProjects.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setPage}
+                onItemsPerPageChange={setLimit}
+              />
+            </div>
           )}
         </div>
       </div>
