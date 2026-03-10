@@ -88,7 +88,7 @@ export function RevenueChart({ chartData, selectedYear, onYearChange }: RevenueC
                     <div className="flex items-center justify-between">
                         <CardTitle className="text-lg font-semibold text-gray-800">Revenue & Expenses</CardTitle>
                         <Select value={selectedYear} onValueChange={onYearChange} >
-                            <SelectTrigger className="w-[100px]    border border-gray-200  focus:ring-0 focus:ring-offset-0">
+                            <SelectTrigger className="w-[100px]  bg-primary text-white  border border-gray-200  focus:ring-0 focus:ring-offset-0">
                                 <SelectValue placeholder="Year" />
                             </SelectTrigger>
                             <SelectContent>

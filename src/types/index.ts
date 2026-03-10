@@ -642,3 +642,29 @@ export interface ControllerFormData {
   role: ControllerRole
   shopId?: string
 }
+
+// ==================== Company & Project Types ====================
+export type ProjectStatus = 'Active' | 'Completed' | 'Pending'
+
+export interface Project {
+  id: string
+  projectName: string
+  category: string
+  customer: string
+  email: string
+  company: string
+  startDate: string
+  totalBudget: number
+  amountSpent: number
+  duration: string
+  remaining: number
+  paymentMethod?: string
+  status: ProjectStatus
+  amountDue?: number
+  description?: string
+}
+
+export interface ProjectFilters {
+  search: string
+  status: ProjectStatus | 'all'
+}

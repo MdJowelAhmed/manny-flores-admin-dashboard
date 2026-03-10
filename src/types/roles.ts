@@ -31,6 +31,7 @@ export const FEATURE_ACCESS: Record<string, UserRole[]> = {
   'push-notification': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING],
   controllers: [UserRole.SUPER_ADMIN],
   profile: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  'company-projects': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
 }
 
 export type FeatureKey = keyof typeof FEATURE_ACCESS

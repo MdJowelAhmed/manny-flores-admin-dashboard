@@ -20,6 +20,7 @@ import {
   Mail,
   Bell,
   ImageIcon,
+  Building2,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -94,6 +95,12 @@ const navItems: NavItem[] = [
   //   href: '/calender',
   //   icon: Calendar,
   // },
+  {
+    title: 'Company & Projects',
+    href: '/company-projects',
+    icon: Building2,
+    feature: 'company-projects',
+  },
   {
     title: 'Revenue',
     href: '/transactions-history',
