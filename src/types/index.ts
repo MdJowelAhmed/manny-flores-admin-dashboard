@@ -755,3 +755,15 @@ export interface Equipment {
   assignedEmployee?: EquipmentAssignedEmployee
   lastService: string
 }
+
+// ==================== Review Types ====================
+export type ReviewStatus = 'Pending' | 'Approved' | 'Rejected'
+
+export interface Review {
+  id: string
+  customerName: string
+  projectName: string
+  rating: number
+  feedback: string
+  status: ReviewStatus
+}

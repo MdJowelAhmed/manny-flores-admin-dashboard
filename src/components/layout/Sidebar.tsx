@@ -25,6 +25,7 @@ import {
   UserCog,
   Truck,
   Wrench,
+  Star,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -128,6 +129,12 @@ const navItems: NavItem[] = [
     href: '/equipment-maintenance',
     icon: Wrench,
     feature: 'equipment-maintenance',
+  },
+  {
+    title: 'Review',
+    href: '/reviews',
+    icon: Star,
+    feature: 'reviews',
   },
   {
     title: 'Revenue',
