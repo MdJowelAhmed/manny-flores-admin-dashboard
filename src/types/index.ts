@@ -728,3 +728,30 @@ export interface Vehicle {
   assignedEmployee?: VehicleAssignedEmployee
   lastService: string
 }
+
+// ==================== Equipment Maintenance Types ====================
+export type EquipmentStatus = 'Available' | 'In Use' | 'Maintenance'
+
+export interface EquipmentAssignedEmployee {
+  name: string
+  project: string
+  startDate: string
+  location: string
+}
+
+export interface Equipment {
+  id: string
+  equipmentName: string
+  type: string
+  assignedTo: string
+  usage: string
+  nextService: string
+  status: EquipmentStatus
+  model: string
+  category: string
+  purchaseDate: string
+  purchaseCost: string
+  warrantyExpiry: string
+  assignedEmployee?: EquipmentAssignedEmployee
+  lastService: string
+}
