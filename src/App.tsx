@@ -51,6 +51,7 @@ import ProjectScheduling from './pages/ProjectScheduling/ProjectScheduling'
 import ManageMaterials from './pages/ManageMaterials/ManageMaterials'
 import CustomerFinance from './pages/CustomerFinance/CustomerFinance'
 import Attendance from './pages/Attendance/Attendance'
+import PayrollManagement from './pages/PayrollManagement/PayrollManagement'
 import AttendanceDetail from './pages/Attendance/AttendanceDetail'
 
 function AppEntryRedirect() {
@@ -270,6 +271,16 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
                 <CustomerFinance />
+              </RoleBasedRoute>
+            }
+          />
+
+          {/* Payroll Management - Super Admin, Admin */}
+          <Route
+            path="payroll-management"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <PayrollManagement />
               </RoleBasedRoute>
             }
           />

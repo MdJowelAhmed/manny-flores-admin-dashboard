@@ -32,6 +32,7 @@ import {
   Package2,
   Wallet,
   ClipboardCheck,
+  DollarSign,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -135,6 +136,12 @@ const navItems: NavItem[] = [
     href: '/attendance',
     icon: ClipboardCheck,
     feature: 'attendance',
+  },
+  {
+    title: 'Payroll management',
+    href: '/payroll-management',
+    icon: DollarSign,
+    feature: 'payroll-management',
   },
   {
     title: 'Vehicle Maintenance',
