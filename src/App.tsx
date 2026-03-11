@@ -52,6 +52,7 @@ import ManageMaterials from './pages/ManageMaterials/ManageMaterials'
 import CustomerFinance from './pages/CustomerFinance/CustomerFinance'
 import Attendance from './pages/Attendance/Attendance'
 import PayrollManagement from './pages/PayrollManagement/PayrollManagement'
+import ResourceRequestsReport from './pages/ResourceRequestsReport/ResourceRequestsReport'
 import AttendanceDetail from './pages/Attendance/AttendanceDetail'
 
 function AppEntryRedirect() {
@@ -281,6 +282,16 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
                 <PayrollManagement />
+              </RoleBasedRoute>
+            }
+          />
+
+          {/* Resource Requests & Report - Super Admin, Admin */}
+          <Route
+            path="resource-requests-report"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <ResourceRequestsReport />
               </RoleBasedRoute>
             }
           />

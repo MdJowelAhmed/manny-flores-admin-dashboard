@@ -33,6 +33,7 @@ import {
   Wallet,
   ClipboardCheck,
   DollarSign,
+  FileBarChart,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -184,6 +185,12 @@ const navItems: NavItem[] = [
     href: '/manage-materials',
     icon: Package2,
     feature: 'manage-materials',
+  },
+  {
+    title: 'Resource Requests & Report',
+    href: '/resource-requests-report',
+    icon: FileBarChart,
+    feature: 'resource-requests-report',
   },
   {
     title: 'Revenue',
