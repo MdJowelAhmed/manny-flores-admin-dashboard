@@ -50,6 +50,8 @@ import DocumentsApprovals from './pages/DocumentsApprovals/DocumentsApprovals'
 import ProjectScheduling from './pages/ProjectScheduling/ProjectScheduling'
 import ManageMaterials from './pages/ManageMaterials/ManageMaterials'
 import CustomerFinance from './pages/CustomerFinance/CustomerFinance'
+import Attendance from './pages/Attendance/Attendance'
+import AttendanceDetail from './pages/Attendance/AttendanceDetail'
 
 function AppEntryRedirect() {
   const { user } = useAppSelector((state) => state.auth)
@@ -271,6 +273,26 @@ function App() {
               </RoleBasedRoute>
             }
           />
+
+          {/* Attendance - Super Admin, Admin */}
+          <Route path="attendance">
+            <Route
+              index
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <Attendance />
+                </RoleBasedRoute>
+              }
+            />
+            <Route
+              path="employee/:employeeSlug"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <AttendanceDetail />
+                </RoleBasedRoute>
+              }
+            />
+          </Route>
 
           {/* Revenue - Super Admin, Admin */}
           <Route

@@ -31,6 +31,7 @@ import {
   CalendarDays,
   Package2,
   Wallet,
+  ClipboardCheck,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -128,6 +129,12 @@ const navItems: NavItem[] = [
     href: '/employee-management',
     icon: UserCog,
     feature: 'employee-management',
+  },
+  {
+    title: 'Attendance',
+    href: '/attendance',
+    icon: ClipboardCheck,
+    feature: 'attendance',
   },
   {
     title: 'Vehicle Maintenance',
