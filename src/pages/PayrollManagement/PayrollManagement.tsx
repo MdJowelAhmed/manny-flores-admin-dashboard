@@ -7,6 +7,7 @@ import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { PayrollTable } from './components/PayrollTable'
 import { CreateEditPaymentModal } from './components/CreateEditPaymentModal'
+import { PaymentDetailsModal } from './components/PaymentDetailsModal'
 import {
   payrollStats,
   mockPayrollData,
@@ -23,6 +24,7 @@ export default function PayrollManagement() {
   const [records, setRecords] = useState<PayrollRecord[]>(mockPayrollData)
   const [selectedRecord, setSelectedRecord] = useState<PayrollRecord | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [recordToDelete, setRecordToDelete] = useState<PayrollRecord | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -63,7 +65,21 @@ export default function PayrollManagement() {
 
   const handleView = (r: PayrollRecord) => {
     setSelectedRecord(r)
-    setIsModalOpen(true)
+    setIsDetailsModalOpen(true)
+  }
+
+  const handleEditFromDetails = () => {
+    setIsDetailsModalOpen(false)
+    if (selectedRecord) setIsModalOpen(true)
+  }
+
+  const handleDeleteFromDetails = () => {
+    setIsDetailsModalOpen(false)
+    if (selectedRecord) {
+      setRecordToDelete(selectedRecord)
+      setIsConfirmOpen(true)
+      setSelectedRecord(null)
+    }
   }
 
   const handleSave = (data: Partial<PayrollRecord>) => {
@@ -196,6 +212,17 @@ export default function PayrollManagement() {
           </div>
         )}
       </div>
+
+      <PaymentDetailsModal
+        open={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false)
+          setSelectedRecord(null)
+        }}
+        record={selectedRecord}
+        onEdit={handleEditFromDetails}
+        onDelete={handleDeleteFromDetails}
+      />
 
       <CreateEditPaymentModal
         open={isModalOpen}
