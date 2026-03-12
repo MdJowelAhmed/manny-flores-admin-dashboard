@@ -154,7 +154,7 @@ export function AddEditProjectFinanceModal({
 
         <div>
           <h3 className="text-sm font-semibold mb-3 text-foreground">Timeline & Budget</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DatePicker
               label="Start date"
               value={startDate}
@@ -207,11 +207,9 @@ export function AddEditProjectFinanceModal({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
+         
           <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
-            Save
+            {isEdit ? 'Update Project' : 'Add Project'}
           </Button>
         </div>
       </form>

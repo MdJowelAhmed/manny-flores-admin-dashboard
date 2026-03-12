@@ -21,16 +21,16 @@ export function MaterialsTable({
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[900px]">
         <thead>
-          <tr className="bg-green-50 text-slate-800">
-            <th className="px-4 py-3 text-left text-sm font-semibold">Material Name</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold">Category</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold">Unit</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold">Current Stock</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold">Supplier</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold">Cost Price</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold">Project Rate</th>
-            <th className="px-4 py-3 text-left text-sm font-semibold">Assigned Project</th>
-            <th className="px-4 py-3 text-right text-sm font-semibold">Action</th>
+          <tr className="bg-secondary-foreground text-accent">
+            <th className="px-6 py-4 text-left text-sm font-semibold">Material Name</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">Category</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">Unit</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">Current Stock</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">Supplier</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">Cost Price</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">Project Rate</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">Assigned Project</th>
+            <th className="px-6 py-4 text-right text-sm font-semibold">Action</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
@@ -47,7 +47,7 @@ export function MaterialsTable({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.02 * index }}
-                className="hover:bg-gray-50/50 transition-colors"
+                className="hover:bg-gray-50/50 transition-colors shadow-sm"
               >
                 <td className="px-4 py-3 text-sm text-slate-800">{item.materialName}</td>
                 <td className="px-4 py-3 text-sm text-slate-600">{item.category}</td>
@@ -69,7 +69,7 @@ export function MaterialsTable({
                       onClick={() => onView(item)}
                       className="h-8 w-8 text-primary hover:bg-primary/10"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-5 w-5" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -77,7 +77,7 @@ export function MaterialsTable({
                       onClick={(e) => onEdit(item, e)}
                       className="h-8 w-8 text-primary hover:bg-primary/10"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-5 w-5" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -85,7 +85,7 @@ export function MaterialsTable({
                       onClick={() => onDelete(item)}
                       className="h-8 w-8 text-destructive hover:bg-destructive/10"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-5 w-5" />
                     </Button>
                   </div>
                 </td>

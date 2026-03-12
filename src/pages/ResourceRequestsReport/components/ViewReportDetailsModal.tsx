@@ -46,7 +46,7 @@ export function ViewReportDetailsModal({
       onClose={onClose}
       title="Report Details"
       size="md"
-      className="max-w-md"
+      className="max-w-2xl bg-white"
     >
       <div className="space-y-5">
         <div>

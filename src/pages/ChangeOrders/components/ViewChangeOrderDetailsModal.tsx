@@ -26,7 +26,7 @@ function DetailRow({
       <span className="text-sm text-muted-foreground">{label}:</span>
       <span
         className={cn(
-          'text-sm font-medium',
+          'text-sm ',
           valueHighlight ? 'text-amber-600' : 'text-foreground'
         )}
       >
@@ -67,7 +67,7 @@ export function ViewChangeOrderDetailsModal({
       title={order.orderId}
       description="Complete change order details and approval status"
       size="lg"
-      className="max-w-xl"
+      className="max-w-2xl bg-white"
     >
       <div className="space-y-6">
         <div>
@@ -102,18 +102,12 @@ export function ViewChangeOrderDetailsModal({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2 pt-4 border-t">
+        <div className="flex flex-wrap gap-2 pt-4 border-t justify-end">
           <Button
             onClick={() => handleStatusChange('Approved')}
             className="bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             Approved
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => handleStatusChange('Cancelled')}
-          >
-            Cancelled
           </Button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Paperclip, Send, Check } from 'lucide-react'
+import { Paperclip, Send, CheckCheck } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
@@ -276,23 +276,19 @@ function MessageList({ messages }: { messages: Message[] }) {
               )}
               <div
                 className={cn(
-                  'rounded-lg px-4 py-2',
+                  ' px-4 py-4',
                   msg.isOutgoing
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-accent'
+                    ? 'bg-secondary-foreground text-accent'
+                    : 'bg-secondary-foreground text-accent',
+                    msg.isOutgoing ? 'rounded-t-lg rounded-bl-lg' : 'rounded-b-lg rounded-tr-lg'
                 )}
               >
                 <p className="text-sm">{msg.text}</p>
               </div>
-              <div
-                className={cn(
-                  'flex items-center gap-1 mt-0.5',
-                  msg.isOutgoing ? 'text-white/90' : 'text-muted-foreground'
-                )}
-              >
+              <div className="flex items-center gap-1.5 mt-0.5 text-muted-foreground">
                 <span className="text-xs">{msg.timestamp}</span>
-                {msg.isOutgoing && msg.isRead && (
-                  <Check className="h-3 w-3" strokeWidth={2.5} />
+                {msg.isOutgoing && (
+                  <CheckCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
                 )}
               </div>
             </div>

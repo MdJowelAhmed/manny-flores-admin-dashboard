@@ -51,7 +51,7 @@ export function ViewRequestDetailsModal({
       onClose={onClose}
       title={title}
       size="md"
-      className="max-w-md"
+      className="max-w-2xl bg-white"
     >
       <div className="space-y-5">
         <div>
@@ -97,7 +97,7 @@ export function ViewRequestDetailsModal({
         )}
 
         <Button
-          className="w-full bg-primary hover:bg-primary/90 text-white mt-4"
+          className="w-full bg-primary hover:bg-primary/90 text-white mt-6"
           onClick={() => {
             onApproved?.()
             onClose()

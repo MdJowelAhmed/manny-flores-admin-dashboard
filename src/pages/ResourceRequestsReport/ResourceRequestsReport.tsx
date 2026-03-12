@@ -126,24 +126,24 @@ export default function ResourceRequestsReport() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+      <div className="rounded-xl  overflow-hidden shadow-sm">
         <Tabs
           value={tabParam}
           onValueChange={setTab}
           className="w-full"
         >
-          <div className="border-b border-gray-100 px-4 pt-4">
-            <TabsList className="h-10 bg-gray-100 p-1">
-              <TabsTrigger value="request" className="px-5 py-2 text-sm">
+          <div className="  pb-4">
+            <TabsList className="h-[44px] bg-gray-100 p-1">
+              <TabsTrigger value="request" className="px-5 py-3 text-sm">
                 Request
               </TabsTrigger>
-              <TabsTrigger value="report" className="px-5 py-2 text-sm">
+              <TabsTrigger value="report" className="px-5 py-3 text-sm">
                 Report
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="request" className="mt-0">
+          <TabsContent value="request" className="mt-0 bg-white rounded-xl">
             <RequestTable
               records={paginatedRequests}
               onView={setViewRequest}

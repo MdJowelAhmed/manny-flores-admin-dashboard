@@ -68,14 +68,14 @@ export function ReviewCard({ review, onApproved, onDelete }: ReviewCardProps) {
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="Customer name"
-              className="border-gray-200 bg-gray-50"
+              className="border-gray-200 "
             />
             <FormInput
               label="Project Name"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               placeholder="Project name"
-              className="border-gray-200 bg-gray-50"
+              className="border-gray-200 "
             />
           </div>
         </div>
@@ -101,7 +101,7 @@ export function ReviewCard({ review, onApproved, onDelete }: ReviewCardProps) {
                 placeholder="Enter feedback..."
                 rows={6}
                 maxLength={FEEDBACK_MAX_LENGTH}
-                className="border-gray-200 bg-gray-50 resize-none"
+                className="border-gray-200  resize-none"
               />
               <p className="text-xs text-muted-foreground mt-1">
                 {feedback.length} characters / {FEEDBACK_MAX_LENGTH} max

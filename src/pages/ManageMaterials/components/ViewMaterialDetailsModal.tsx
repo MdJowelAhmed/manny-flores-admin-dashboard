@@ -15,7 +15,7 @@ function DetailRow({ label, value }: { label: string; value: string | number }) 
   return (
     <div className="flex justify-between py-2 gap-4">
       <span className="text-sm text-muted-foreground">{label}:</span>
-      <span className="text-sm font-medium">{value}</span>
+      <span className="text-sm ">{value}</span>
     </div>
   )
 }
@@ -35,7 +35,7 @@ export function ViewMaterialDetailsModal({
       onClose={onClose}
       title="Material Details"
       size="lg"
-      className="max-w-xl bg-white"
+      className="max-w-2xl bg-white"
     >
       <div className="space-y-5">
         {/* Material Overview */}
@@ -82,16 +82,13 @@ export function ViewMaterialDetailsModal({
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
           <Button
             onClick={onEdit}
-            className="bg-primary hover:bg-primary/90 text-white"
+            className="bg-primary hover:bg-primary/90 text-white px-6"
           >
             Edit
           </Button>
-          <Button variant="destructive" onClick={onDelete}>
+          <Button variant="destructive" onClick={onDelete} className="bg-destructive hover:bg-destructive/90 text-white">
             Delete
           </Button>
         </div>

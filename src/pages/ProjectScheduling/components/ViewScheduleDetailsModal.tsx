@@ -42,7 +42,7 @@ export function ViewScheduleDetailsModal({
             <div className="p-1.5 rounded bg-primary/10">
               <FileText className="h-4 w-4 text-primary" />
             </div>
-            <h3 className="text-sm font-semibold text-primary">Project Information</h3>
+            <h3 className="text-sm font-semibold text-primary">Customer Information</h3>
           </div>
           <div className="space-y-1 pl-8">
             <DetailRow label="Customer Name" value={schedule.customer} />

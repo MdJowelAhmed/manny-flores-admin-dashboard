@@ -17,7 +17,7 @@ export default function DashboardLayout() {
         )}
       >
         <Header />
-        <main className="p-6 lg:p-8 bg-[#fafafa] min-h-[calc(100vh-4rem)]">
+        <main className="p-6 lg:p-8 bg-[#fafafa] min-h-[calc(100vh-5rem)]">
           <Outlet />
         </main>
       </div>

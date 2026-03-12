@@ -128,7 +128,7 @@ export default function DocumentsApprovals() {
           />
         </CardHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {filteredDocuments.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-sm">
               No documents found
@@ -144,33 +144,35 @@ export default function DocumentsApprovals() {
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-accent text-base truncate">{doc.projectTitle}</h4>
                   <p className="text-sm text-muted-foreground mt-0.5">{doc.category}</p>
-                  <div className="flex flex-wrap gap-x-6 gap-y-1 mt-3">
+                  <div className="flex flex-wrap gap-x-6 gap-y-1 mt-5">
                     <div>
-                      <span className="text-xs text-muted-foreground block">Project</span>
+                      <span className="text-xs text-muted-foreground block mb-1">Project</span>
                       <span className="text-sm font-medium">{doc.project}</span>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground block">Upload Date</span>
+                      <span className="text-xs text-muted-foreground block mb-1">Upload Date</span>
                       <span className="text-sm font-medium">{doc.uploadDate}</span>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground block">Uploaded By</span>
+                      <span className="text-xs text-muted-foreground block mb-1">Uploaded By</span>
                       <span className="text-sm font-medium">{doc.uploadedBy}</span>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground block">Timeline</span>
+                      <span className="text-xs text-muted-foreground block mb-1">Timeline</span>
                       <span className="text-sm font-medium">{doc.timeline}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleViewDetails(doc)}
-                    className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                    className="text-sm   bg-secondary-foreground text-accent h-9"
                   >
                     View details
-                  </button>
+                  </Button>
                   {doc.status === 'pending' && (
                     <>
                       <Button
@@ -184,7 +186,7 @@ export default function DocumentsApprovals() {
                       <Button
                         size="sm"
                         variant="destructive"
-                        className="h-9"
+                        className="h-9  text-white"
                         onClick={(e) => handleReject(doc, e)}
                       >
                         Reject

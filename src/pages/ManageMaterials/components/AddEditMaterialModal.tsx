@@ -91,7 +91,7 @@ export function AddEditMaterialModal({
       onClose={onClose}
       title={isEdit ? 'Edit Material' : 'Add Material'}
       size="lg"
-      className="max-w-xl bg-white"
+      className="max-w-3xl bg-white"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* General Information */}
@@ -117,7 +117,7 @@ export function AddEditMaterialModal({
         {/* Price & Rate */}
         <div>
           <h3 className="text-sm font-semibold mb-3 text-foreground">Price & Rate</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               label="Unit Price"
               placeholder="e.g. $12"
@@ -174,11 +174,11 @@ export function AddEditMaterialModal({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onClose}>
+          {/* <Button type="button" variant="outline" onClick={onClose}>
             Cancel
-          </Button>
+          </Button> */}
           <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
-            {isEdit ? 'Update' : 'Save'}
+            {isEdit ? 'Update Material' : 'Add Material'}
           </Button>
         </div>
       </form>

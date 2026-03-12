@@ -88,10 +88,10 @@ export default function ChangeOrders() {
       className="space-y-6"
     >
       {/* Info Banner */}
-      <div className="flex gap-3 p-4 rounded-xl bg-amber-50 border border-amber-100">
-        <div className="shrink-0 p-2 rounded-full bg-amber-100">
+      <div className="flex gap-3 p-4 rounded-xl bg-[#F66E1033] border border-amber-100">
+        
           <Info className="h-5 w-5 text-amber-600" />
-        </div>
+       
         <div>
           <h3 className="font-semibold text-foreground">Change Order Process</h3>
           <p className="text-sm text-muted-foreground mt-1">
@@ -136,19 +136,19 @@ export default function ChangeOrders() {
       </div>
 
       {/* All Change Orders */}
-      <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border-b border-gray-100">
+      <div className="rounded-xl  overflow-hidden shadow-sm ">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6  0">
           <h2 className="text-base font-bold text-accent">All Change Orders</h2>
           <div className="flex items-center gap-2">
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Search documents..."
-              className="w-[200px]"
+              className="w-[280px] bg-white"
               debounceMs={150}
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[120px] h-9 bg-primary text-white hover:bg-primary/90 border-0">
+              <SelectTrigger className="w-[120px] h-[44px] bg-primary text-white hover:bg-primary/90 border-0">
                 <SlidersHorizontal className="h-4 w-4 mr-1 shrink-0" />
                 <SelectValue placeholder="Filter" />
               </SelectTrigger>
@@ -163,7 +163,7 @@ export default function ChangeOrders() {
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className=" space-y-4">
           {filteredOrders.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-sm">
               No change orders found
@@ -189,69 +189,71 @@ export default function ChangeOrders() {
                       type="button"
                       onClick={() => handleStatusClick(o)}
                       className={cn(
-                        'px-3 py-1 rounded-full text-xs font-medium shrink-0 cursor-pointer transition-opacity hover:opacity-80',
+                        'px-3 py-1 rounded-sm text-xs font-medium shrink-0 cursor-pointer transition-opacity hover:opacity-80',
                         o.status === 'Approved'
                           ? 'bg-emerald-100 text-emerald-700'
-                          : o.status === 'Cancelled'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-amber-100 text-amber-700'
+                          : 'bg-amber-100 text-amber-700'
                       )}
                     >
                       {o.status}
                     </button>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-3">
+                  <div className="flex flex-wrap items-start justify-between mr-16 gap-4 my-3 mt-3">
                     <div>
-                      <span className="text-xs text-muted-foreground block">
+                      <span className="text-sm text-accent block">
                         Original Cost
                       </span>
-                      <span className="text-sm font-semibold">
+                      <span className="text-base font-bold mt-1">
                         {formatCurrency(o.originalCost)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground block">
+                      <span className="text-sm text-accent block">
                         Additional Cost
                       </span>
-                      <span className="text-sm font-semibold text-amber-600">
+                      <span className="text-base font-bold text-amber-600 mt-1">
                         +{formatCurrency(o.additionalCost)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground block">
+                      <span className="text-sm text-accent block">
                         New Total
                       </span>
-                      <span className="text-sm font-semibold text-emerald-600">
+                      <span className="text-base font-bold text-emerald-600 mt-1">
                         {formatCurrency(o.newTotal)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground block">
+                      <span className="text-sm text-accent block">
                         Request Date
                       </span>
-                      <span className="text-sm font-semibold">{o.requestDate}</span>
+                      <span className="text-base font-bold mt-1">{o.requestDate}</span>
                     </div>
+
+
+
+                  </div>
+                  <div className="flex items-center justify-end gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownloadPdf(o)}
+                      className="border-red-200 text-red-600 hover:bg-red-50"
+                    >
+                      <FileDown className="h-4 w-4 mr-1" />
+                      Download PDF
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewDetails(o)}
+                      className="border-gray-200 text-slate-600 hover:bg-gray-100"
+                    >
+                      View details
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDownloadPdf(o)}
-                    className="border-red-200 text-red-600 hover:bg-red-50"
-                  >
-                    <FileDown className="h-4 w-4 mr-1" />
-                    Download PDF
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleViewDetails(o)}
-                    className="border-gray-200 text-slate-600 hover:bg-gray-100"
-                  >
-                    View details
-                  </Button>
-                </div>
+
               </motion.div>
             ))
           )}

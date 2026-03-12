@@ -200,12 +200,12 @@ const navItems: NavItem[] = [
     icon: ClipboardList,
     feature: 'change-orders',
   },
-  {
-    title: 'Revenue',
-    href: '/transactions-history',
-    icon: CreditCard,
-    feature: 'revenue',
-  },
+  // {
+  //   title: 'Revenue',
+  //   href: '/transactions-history',
+  //   icon: CreditCard,
+  //   feature: 'revenue',
+  // },
   // {
   //   title: 'User Management',
   //   href: '/users',

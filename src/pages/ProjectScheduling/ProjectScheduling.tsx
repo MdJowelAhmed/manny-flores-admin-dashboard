@@ -50,15 +50,15 @@ export default function ProjectScheduling() {
         prev.map((s) =>
           s.id === data.id
             ? {
-                ...s,
-                projectTitle: data.projectTitle ?? s.projectTitle,
-                uploadDate: newDate || s.uploadDate,
-                scheduledDate: newDate || s.scheduledDate,
-                uploadedBy: data.uploadedBy ?? s.uploadedBy,
-                email: data.email ?? s.email,
-                company: data.company ?? s.company,
-                team: data.team ?? s.team,
-              }
+              ...s,
+              projectTitle: data.projectTitle ?? s.projectTitle,
+              uploadDate: newDate || s.uploadDate,
+              scheduledDate: newDate || s.scheduledDate,
+              uploadedBy: data.uploadedBy ?? s.uploadedBy,
+              email: data.email ?? s.email,
+              company: data.company ?? s.company,
+              team: data.team ?? s.team,
+            }
             : s
         )
       )
@@ -109,15 +109,17 @@ export default function ProjectScheduling() {
       <div className="space-y-6">
         {groupedByDate.map(([date, items]) => (
           <div key={date} className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-base font-medium text-foreground">{date}</span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-base font-medium text-foreground">{date}</span>
+              </div>
               <span className="text-sm text-primary font-medium">
                 {items.length} Project{items.length !== 1 ? 's' : ''}
               </span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-5">
               {items.map((schedule) => (
                 <motion.div
                   key={schedule.id}
@@ -126,23 +128,23 @@ export default function ProjectScheduling() {
                   className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-white border border-gray-100"
                 >
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-accent text-base">{schedule.projectTitle}</h4>
+                    <h4 className="font-semibold text-accent text-base">{schedule.projectTitle}</h4>
                     <p className="text-sm text-muted-foreground mt-0.5">{schedule.category}</p>
-                    <div className="flex flex-wrap gap-x-6 gap-y-1 mt-3">
+                    <div className="flex flex-wrap gap-x-6 gap-y-1 mt-6">
                       <div>
-                        <span className="text-xs text-muted-foreground block">Project</span>
+                        <span className="text-xs text-muted-foreground block mb-1">Project</span>
                         <span className="text-sm font-medium">{schedule.project}</span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground block">Upload Date</span>
+                        <span className="text-xs text-muted-foreground block mb-1">Upload Date</span>
                         <span className="text-sm font-medium">{schedule.uploadDate}</span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground block">Uploaded By</span>
+                        <span className="text-xs text-muted-foreground block mb-1">Uploaded By</span>
                         <span className="text-sm font-medium">{schedule.uploadedBy}</span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground block">Team</span>
+                        <span className="text-xs text-muted-foreground block mb-1">Team</span>
                         <span className="text-sm font-medium">{schedule.team}</span>
                       </div>
                     </div>

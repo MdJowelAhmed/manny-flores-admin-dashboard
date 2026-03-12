@@ -22,7 +22,6 @@ interface UpdateStatusModalProps {
 const STATUS_STYLES: Record<ChangeOrderStatus, string> = {
   Pending: 'bg-amber-100 text-amber-700',
   Approved: 'bg-emerald-100 text-emerald-700',
-  Cancelled: 'bg-red-100 text-red-700',
 }
 
 export function UpdateStatusModal({
@@ -53,7 +52,7 @@ export function UpdateStatusModal({
       title="Update Status"
       description={`Change order ${order.orderId}`}
       size="sm"
-      className="max-w-sm"
+      className="max-w-sm bg-white"
     >
       <div className="space-y-4">
         <div>

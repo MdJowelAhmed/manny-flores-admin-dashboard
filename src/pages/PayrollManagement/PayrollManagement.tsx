@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CreditCard, DollarSign, Plus } from 'lucide-react'
+import { CreditCard,  } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'

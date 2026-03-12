@@ -1,6 +1,6 @@
 import { FileText, Info, DollarSign } from 'lucide-react'
 
-export type ChangeOrderStatus = 'Pending' | 'Approved' | 'Cancelled'
+export type ChangeOrderStatus = 'Pending' | 'Approved'
 
 export interface ChangeOrder {
   id: string
@@ -50,13 +50,11 @@ export const statusFilterOptions = [
   { value: 'all', label: 'All' },
   { value: 'Pending', label: 'Pending' },
   { value: 'Approved', label: 'Approved' },
-  { value: 'Cancelled', label: 'Cancelled' },
 ]
 
 export const statusUpdateOptions: { value: ChangeOrderStatus; label: string }[] = [
   { value: 'Pending', label: 'Pending' },
   { value: 'Approved', label: 'Approved' },
-  { value: 'Cancelled', label: 'Cancelled' },
 ]
 
 export const mockChangeOrders: ChangeOrder[] = [
