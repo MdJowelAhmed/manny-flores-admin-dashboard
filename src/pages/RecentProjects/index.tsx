@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Eye, Trash2 } from 'lucide-react'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
@@ -77,16 +77,12 @@ export default function RecentProjects() {
   return (
     <div className="space-y-6">
       <Card className="bg-white border-0">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-slate-800">
-            Recent Projects
-          </CardTitle>
-        </CardHeader>
+       
         <CardContent className="p-0">
           <div className="w-full overflow-auto">
             <table className="w-full min-w-[980px]">
               <thead>
-                <tr className="bg-gray-50/80 text-slate-800 border-b border-gray-100">
+                <tr className="bg-secondary-foreground text-accent">
                   <th className="px-6 py-4 text-left text-sm font-bold">ID</th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
                     Customer Name
@@ -112,7 +108,7 @@ export default function RecentProjects() {
                 {paginatedProjects.map((project) => (
                   <tr
                     key={project.id}
-                    className="hover:bg-gray-50/50 transition-colors"
+                    className="hover:bg-gray-50/50 transition-colors shadow-sm"
                   >
                     <td className="px-6 py-5 text-sm font-medium">
                       {project.id}
@@ -160,7 +156,7 @@ export default function RecentProjects() {
                           className="text-gray-400 hover:text-gray-600 transition-colors"
                           aria-label="View details"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-5 w-5" />
                         </button>
                         <button
                           type="button"
@@ -168,7 +164,7 @@ export default function RecentProjects() {
                           className="text-red-400 hover:text-red-600 transition-colors"
                           aria-label="Delete"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
                     </td>
