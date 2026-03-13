@@ -16,6 +16,8 @@ interface ModalWrapperProps {
   children: React.ReactNode
   className?: string
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  /** Renders at bottom of modal, stays fixed when content scrolls */
+  footer?: React.ReactNode
 }
 
 const sizeClasses = {
@@ -34,6 +36,7 @@ export function ModalWrapper({
   children,
   className,
   size = 'md',
+  footer,
 }: ModalWrapperProps) {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -42,9 +45,10 @@ export function ModalWrapper({
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto pr-2 -mr-2 scrollbar-thin">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-2 -mr-2 scrollbar-thin">
           {children}
         </div>
+        {footer && <div className="flex-shrink-0 pt-4 mt-2 border-t">{footer}</div>}
       </DialogContent>
     </Dialog>
   )

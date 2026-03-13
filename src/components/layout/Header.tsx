@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Menu, Bell, LogOut, User, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,13 +11,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ModalWrapper } from '@/components/common/ModalWrapper'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { toggleSidebar } from '@/redux/slices/uiSlice'
 import { logout } from '@/redux/slices/authSlice'
 import { getInitials } from '@/utils/formatters'
+import { SAMPLE_NOTIFICATIONS } from '@/pages/Notifications/notificationData'
+import type { Notification } from '@/types/notification'
+import { formatDistanceToNow } from 'date-fns'
 
 const routeTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
+  '/notifications': 'Notifications',
   '/orders': 'Orders',
   '/booking-management': 'Booking Management',
   '/calender': 'Calendar',
@@ -33,18 +39,50 @@ const routeTitles: Record<string, string> = {
   '/settings/about-us': 'About Us',
 }
 
+const RECENT_NOTIFICATIONS_COUNT = 3
+
+function NotificationItem({ notification }: { notification: Notification }) {
+
+
+  return (
+    <div className="py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors border-b last:border-b-0">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm text-accent">{notification.title}</p>
+          <p className="text-sm text-muted-foreground truncate">{notification.message}</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            {formatDistanceToNow(new Date(notification.timestamp), { addSuffix: true })}
+          </p>
+          </div>
+      </div>
+    </div>
+  )
+}
+
 export function Header() {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false)
   // const { theme } = useAppSelector((state) => state.ui)
   const { user } = useAppSelector((state) => state.auth)
   const location = useLocation()
-
+  const [language, setLanguage] = useState('en')
   const pageTitle = routeTitles[location.pathname] || 'Dashboard'
+  const recentNotifications = SAMPLE_NOTIFICATIONS.slice(0, RECENT_NOTIFICATIONS_COUNT)
+
+  const handleViewAllNotifications = () => {
+    setNotificationModalOpen(false)
+    navigate('/notifications')
+  }
 
   const handleLogout = () => {
     dispatch(logout())
     navigate('/auth/login')
+  }
+
+  const handleLanguageToggle = () => {
+    setLanguage(language === 'en' ? 'es' : 'en')
+    console.log(language)
   }
 
   return (
@@ -81,7 +119,7 @@ export function Header() {
         </div> */}
 
         {/* Right side */}
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-6">
           {/* Theme toggle */}
           {/* <Button
             variant="ghost"
@@ -95,23 +133,59 @@ export function Header() {
             )}
           </Button> */}
 
+          {/* Language Toggle (English, Spanish) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLanguageToggle}
+          >
+            {
+              language === 'en' ? (
+                <div className="h-8 w-8 text-accent flex items-center gap-2">
+                  <img src="/assets/english.png" alt="English" className="h-6 w-7 rounded-full" />
+                  <span className="text-xs text-accent">ENG</span>
+                </div>
+              ) : (
+                <div className="h-8 w-8 text-accent flex items-center gap-2">
+                  <img src="/assets/spain.png" alt="Spanish" className="h-6 w-7 rounded-full" />
+                  <span className="text-xs text-accent">ESP</span>
+                </div>
+              )
+            }
+          </Button>
+
           {/* Notifications */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-8 w-8 text-accent" />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => setNotificationModalOpen(true)}
+          >
+            <Bell className="h-8 w-8 text-accent" />
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+          </Button>
+          <ModalWrapper
+            open={notificationModalOpen}
+            onClose={() => setNotificationModalOpen(false)}
+            title="Notifications"
+            size="md"
+            className="bg-white"
+            footer={
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleViewAllNotifications}
+              >
+                View All
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="p-4 text-center text-sm text-muted-foreground">
-                <Bell className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                <p>No new notifications</p>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            }
+          >
+            <div className="space-y-0">
+              {recentNotifications.map((n) => (
+                <NotificationItem key={n.id} notification={n} />
+              ))}
+            </div>
+          </ModalWrapper>
 
           {/* User menu */}
           <DropdownMenu>

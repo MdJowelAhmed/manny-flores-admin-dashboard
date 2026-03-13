@@ -1,6 +1,5 @@
 import { FileText, Info } from 'lucide-react'
 import { ModalWrapper } from '@/components/common'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import type { RecentProject } from '../recentProjectsData'
 import { cn } from '@/utils/cn'

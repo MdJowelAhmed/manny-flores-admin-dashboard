@@ -339,9 +339,9 @@ export function Sidebar() {
         <div className="flex items-center justify-between h-28 px-4 border-b">
           <div className="flex items-center gap-3">
             <div className="">
-              <div className="text-primary text-white font-bold text-lg">
-                {/* <img src="/assets/logo.png" alt="Motly" className="" /> */}
-                <span className="text-primary font-bold text-2xl">LOGO</span>
+              <div className="text-primary text-white font-bold text-lg flex items-center justify-center w-72  mx-auto">
+                <img src="/assets/image3.svg" alt="manny Flores" className="" />
+                {/* <span className="text-primary font-bold text-2xl">LOGO</span> */}
               </div>
             </div>
             {/* {!sidebarCollapsed && (
