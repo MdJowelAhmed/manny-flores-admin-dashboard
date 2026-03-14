@@ -87,7 +87,7 @@ function NotificationRow({ notification, onMarkAsRead }: NotificationRowProps) {
   return (
     <div
       className={`flex items-start justify-between gap-4 p-4 transition-colors ${
-        notification.isRead ? 'bg-muted/30' : 'bg-background'
+        notification.isRead ? 'bg-muted/30' : 'bg-white'
       }`}
     >
       <div className="flex-1 min-w-0">
@@ -99,10 +99,10 @@ function NotificationRow({ notification, onMarkAsRead }: NotificationRowProps) {
       </div>
       {!notification.isRead && (
         <Button
-          variant="secondary"
+          variant="outline"
           size="sm"
           onClick={() => onMarkAsRead(notification.id)}
-          className="shrink-0"
+          className="shrink-0 h-8"
         >
           Read
         </Button>
