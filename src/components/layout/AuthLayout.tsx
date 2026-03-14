@@ -55,7 +55,7 @@ export default function AuthLayout() {
             </p>
 
             {/* Features */}
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               {[
                 "Analytics",
                 "Recent Projects",
@@ -97,7 +97,7 @@ export default function AuthLayout() {
                   <span className="text-white/90">{feature}</span>
                 </motion.div>
               ))}
-            </div>
+            </div> */}
           </motion.div>
         </div>
       </div>
