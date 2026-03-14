@@ -237,7 +237,8 @@ export default function Login() {
         <div className="space-y-2">
           <div>
             <p className="font-medium">Super Admin:</p>
-            <p className="text-muted-foreground">superadmin@example.com / password</p>
+            <p className="text-muted-foreground">Email: superadmin@example.com</p>
+            <p className="text-muted-foreground">Password: password</p>
           </div>
           {/* <div>
             <p className="font-medium">Admin:</p>
