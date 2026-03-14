@@ -64,10 +64,18 @@ export default function AuthLayout() {
                 "Employee Management",
                 "Attendance",
                 "Communication",
+                "Manage Materials",
                 "Customer & Finance",
                 "Payroll Management",
                 "Resource Requests Report",
                 "Change Orders",
+                "Vehicle Maintenance",
+                "Documents & Approvals",
+                "Project Scheduling",
+                "Equipment Maintenance",
+                "Daily Safety Reports",
+                "Reviews & Feedback",
+            
            
               ].map((feature, index) => (
                 <motion.div
