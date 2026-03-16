@@ -16,7 +16,7 @@ export const employeeStats = [
     iconColor: 'text-orange-600',
   },
   {
-    title: 'On Leave',
+    title: 'Absent',
     icon: Calendar,
     iconBgColor: 'bg-green-100',
     iconColor: 'text-green-600',
@@ -25,7 +25,8 @@ export const employeeStats = [
 
 export const EMPLOYEE_STATUS_COLORS: Record<EmployeeStatus, { bg: string; text: string }> = {
   Active: { bg: 'bg-green-100', text: 'text-green-600' },
-  Leave: { bg: 'bg-orange-100', text: 'text-orange-600' },
+  // Leave: { bg: 'bg-orange-100', text: 'text-orange-600' },
+  inactive: { bg: 'bg-muted', text: 'text-muted-foreground' },
 }
 
 export const departmentOptions: SelectOption[] = [
@@ -77,7 +78,7 @@ export const mockEmployeesData: Employee[] = [
     fullName: 'Sarah Smith',
     email: 'sarah@mail.com',
     department: 'Sales',
-    status: 'Leave',
+    status: 'inactive',
     joiningDate: '15 January, 2026',
     role: 'Worker',
     workSchedule: '09:00 AM - 06:00 PM',
@@ -113,7 +114,7 @@ export const mockEmployeesData: Employee[] = [
     fullName: 'David Wilson',
     email: 'david@mail.com',
     department: 'Operation',
-    status: 'Leave',
+    status: 'inactive',
     joiningDate: '10 January, 2026',
     role: 'Worker',
     workSchedule: '08:00 AM - 05:00 PM',
@@ -149,7 +150,7 @@ export const mockEmployeesData: Employee[] = [
     fullName: 'Maria Garcia',
     email: 'maria@mail.com',
     department: 'Operation',
-    status: 'Leave',
+    status: 'inactive',
     joiningDate: '18 February, 2026',
     role: 'Worker',
     workSchedule: '09:00 AM - 06:00 PM',

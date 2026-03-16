@@ -181,7 +181,7 @@ export function AddEditEmployeeModal({
               onChange={setRole}
               placeholder="Select role"
             />
-            <div>
+            {/* <div>
               <h3 className="text-sm font-bold text-foreground mb-2">Password</h3>
               <div className="relative">
                 <FormInput
@@ -205,7 +205,7 @@ export function AddEditEmployeeModal({
                   Leave blank to keep current password
                 </p>
               )}
-            </div>
+            </div> */}
           </div>
           <div className="mt-3">
             <h4 className="text-sm font-medium mb-2 text-foreground">Working Schedule</h4>

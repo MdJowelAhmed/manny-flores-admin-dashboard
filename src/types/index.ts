@@ -679,7 +679,7 @@ export interface CustomerProject {
 }
 
 // ==================== Employee Management Types ====================
-export type EmployeeStatus = 'Active' | 'Leave'
+export type EmployeeStatus = 'Active' | 'inactive'
 
 export interface EmployeeProject {
   id: string
