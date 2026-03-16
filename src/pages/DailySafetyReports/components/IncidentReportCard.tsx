@@ -27,7 +27,7 @@ export function IncidentReportCard({ submission, onViewReport }: IncidentReportC
       <CardFooter className="p-4 pt-0 flex justify-end">
         <Button
           size="sm"
-          className="bg-primary hover:bg-primary/90 text-white"
+          className="bg-primary hover:bg-primary/90 text-white h-9"
           onClick={() => onViewReport(submission)}
         >
           View Report
