@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Pencil, SlidersHorizontal } from 'lucide-react'
 import { SearchInput } from '@/components/common/SearchInput'
@@ -184,8 +183,8 @@ export default function CompanyProjects() {
 
       {/* Project Status Section */}
       <div className=" border-0 ">
-        <CardHeader className="flex flex-row items-center justify-between pb-6">
-          <CardTitle className="text-xl font-bold text-accent">Project Status</CardTitle>
+        <div className="flex flex-row items-center justify-between pb-6">
+          <h2 className="text-xl font-bold text-accent">Project Status</h2>
           <div className="flex items-center gap-3">
             <SearchInput
               value={searchQuery}
@@ -220,7 +219,7 @@ export default function CompanyProjects() {
               Add Project
             </Button>
           </div>
-        </CardHeader>
+        </div>
 
         <div className="space-y-6">
           {filteredProjects.length === 0 ? (

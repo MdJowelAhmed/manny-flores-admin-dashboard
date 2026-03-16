@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, SlidersHorizontal } from 'lucide-react'
-import { CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/common/SearchInput'
 import {
@@ -134,8 +133,8 @@ export default function CustomerFinance() {
 
       {/* Project Status */}
       <div>
-        <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4">
-          <CardTitle className="text-lg font-bold text-accent">Project Status</CardTitle>
+        <div className="flex flex-row items-center justify-between gap-4 pb-4">
+          <h2 className="text-lg font-bold text-accent">Project Status</h2>
           <div className="flex items-center gap-2 flex-wrap">
             <SearchInput
               value={searchQuery}
@@ -166,7 +165,7 @@ export default function CustomerFinance() {
               Add Project
             </Button>
           </div>
-        </CardHeader>
+        </div>
 
         <div className="space-y-4">
           {filteredProjects.length === 0 ? (

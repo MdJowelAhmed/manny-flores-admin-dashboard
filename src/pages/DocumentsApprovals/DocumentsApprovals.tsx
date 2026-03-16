@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { FileText, Clock, Check, X } from 'lucide-react'
-import { CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/common/SearchInput'
 import { ViewDocumentDetailsModal } from './components/ViewDocumentDetailsModal'
@@ -117,16 +116,16 @@ export default function DocumentsApprovals() {
 
       {/* Project Status Section */}
       <div className="border-0">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4">
-          <CardTitle className="text-lg font-bold text-accent">Project Status</CardTitle>
+        <div className="flex flex-row items-center justify-between gap-4 pb-4">
+          <h2 className="text-lg font-bold text-accent">Project Status</h2>
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Search documents...."
-            className="w-[240px]"
+            className="w-[240px] bg-white"
             debounceMs={150}
           />
-        </CardHeader>
+        </div>
 
         <div className="space-y-6">
           {filteredDocuments.length === 0 ? (

@@ -133,11 +133,11 @@ export default function ResourceRequestsReport() {
           className="w-full"
         >
           <div className="  pb-4">
-            <TabsList className="h-[44px] bg-gray-100 p-1">
-              <TabsTrigger value="request" className="px-5 py-3 text-sm data-[state=active]:bg-secondary data-[state=active]:text-white">
+            <TabsList className="h-[40px] bg-gray-100 p-1">
+              <TabsTrigger value="request" className="px-5 py-2 text-sm data-[state=active]:bg-secondary data-[state=active]:text-white">
                 Request
               </TabsTrigger>
-              <TabsTrigger value="report" className="px-5 py-3 text-sm data-[state=active]:bg-secondary data-[state=active]:text-white">
+              <TabsTrigger value="report" className="px-5 py-2 text-sm data-[state=active]:bg-secondary data-[state=active]:text-white">
                 Report
               </TabsTrigger>
             </TabsList>

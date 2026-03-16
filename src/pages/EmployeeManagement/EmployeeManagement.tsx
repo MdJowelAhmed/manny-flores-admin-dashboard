@@ -52,7 +52,7 @@ export default function EmployeeManagement() {
   const stats = useMemo(() => {
     const total = employees.length
     const active = employees.filter((e) => e.status === 'Active').length
-    const onLeave = employees.filter((e) => e.status === 'Leave').length
+    const onLeave = employees.filter((e) => e.status === 'inactive').length
     return { total, active, onLeave }
   }, [employees])
 
