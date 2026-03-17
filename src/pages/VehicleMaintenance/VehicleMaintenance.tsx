@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import type { Vehicle } from '@/types'
 import { toast } from '@/utils/toast'
 
 export default function VehicleMaintenance() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get('search') ?? ''
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
@@ -142,8 +144,8 @@ export default function VehicleMaintenance() {
       setVehicles((prev) => prev.filter((v) => v.id !== vehicleToDelete.id))
       toast({
         variant: 'success',
-        title: 'Vehicle Deleted',
-        description: `${vehicleToDelete.vehicleName} has been removed.`,
+        title: t('vehicleMaintenance.vehicleDeleted'),
+        description: t('vehicleMaintenance.vehicleRemoved', { name: vehicleToDelete.vehicleName }),
       })
       setIsConfirmOpen(false)
       setVehicleToDelete(null)
@@ -153,7 +155,7 @@ export default function VehicleMaintenance() {
         setIsAddEditModalOpen(false)
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to delete vehicle.', variant: 'destructive' })
+      toast({ title: t('common.error'), description: t('vehicleMaintenance.failedToDelete'), variant: 'destructive' })
     } finally {
       setIsDeleting(false)
     }
@@ -168,18 +170,18 @@ export default function VehicleMaintenance() {
     >
       <div className="border-0">
         <div className="flex flex-row items-center justify-between pb-6">
-          <h2 className="text-xl font-bold text-accent">Track Vehicles</h2>
+          <h2 className="text-xl font-bold text-accent">{t('vehicleMaintenance.trackVehicles')}</h2>
           <div className="flex items-center gap-3">
             <SearchInput
               value={searchQuery}
               onChange={setSearch}
-              placeholder="Search vehicles..."
+              placeholder={t('vehicleMaintenance.searchVehicles')}
               className="w-[280px] bg-white"
               debounceMs={150}
             />
             <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-white">
               <Plus className="h-4 w-4 mr-2" />
-              Add Vehicles
+              {t('vehicleMaintenance.addVehicles')}
             </Button>
           </div>
         </div>
@@ -235,9 +237,10 @@ export default function VehicleMaintenance() {
           setVehicleToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Vehicle"
-        description={`Are you sure you want to delete "${vehicleToDelete?.vehicleName}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('vehicleMaintenance.deleteVehicle')}
+        description={t('vehicleMaintenance.deleteVehicleConfirm', { name: vehicleToDelete?.vehicleName ?? '' })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeleting}
       />

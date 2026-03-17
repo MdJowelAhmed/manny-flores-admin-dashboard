@@ -23,21 +23,16 @@ import ChangePassword from '@/pages/Settings/ChangePassword/ChangePassword'
 import TermsSettings from '@/pages/Settings/Terms/TermsSettings'
 import PrivacySettings from '@/pages/Settings/Privacy/PrivacySettings'
 import AboutUsSettings from '@/pages/Settings/AboutUs/AboutUsSettings'
-import BookingManagement from './pages/Booking/BookingManagement'
 import OrderList from './pages/Orders/OrderList'
 // import AddCar from './pages/carlist/AddCar'
 import ClientManagement from './pages/ClientManagement/ClientManagement'
-import AgencyManagement from './pages/agency-management/AgencyManagement'
-import Calender from './pages/calender/Calender'
 import TransactionsHistory from './pages/transictions-history/TransactionsHistory'
-import FAQ from './pages/FAQ/FAQ'
 import NotFound from './pages/NotFound/NotFound'
 import Customise from './pages/ShopManagement/Customise/Customise'
 import ShopCategory from './pages/ShopManagement/Category/ShopCategory'
 import ShopList from './pages/ShopManagement/Shop/ShopList'
 import ShopProducts from './pages/ShopManagement/Products/ShopProducts'
 import SubscriberList from './pages/Subscribers/SubscriberList'
-import AdManagement from './pages/AdManagement/AdManagement'
 import PushNotificationList from './pages/PushNotification/PushNotificationList'
 import ControllerList from './pages/Controllers/ControllerList'
 import CompanyProjects from './pages/CompanyProjects/CompanyProjects'
@@ -131,15 +126,7 @@ function App() {
             }
           />
 
-          {/* Ad Management - Super Admin, Marketing */}
-          <Route
-            path="ad-management"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.MARKETING]}>
-                <AdManagement />
-              </RoleBasedRoute>
-            }
-          />
+   
 
           {/* Push Notification - Super Admin, Admin, Marketing */}
           <Route
@@ -161,15 +148,7 @@ function App() {
             }
           />
 
-          {/* Agency Management - Super Admin only */}
-          <Route
-            path="agency-management"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
-                <AgencyManagement />
-              </RoleBasedRoute>
-            }
-          />
+ 
 
           {/* Recent Projects - Super Admin, Admin */}
           <Route
@@ -382,8 +361,7 @@ function App() {
           />
 
           {/* Super Admin only */}
-          <Route path="booking-management" element={<BookingManagement />} />
-          <Route path="calender" element={<Calender />} />
+     
           <Route path="clients" element={<ClientManagement />} />
           <Route path="products" element={<ProductList />} />
           <Route path="categories" element={<CategoryList />} />
@@ -467,7 +445,6 @@ function App() {
                 </RoleBasedRoute>
               }
             />
-            <Route path="faq" element={<FAQ />} />
           </Route>
         </Route>
 

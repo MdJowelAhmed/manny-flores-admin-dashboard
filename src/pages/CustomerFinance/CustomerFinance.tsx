@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 
 export default function CustomerFinance() {
+  const { t } = useTranslation()
   const [projects, setProjects] = useState<Project[]>(mockFinanceProjects)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -109,7 +111,7 @@ export default function CustomerFinance() {
           const Icon = stat.icon
           return (
             <motion.div
-              key={stat.title}
+              key={stat.titleKey}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -117,7 +119,7 @@ export default function CustomerFinance() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t(stat.titleKey)}</p>
                   <h3 className="text-xl font-bold text-foreground mt-1">
                     {formatCurrency(stat.value)}
                   </h3>
@@ -134,24 +136,24 @@ export default function CustomerFinance() {
       {/* Project Status */}
       <div>
         <div className="flex flex-row items-center justify-between gap-4 pb-4">
-          <h2 className="text-lg font-bold text-accent">Project Status</h2>
+          <h2 className="text-lg font-bold text-accent">{t('customerFinance.projectStatus')}</h2>
           <div className="flex items-center gap-2 flex-wrap">
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Search customer..."
+              placeholder={t('customerFinance.searchCustomer')}
               className="w-[280px] bg-white"
               debounceMs={150}
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[120px] bg-primary text-white hover:bg-primary/90 border-0">
                 <SlidersHorizontal className="h-4 w-4 mr-1" />
-                <SelectValue placeholder="Filter" />
+                <SelectValue placeholder={t('customerFinance.filter')} />
               </SelectTrigger>
               <SelectContent>
                 {projectStatusFilterOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -162,7 +164,7 @@ export default function CustomerFinance() {
               className="bg-primary hover:bg-primary/90 text-white"
             >
               <Plus className="h-4 w-4 mr-1" />
-              Add Project
+              {t('customerFinance.addProject')}
             </Button>
           </div>
         </div>
@@ -170,7 +172,7 @@ export default function CustomerFinance() {
         <div className="space-y-4">
           {filteredProjects.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-sm">
-              No projects found
+              {t('customerFinance.noProjectsFound')}
             </div>
           ) : (
             filteredProjects.map((p) => {
@@ -201,17 +203,17 @@ export default function CustomerFinance() {
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                       <div>
-                        <span className="text-xs text-muted-foreground block">Total Amount</span>
+                        <span className="text-xs text-muted-foreground block">{t('customerFinance.totalAmount')}</span>
                         <span className="text-sm font-bold">{formatCurrency(p.totalBudget)}</span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground block">Paid</span>
+                        <span className="text-xs text-muted-foreground block">{t('customerFinance.paid')}</span>
                         <span className="text-sm font-medium text-emerald-600">
                           {formatCurrency(p.amountSpent)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground block">Balance</span>
+                        <span className="text-xs text-muted-foreground block">{t('customerFinance.balance')}</span>
                         <span
                           className={cn(
                             'text-sm font-medium',
@@ -222,7 +224,7 @@ export default function CustomerFinance() {
                         </span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground block">Payment Method</span>
+                        <span className="text-xs text-muted-foreground block">{t('customerFinance.paymentMethod')}</span>
                         <span className="text-sm font-medium">{p.paymentMethod}</span>
                       </div>
                     </div>
@@ -234,7 +236,7 @@ export default function CustomerFinance() {
                         />
                       </div>
                       <span className="text-xs font-medium text-muted-foreground shrink-0">
-                        {paidPercent}% Paid
+                        {t('customerFinance.percentPaid', { percent: paidPercent })}
                       </span>
 
 
@@ -245,7 +247,7 @@ export default function CustomerFinance() {
                       onClick={(e) => handleEdit(p, e)}
                       className="bg-secondary-foreground text-accent hover:bg-secondary-foreground/90 px-8 lg:px-10"
                     >
-                      Edit
+                      {t('common.edit')}
                     </Button>
                     <Button
                       size="sm"
@@ -253,7 +255,7 @@ export default function CustomerFinance() {
                       onClick={() => handleViewDetails(p)}
                       className="bg-secondary-foreground text-accent hover:bg-secondary-foreground/90 "
                     >
-                      View details
+                      {t('customerFinance.viewDetails')}
                     </Button>
                   </div>
                     </div>

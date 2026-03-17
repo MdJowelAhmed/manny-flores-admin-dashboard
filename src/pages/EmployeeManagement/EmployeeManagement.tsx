@@ -16,8 +16,10 @@ import {
 } from './employeeManagementData'
 import type { Employee, EmployeeStatus } from '@/types'
 import { toast } from '@/utils/toast'
+import { useTranslation } from 'react-i18next'
 
 export default function EmployeeManagement() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get('search') ?? ''
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
@@ -134,8 +136,8 @@ export default function EmployeeManagement() {
     )
     toast({
       variant: 'success',
-      title: 'Status Updated',
-      description: `${employee.fullName} is now ${newStatus}.`,
+      title: t('employeeManagement.statusUpdated'),
+      description: t('employeeManagement.statusChangedTo', { name: employee.fullName, status: newStatus }),
     })
   }
 
@@ -152,8 +154,8 @@ export default function EmployeeManagement() {
       setEmployees((prev) => prev.filter((e) => e.id !== employeeToDelete.id))
       toast({
         variant: 'success',
-        title: 'Employee Deleted',
-        description: `${employeeToDelete.fullName} has been removed.`,
+        title: t('employeeManagement.employeeDeleted'),
+        description: t('employeeManagement.employeeRemoved', { name: employeeToDelete.fullName }),
       })
       setIsConfirmOpen(false)
       setEmployeeToDelete(null)
@@ -163,7 +165,7 @@ export default function EmployeeManagement() {
         setIsAddEditModalOpen(false)
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to delete employee.', variant: 'destructive' })
+      toast({ title: t('common.error'), description: t('employeeManagement.errorDeleteEmployee'), variant: 'destructive' })
     } finally {
       setIsDeleting(false)
     }
@@ -181,15 +183,15 @@ export default function EmployeeManagement() {
         {employeeStats.map((stat, index) => {
           const Icon = stat.icon
           const value =
-            stat.title === 'Total Employee'
+            stat.titleKey === 'employeeManagement.totalEmployee'
               ? stats.total
-              : stat.title === 'Active Now'
+              : stat.titleKey === 'employeeManagement.activeNow'
                 ? stats.active
                 : stats.onLeave
           return (
             <EmployeeSummaryCard
-              key={stat.title}
-              title={stat.title}
+              key={stat.titleKey}
+              title={t(stat.titleKey)}
               value={value}
               icon={Icon}
               iconBgColor={stat.iconBgColor}
@@ -203,18 +205,18 @@ export default function EmployeeManagement() {
       {/* Track Employee Section */}
       <div className="border-0">
         <div className="flex flex-row items-center justify-between pb-6">
-          <h2 className="text-xl font-bold text-accent">Track Employee</h2>
+          <h2 className="text-xl font-bold text-accent">{t('employeeManagement.trackEmployee')}</h2>
           <div className="flex items-center gap-3">
             <SearchInput
               value={searchQuery}
               onChange={setSearch}
-              placeholder="Search employee..."
+              placeholder={t('employeeManagement.searchEmployee')}
               className="w-[280px] bg-white"
               debounceMs={150}
             />
             <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-white">
               <Plus className="h-4 w-4 mr-2" />
-              Add Employee
+              {t('employeeManagement.addEmployee')}
             </Button>
           </div>
         </div>
@@ -271,9 +273,9 @@ export default function EmployeeManagement() {
           setEmployeeToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Employee"
-        description={`Are you sure you want to delete "${employeeToDelete?.fullName}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('employeeManagement.deleteEmployee')}
+        description={t('employeeManagement.deleteConfirmation', { name: employeeToDelete?.fullName })}
+        confirmText={t('common.delete')}
         variant="danger"
         isLoading={isDeleting}
       />

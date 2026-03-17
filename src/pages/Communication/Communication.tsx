@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Paperclip, Send, CheckCheck } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -33,6 +34,7 @@ function getTimeForList() {
 }
 
 export default function Communication() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<ConversationType>('customer')
   const [customerConversations, setCustomerConversations] = useState<Conversation[]>(
     () => JSON.parse(JSON.stringify(mockCustomerConversations))
@@ -104,7 +106,7 @@ export default function Communication() {
                   'data-[state=inactive]:text-muted-foreground'
                 )}
               >
-                Customer
+                {t('communication.customer')}
               </TabsTrigger>
               <TabsTrigger
                 value="employee"
@@ -114,7 +116,7 @@ export default function Communication() {
                   'data-[state=inactive]:text-muted-foreground'
                 )}
               >
-                Employee
+                {t('communication.employee')}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -124,6 +126,7 @@ export default function Communication() {
               conversations={customerConversations}
               selected={selectedConversation}
               onSelect={setSelectedConversation}
+              youLabel={t('communication.you')}
             />
           </TabsContent>
           <TabsContent value="employee" className="m-0 flex-1 overflow-y-auto">
@@ -131,6 +134,7 @@ export default function Communication() {
               conversations={employeeConversations}
               selected={selectedConversation}
               onSelect={setSelectedConversation}
+              youLabel={t('communication.you')}
             />
           </TabsContent>
         </Tabs>
@@ -141,16 +145,17 @@ export default function Communication() {
         {selectedConversation ? (
           <>
             <ChatHeader conversation={selectedConversation} />
-            <MessageList messages={selectedConversation.messages} />
+            <MessageList messages={selectedConversation.messages} noMessagesText={t('communication.noMessagesYet')} />
             <ChatInput
               value={messageInput}
               onChange={setMessageInput}
               onSend={handleSendMessage}
+              placeholder={t('communication.message')}
             />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            <p className="text-sm">Select a conversation to start chatting</p>
+            <p className="text-sm">{t('communication.selectConversation')}</p>
           </div>
         )}
       </div>
@@ -162,12 +167,14 @@ interface ConversationListProps {
   conversations: Conversation[]
   selected: Conversation | null
   onSelect: (c: Conversation) => void
+  youLabel: string
 }
 
 function ConversationList({
   conversations,
   selected,
   onSelect,
+  youLabel,
 }: ConversationListProps) {
   return (
     <div className="overflow-y-auto scrollbar-thin flex-1">
@@ -206,7 +213,7 @@ function ConversationList({
                   isSelected ? 'text-primary/80' : 'text-muted-foreground'
                 )}
               >
-                {conv.lastMessageIsFromYou ? 'You: ' : ''}
+                {conv.lastMessageIsFromYou ? `${youLabel}: ` : ''}
                 {conv.lastMessage}
               </p>
             </div>
@@ -239,12 +246,12 @@ function ChatHeader({ conversation }: { conversation: Conversation }) {
   )
 }
 
-function MessageList({ messages }: { messages: Message[] }) {
+function MessageList({ messages, noMessagesText }: { messages: Message[]; noMessagesText: string }) {
   return (
     <div className="flex-1 overflow-y-auto scrollbar-thin px-6 py-4 space-y-4">
       {messages.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">
-          No messages yet. Start the conversation!
+          {noMessagesText}
         </p>
       ) : (
         messages.map((msg) => (
@@ -303,9 +310,10 @@ interface ChatInputProps {
   value: string
   onChange: (v: string) => void
   onSend: () => void
+  placeholder?: string
 }
 
-function ChatInput({ value, onChange, onSend }: ChatInputProps) {
+function ChatInput({ value, onChange, onSend, placeholder = 'Message' }: ChatInputProps) {
   return (
     <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-100 bg-white">
       <Button
@@ -325,7 +333,7 @@ function ChatInput({ value, onChange, onSend }: ChatInputProps) {
             onSend()
           }
         }}
-        placeholder="Message"
+        placeholder={placeholder}
         className="flex-1 rounded-full border-gray-200 h-11"
       />
       <Button

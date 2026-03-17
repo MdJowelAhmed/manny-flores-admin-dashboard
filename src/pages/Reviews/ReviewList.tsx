@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { ReviewCard } from './components/ReviewCard'
@@ -8,6 +9,7 @@ import type { Review } from '@/types'
 import { toast } from '@/utils/toast'
 
 export default function ReviewList() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get('search') ?? ''
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
@@ -56,8 +58,8 @@ export default function ReviewList() {
     )
     toast({
       variant: 'success',
-      title: 'Review Approved',
-      description: `Review from ${review.customerName} has been approved.`,
+      title: t('reviews.reviewApproved'),
+      description: t('reviews.reviewApprovedDesc', { name: review.customerName }),
     })
   }
 
@@ -74,15 +76,15 @@ export default function ReviewList() {
       setReviews((prev) => prev.filter((r) => r.id !== reviewToDelete.id))
       toast({
         variant: 'success',
-        title: 'Review Rejected',
-        description: `Review from ${reviewToDelete.customerName} has been rejected and removed.`,
+        title: t('reviews.reviewRejected'),
+        description: t('reviews.reviewRejectedDesc', { name: reviewToDelete.customerName }),
       })
       setIsConfirmOpen(false)
       setReviewToDelete(null)
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to delete review.',
+        title: t('common.error'),
+        description: t('reviews.failedToDelete'),
         variant: 'destructive',
       })
     } finally {
@@ -111,7 +113,7 @@ export default function ReviewList() {
       <div className="space-y-6">
         {paginatedReviews.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-100 p-12 text-center text-muted-foreground">
-            No reviews found
+            {t('reviews.noReviewsFound')}
           </div>
         ) : (
           paginatedReviews.map((review, index) => (
@@ -150,9 +152,9 @@ export default function ReviewList() {
           setReviewToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Reject Review"
-        description={`Are you sure you want to reject and remove the review from "${reviewToDelete?.customerName}"? This action cannot be undone.`}
-        confirmText="Reject"
+        title={t('reviews.rejectReview')}
+        description={t('reviews.rejectReviewConfirm', { name: reviewToDelete?.customerName ?? '' })}
+        confirmText={t('reviews.reject')}
         variant="danger"
         isLoading={isDeleting}
       />

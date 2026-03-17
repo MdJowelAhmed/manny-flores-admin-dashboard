@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Info, Lock, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -23,27 +24,28 @@ export function AttendanceTable({
   onDelete,
   onStatusChange,
 }: AttendanceTableProps) {
+  const { t } = useTranslation()
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[800px]">
         <thead>
           <tr className="bg-secondary-foreground text-accent">
-            <th className="px-4 py-4 text-left text-sm font-semibold">Date</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Employee</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Project</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Check In</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Check Out</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Total Hours</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Active</th>
-            <th className="px-4 py-4 text-right text-sm font-semibold">Action</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.date')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.employee')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('companyProjects.project')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.checkIn')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.checkOut')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.totalHours')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.status')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.active')}</th>
+            <th className="px-4 py-4 text-right text-sm font-semibold">{t('common.actions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {records.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground text-sm">
-                No attendance records found
+                {t('attendance.noRecordsFound')}
               </td>
             </tr>
           ) : (

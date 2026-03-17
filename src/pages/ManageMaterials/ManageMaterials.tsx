@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import { mockMaterialsData, type Material } from './manageMaterialsData'
 import { toast } from '@/utils/toast'
 
 export default function ManageMaterials() {
+  const { t } = useTranslation()
   const [materials, setMaterials] = useState<Material[]>(mockMaterialsData)
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
@@ -92,8 +94,8 @@ export default function ManageMaterials() {
       setMaterials((prev) => prev.filter((m) => m.id !== materialToDelete.id))
       toast({
         variant: 'success',
-        title: 'Material Deleted',
-        description: `${materialToDelete.materialName} has been removed.`,
+        title: t('manageMaterials.materialDeleted'),
+        description: t('manageMaterials.materialRemoved', { name: materialToDelete.materialName }),
       })
       setIsConfirmOpen(false)
       setMaterialToDelete(null)
@@ -101,7 +103,7 @@ export default function ManageMaterials() {
         setSelectedMaterial(null)
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to delete material.', variant: 'destructive' })
+      toast({ title: t('common.error'), description: t('manageMaterials.failedToDelete'), variant: 'destructive' })
     } finally {
       setIsDeleting(false)
     }
@@ -115,13 +117,13 @@ export default function ManageMaterials() {
       className="space-y-6"
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-xl font-bold text-foreground">Manage Materials</h1>
+        <h1 className="text-xl font-bold text-foreground">{t('manageMaterials.title')}</h1>
         <Button
           onClick={handleAdd}
           className="bg-primary hover:bg-primary/90 text-white shrink-0"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Material
+          {t('manageMaterials.addMaterial')}
         </Button>
       </div>
 
@@ -162,9 +164,10 @@ export default function ManageMaterials() {
           setMaterialToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Material"
-        description={`Are you sure you want to delete "${materialToDelete?.materialName}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('manageMaterials.deleteMaterial')}
+        description={t('manageMaterials.deleteMaterialConfirm', { name: materialToDelete?.materialName ?? '' })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeleting}
       />

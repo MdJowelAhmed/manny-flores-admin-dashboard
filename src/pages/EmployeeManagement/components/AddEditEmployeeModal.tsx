@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { ModalWrapper } from '@/components/common'
 import { FormInput, FormSelect, DatePicker } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
-import { Eye, EyeOff } from 'lucide-react'
 import type { Employee, EmployeeStatus } from '@/types'
 import { departmentOptions, roleOptions } from '../employeeManagementData'
 import { toast } from '@/utils/toast'
@@ -55,7 +54,6 @@ export function AddEditEmployeeModal({
   const [scheduleStart, setScheduleStart] = useState('09:00')
   const [scheduleEnd, setScheduleEnd] = useState('18:00')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     if (open) {

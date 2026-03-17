@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Info, SlidersHorizontal, FileDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 
 export default function ChangeOrders() {
+  const { t } = useTranslation()
   const [orders, setOrders] = useState<ChangeOrder[]>(mockChangeOrders)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -93,12 +95,9 @@ export default function ChangeOrders() {
           <Info className="h-5 w-5 text-amber-600" />
        
         <div>
-          <h3 className="font-semibold text-foreground">Change Order Process</h3>
+          <h3 className="font-semibold text-foreground">{t('changeOrders.changeOrderProcess')}</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Change orders document any modifications to the original project
-            scope, including additional work, material upgrades, or design
-            changes. Customers must review and approve all change orders before
-            work proceeds.
+            {t('changeOrders.changeOrderProcessDesc')}
           </p>
         </div>
       </div>
@@ -109,7 +108,7 @@ export default function ChangeOrders() {
           const Icon = stat.icon
           return (
             <motion.div
-              key={stat.title}
+              key={stat.titleKey}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -118,10 +117,10 @@ export default function ChangeOrders() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
+                    {t(stat.titleKey)}
                   </p>
                   <h3 className="text-xl font-bold text-foreground mt-1">
-                    {stat.title.includes('Revenue')
+                    {stat.titleKey === 'changeOrders.totalAdditionalRevenue'
                       ? formatCurrency(stat.value)
                       : stat.value}
                   </h3>
@@ -138,24 +137,24 @@ export default function ChangeOrders() {
       {/* All Change Orders */}
       <div className="rounded-xl  overflow-hidden shadow-sm ">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6  0">
-          <h2 className="text-base font-bold text-accent">All Change Orders</h2>
+          <h2 className="text-base font-bold text-accent">{t('changeOrders.allChangeOrders')}</h2>
           <div className="flex items-center gap-2">
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Search documents..."
+              placeholder={t('changeOrders.searchDocuments')}
               className="w-[280px] bg-white"
               debounceMs={150}
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[120px] h-[44px] bg-primary text-white hover:bg-primary/90 border-0">
                 <SlidersHorizontal className="h-4 w-4 mr-1 shrink-0" />
-                <SelectValue placeholder="Filter" />
+                <SelectValue placeholder={t('common.filter')} />
               </SelectTrigger>
               <SelectContent>
                 {statusFilterOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -166,7 +165,7 @@ export default function ChangeOrders() {
         <div className=" space-y-4">
           {filteredOrders.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-sm">
-              No change orders found
+              {t('changeOrders.noOrdersFound')}
             </div>
           ) : (
             filteredOrders.map((o, index) => (
@@ -201,7 +200,7 @@ export default function ChangeOrders() {
                   <div className="flex flex-wrap items-start justify-between mr-16 gap-4 my-3 mt-3">
                     <div>
                       <span className="text-sm text-accent block">
-                        Original Cost
+                        {t('changeOrders.originalCost')}
                       </span>
                       <span className="text-base font-bold mt-1">
                         {formatCurrency(o.originalCost)}
@@ -209,7 +208,7 @@ export default function ChangeOrders() {
                     </div>
                     <div>
                       <span className="text-sm text-accent block">
-                        Additional Cost
+                        {t('changeOrders.additionalCost')}
                       </span>
                       <span className="text-base font-bold text-amber-600 mt-1">
                         +{formatCurrency(o.additionalCost)}
@@ -217,7 +216,7 @@ export default function ChangeOrders() {
                     </div>
                     <div>
                       <span className="text-sm text-accent block">
-                        New Total
+                        {t('changeOrders.newTotal')}
                       </span>
                       <span className="text-base font-bold text-emerald-600 mt-1">
                         {formatCurrency(o.newTotal)}
@@ -225,7 +224,7 @@ export default function ChangeOrders() {
                     </div>
                     <div>
                       <span className="text-sm text-accent block">
-                        Request Date
+                        {t('changeOrders.requestDate')}
                       </span>
                       <span className="text-base font-bold mt-1">{o.requestDate}</span>
                     </div>
@@ -241,7 +240,7 @@ export default function ChangeOrders() {
                       className="border-red-200 text-red-600 hover:bg-red-50"
                     >
                       <FileDown className="h-4 w-4 mr-1" />
-                      Download PDF
+                      {t('changeOrders.downloadPdf')}
                     </Button>
                     <Button
                       size="sm"
@@ -249,7 +248,7 @@ export default function ChangeOrders() {
                       onClick={() => handleViewDetails(o)}
                       className="border-gray-200 text-slate-600 hover:bg-gray-100"
                     >
-                      View details
+                      {t('changeOrders.viewDetails')}
                     </Button>
                   </div>
                 </div>

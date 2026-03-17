@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 
 import { Pagination } from '@/components/common/Pagination'
@@ -16,6 +17,7 @@ import { toast } from '@/utils/toast'
 import { cn } from '@/utils/cn'
 
 export default function Attendance() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
@@ -127,13 +129,15 @@ export default function Attendance() {
       )
       toast({
         variant: 'success',
-        title: 'Status Updated',
-        description: `Record marked as ${pendingStatusChange.isActive ? 'Active' : 'Inactive'}.`,
+        title: t('attendance.statusUpdated'),
+        description: t('attendance.recordMarkedAs', {
+          status: pendingStatusChange.isActive ? t('attendance.active') : t('attendance.inactive'),
+        }),
       })
       setIsStatusConfirmOpen(false)
       setPendingStatusChange(null)
     } catch {
-      toast({ title: 'Error', description: 'Failed to update status.', variant: 'destructive' })
+      toast({ title: t('common.error'), description: t('attendance.failedToUpdateStatus'), variant: 'destructive' })
     } finally {
       setIsUpdatingStatus(false)
     }
@@ -152,14 +156,14 @@ export default function Attendance() {
       setRecords((prev) => prev.filter((r) => r.id !== recordToDelete.id))
       toast({
         variant: 'success',
-        title: 'Record Deleted',
-        description: 'Attendance record has been removed.',
+        title: t('attendance.recordDeleted'),
+        description: t('attendance.recordRemoved'),
       })
       setIsConfirmOpen(false)
       setRecordToDelete(null)
       setSelectedRecord(null)
     } catch {
-      toast({ title: 'Error', description: 'Failed to delete.', variant: 'destructive' })
+      toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' })
     } finally {
       setIsDeleting(false)
     }
@@ -178,7 +182,7 @@ export default function Attendance() {
           const Icon = stat.icon
           return (
             <motion.div
-              key={stat.title}
+              key={stat.titleKey}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -186,7 +190,7 @@ export default function Attendance() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t(stat.titleKey)}</p>
                   <h3 className="text-xl font-bold text-foreground mt-1">{stat.value}</h3>
                 </div>
                 <div className={cn('p-2.5 rounded-lg', stat.iconBg)}>
@@ -250,9 +254,10 @@ export default function Attendance() {
           setRecordToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Attendance"
-        description="Are you sure you want to delete this attendance record? This action cannot be undone."
-        confirmText="Delete"
+        title={t('attendance.deleteAttendance')}
+        description={t('attendance.deleteAttendanceConfirm')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeleting}
       />
@@ -264,13 +269,16 @@ export default function Attendance() {
           setPendingStatusChange(null)
         }}
         onConfirm={handleConfirmStatusChange}
-        title="Change Status"
+        title={t('attendance.changeStatus')}
         description={
           pendingStatusChange
-            ? `Are you sure you want to mark this record as ${pendingStatusChange.isActive ? 'Active' : 'Inactive'}?`
+            ? t('attendance.changeStatusConfirm', {
+                status: pendingStatusChange.isActive ? t('attendance.active') : t('attendance.inactive'),
+              })
             : ''
         }
-        confirmText="Update"
+        confirmText={t('attendance.update')}
+        cancelText={t('common.cancel')}
         variant="info"
         isLoading={isUpdatingStatus}
       />

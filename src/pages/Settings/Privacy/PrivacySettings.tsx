@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Shield, Save, Eye } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -71,21 +72,21 @@ const defaultPrivacy = `<h1>Privacy Policy</h1>
 <p><em>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:privacy@example.com">privacy@example.com</a></em></p>`
 
 export default function PrivacySettings() {
+  const { t } = useTranslation()
   const [privacy, setPrivacy] = useState(defaultPrivacy)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState('preview')
 
   const handleSave = async () => {
     setIsSubmitting(true)
-    
-    // Simulate API call
+
     await new Promise((resolve) => setTimeout(resolve, 1500))
-    
+
     toast({
-      title: 'Privacy Policy Updated',
-      description: 'Privacy Policy has been updated successfully.',
+      title: t('settings.privacyPage.updated'),
+      description: t('settings.privacyPage.updatedDesc'),
     })
-    
+
     setIsSubmitting(false)
   }
 
@@ -105,17 +106,14 @@ export default function PrivacySettings() {
                 <Shield className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>Privacy Policy</CardTitle>
-                <CardDescription>
-                  Manage your platform's Privacy Policy
-                </CardDescription>
+                <CardTitle>{t('settings.privacyPage.title')}</CardTitle>
+                <CardDescription>{t('settings.privacyPage.description')}</CardDescription>
               </div>
             </div>
             <div className="flex gap-2">
-             
               <Button onClick={handleSave} isLoading={isSubmitting} className="bg-primary text-white hover:bg-primary/80">
                 <Save className="h-4 w-4 mr-2" />
-                Save Changes
+                {t('settings.privacyPage.saveChanges')}
               </Button>
             </div>
           </div>
@@ -125,11 +123,11 @@ export default function PrivacySettings() {
             <TabsList className="mb-4">
               <TabsTrigger value="edit" className="gap-2">
                 <Shield className="h-4 w-4" />
-                Edit
+                {t('settings.privacyPage.edit')}
               </TabsTrigger>
               <TabsTrigger value="preview" className="gap-2">
                 <Eye className="h-4 w-4" />
-                Preview
+                {t('settings.privacyPage.preview')}
               </TabsTrigger>
             </TabsList>
 
@@ -137,7 +135,7 @@ export default function PrivacySettings() {
               <TiptapEditor
                 content={privacy}
                 onChange={setPrivacy}
-                placeholder="Write your privacy policy here..."
+                placeholder={t('settings.privacyPage.placeholder')}
                 className="min-h-[500px]"
               />
             </TabsContent>

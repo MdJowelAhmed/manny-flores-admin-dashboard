@@ -34,9 +34,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { toggleSidebar } from '@/redux/slices/uiSlice'
 import { cn } from '@/utils/cn'
+import { useTranslation } from 'react-i18next'
 
 interface NavItem {
   title: string
+  titleKey: string
   href: string
   icon: React.ElementType
   feature?: FeatureKey
@@ -46,238 +48,168 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     title: 'Dashboard',
+    titleKey: 'sidebar.dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
     feature: 'dashboard',
   },
-  // {
-  //   title: 'Orders',
-  //   href: '/orders',
-  //   icon: ShoppingBag,
-  //   feature: 'orders',
-  // },
-  // {
-  //   title: 'Shop Management',
-  //   href: '/shop-management/customise',
-  //   icon: Store,
-  //   feature: 'shop-management',
-  //   children: [
-  //     {
-  //       title: 'Customise',
-  //       href: '/shop-management/customise',
-  //       icon: Coffee,
-  //     },
-  //     {
-  //       title: 'Category',
-  //       href: '/shop-management/category',
-  //       icon: Layers,
-  //     },
-  //     {
-  //       title: 'Shop',
-  //       href: '/shop-management/shop',
-  //       icon: Store,
-  //       feature: 'shop-management-shop',
-  //     },
-  //     {
-  //       title: 'Products',
-  //       href: '/shop-management/products',
-  //       icon: Package,
-  //     },
-  //   ],
-  // },
-  // {
-  //   title: 'Booking Management',
-  //   href: '/booking-management',
-  //   icon: ListOrdered,
-  // },
-
-
-  // {
-  //   title: 'Agency Management',
-  //   href: '/agency-management',
-  //   icon: Building,
-  // },
-  // {
-  //   title: 'Calendar',
-  //   href: '/calender',
-  //   icon: Calendar,
-  // },
   {
     title: 'Recent Projects',
+    titleKey: 'sidebar.recentProjects',
     href: '/recent-projects',
     icon: FolderKanban,
     feature: 'recent-projects',
   },
   {
     title: 'Company & Projects',
+    titleKey: 'sidebar.companyProjects',
     href: '/company-projects',
     icon: Building2,
     feature: 'company-projects',
   },
   {
     title: 'Customer Management',
+    titleKey: 'sidebar.customerManagement',
     href: '/customer-management',
     icon: UserCircle,
     feature: 'customer-management',
   },
   {
     title: 'Employee Management',
+    titleKey: 'sidebar.employeeManagement',
     href: '/employee-management',
     icon: UserCog,
     feature: 'employee-management',
   },
   {
     title: 'Attendance',
+    titleKey: 'sidebar.attendance',
     href: '/attendance',
     icon: ClipboardCheck,
     feature: 'attendance',
   },
   {
     title: 'Communication',
+    titleKey: 'sidebar.communication',
     href: '/communication',
     icon: MessageCircle,
     feature: 'communication',
   },
   {
     title: 'Customer & Finance',
+    titleKey: 'sidebar.customerFinance',
     href: '/customer-finance',
     icon: Wallet,
     feature: 'customer-finance',
   },
   {
     title: 'Manage Materials',
+    titleKey: 'sidebar.manageMaterials',
     href: '/manage-materials',
     icon: Package2,
     feature: 'manage-materials',
   },
   {
     title: 'Project Scheduling',
+    titleKey: 'sidebar.projectScheduling',
     href: '/project-scheduling',
     icon: CalendarDays,
     feature: 'project-scheduling',
   },
   {
     title: 'Documents & Approvals',
+    titleKey: 'sidebar.documentsApprovals',
     href: '/documents-approvals',
     icon: FileCheck,
     feature: 'documents-approvals',
   },
   {
     title: 'Payroll management',
+    titleKey: 'sidebar.payrollManagement',
     href: '/payroll-management',
     icon: DollarSign,
     feature: 'payroll-management',
   },
   {
     title: 'Resource Requests & Report',
+    titleKey: 'sidebar.resourceRequestsReport',
     href: '/resource-requests-report',
     icon: FileBarChart,
     feature: 'resource-requests-report',
   },
   {
     title: 'Change Orders',
+    titleKey: 'sidebar.changeOrders',
     href: '/change-orders',
     icon: ClipboardList,
     feature: 'change-orders',
   },
   {
     title: 'Vehicle Maintenance',
+    titleKey: 'sidebar.vehicleMaintenance',
     href: '/vehicle-maintenance',
     icon: Truck,
     feature: 'vehicle-maintenance',
   },
   {
     title: 'Equipment Maintenance',
+    titleKey: 'sidebar.equipmentMaintenance',
     href: '/equipment-maintenance',
     icon: Wrench,
     feature: 'equipment-maintenance',
   },
   {
     title: 'Review',
+    titleKey: 'sidebar.review',
     href: '/reviews',
     icon: Star,
     feature: 'reviews',
   },
   {
     title: 'Daily Safety Reports',
+    titleKey: 'sidebar.dailySafetyReports',
     href: '/daily-safety-reports',
     icon: ShieldCheck,
     feature: 'daily-safety-reports',
   },
-  // {
-  //   title: 'Revenue',
-  //   href: '/transactions-history',
-  //   icon: CreditCard,
-  //   feature: 'revenue',
-  // },
-  // {
-  //   title: 'User Management',
-  //   href: '/users',
-  //   icon: Users,
-  //   feature: 'user-management',
-  // },
-  // {
-  //   title: 'Subscribers',
-  //   href: '/subscribers',
-  //   icon: Mail,
-  //   feature: 'subscribers',
-  // },
-  // {
-  //   title: 'Ad Management',
-  //   href: '/ad-management',
-  //   icon: ImageIcon,
-  //   feature: 'ad-management',
-  // },
-  // {
-  //   title: 'Push Notification',
-  //   href: '/push-notification',
-  //   icon: Bell,
-  //   feature: 'push-notification',
-  // },
-  // {
-  //   title: 'Controllers',
-  //   href: '/controllers',
-  //   icon: ShieldCheck,
-  //   feature: 'controllers',
-  // },
 ]
 
 const settingsItems: NavItem[] = [
   {
     title: 'Profile',
+    titleKey: 'sidebar.profile',
     href: '/settings/profile',
     icon: User,
     feature: 'profile',
   },
   {
     title: 'Password',
+    titleKey: 'sidebar.password',
     href: '/settings/password',
     icon: Lock,
     feature: 'profile',
   },
   {
     title: 'Terms',
+    titleKey: 'sidebar.terms',
     href: '/settings/terms',
     icon: FileText,
     feature: 'profile',
   },
   {
     title: 'Privacy',
+    titleKey: 'sidebar.privacy',
     href: '/settings/privacy',
     icon: Shield,
     feature: 'profile',
   },
   {
     title: 'About Us',
+    titleKey: 'sidebar.aboutUs',
     href: '/settings/about-us',
     icon: Info,
     feature: 'profile',
   },
-  // {
-  //   title: 'FAQ',
-  //   href: '/settings/faq',
-  //   icon: HelpCircle,
-  // },
 ]
 
 function filterNavByRole(items: NavItem[], userRole: UserRole): NavItem[] {
@@ -307,6 +239,7 @@ export function Sidebar() {
   const { sidebarCollapsed } = useAppSelector((state) => state.ui)
   const { user } = useAppSelector((state) => state.auth)
   const location = useLocation()
+  const { t } = useTranslation()
 
   const userRole = (user?.role as UserRole) ?? UserRole.SUPER_ADMIN
   const filteredNavItems = filterNavByRole(navItems, userRole)
@@ -341,25 +274,9 @@ export function Sidebar() {
             <div className="">
               <div className="text-primary text-white font-bold text-lg flex items-center justify-center w-72  mx-auto">
                 <img src="/assets/image3.svg" alt="manny Flores" className="" />
-                {/* <span className="text-primary font-bold text-2xl">LOGO</span> */}
               </div>
             </div>
-            {/* {!sidebarCollapsed && (
-              <span className="font-display font-bold text-xl text-accent">Dashboard</span>
-            )} */}
           </div>
-          {/* <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => dispatch(toggleSidebar())}
-            className="hidden lg:flex"
-          >
-            {sidebarCollapsed ? (
-              <ChevronRight className="h-4 w-4 text-accent" />
-            ) : (
-              <ChevronLeft className="h-4 w-4 text-accent" />
-            )}
-          </Button> */}
         </div>
 
         {/* Navigation */}
@@ -368,7 +285,7 @@ export function Sidebar() {
           <div className="space-y-1">
             {!sidebarCollapsed && (
               <p className="px-3 py-2 text-xs font-semibold text-accent-foreground uppercase tracking-wider">
-                Main Menu
+                {t('sidebar.mainMenu')}
               </p>
             )}
             {filteredNavItems.map((item) => (
@@ -386,7 +303,7 @@ export function Sidebar() {
           <div className="space-y-1">
             {!sidebarCollapsed && (
               <p className="px-3 py-2 text-xs font-semibold text-accent-foreground uppercase tracking-wider">
-                Settings
+                {t('sidebar.settings')}
               </p>
             )}
             {sidebarCollapsed ? (
@@ -412,7 +329,7 @@ export function Sidebar() {
                     />
                   </NavLink>
                 </TooltipTrigger>
-                <TooltipContent side="right">Settings</TooltipContent>
+                <TooltipContent side="right">{t('sidebar.settings')}</TooltipContent>
               </Tooltip>
             ) : (
               filteredSettingsItems.map((item) => (
@@ -430,7 +347,7 @@ export function Sidebar() {
         <div className="p-4 border-t">
           {!sidebarCollapsed && (
             <p className="text-xs text-muted-foreground text-center">
-              © 2026 Manny Flores v1.0
+              {t('sidebar.footer')}
             </p>
           )}
         </div>
@@ -447,11 +364,14 @@ interface SidebarNavItemProps {
 function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
   const Icon = item.icon
   const location = useLocation()
+  const { t } = useTranslation()
   const hasChildren = item.children && item.children.length > 0
   const isParentActive = hasChildren
     ? item.children!.some((c) => location.pathname === c.href || location.pathname.startsWith(c.href + '/'))
     : false
   const [isExpanded, setIsExpanded] = React.useState(isParentActive)
+
+  const translatedTitle = t(item.titleKey)
 
   React.useEffect(() => {
     if (isParentActive) setIsExpanded(true)
@@ -470,7 +390,7 @@ function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
           )}
         >
           <Icon className="h-5 w-5 flex-shrink-0 text-current" />
-          <span className="font-medium flex-1 text-left">{item.title}</span>
+          <span className="font-medium flex-1 text-left">{translatedTitle}</span>
           <ChevronDown
             className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')}
           />
@@ -492,7 +412,7 @@ function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
                   }
                 >
                   <ChildIcon className="h-4 w-4 flex-shrink-0 text-current" />
-                  <span className="text-sm font-medium">{child.title}</span>
+                  <span className="text-sm font-medium">{t(child.titleKey)}</span>
                 </NavLink>
               )
             })}
@@ -515,7 +435,7 @@ function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
       }
     >
       <Icon className="h-5 w-5 flex-shrink-0 text-current" />
-      {!collapsed && <span className="font-medium">{item.title}</span>}
+      {!collapsed && <span className="font-medium">{translatedTitle}</span>}
     </NavLink>
   )
 
@@ -523,14 +443,10 @@ function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-        <TooltipContent side="right">{item.title}</TooltipContent>
+        <TooltipContent side="right">{translatedTitle}</TooltipContent>
       </Tooltip>
     )
   }
 
   return linkContent
 }
-
-
-
-

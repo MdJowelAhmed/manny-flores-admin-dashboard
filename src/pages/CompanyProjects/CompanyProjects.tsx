@@ -19,8 +19,10 @@ import type { Project, ProjectStatus } from '@/types'
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { STATUS_COLORS } from '@/utils/constants'
+import { useTranslation } from 'react-i18next'
 
 export default function CompanyProjects() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const searchQuery = searchParams.get('search') ?? ''
@@ -62,7 +64,8 @@ export default function CompanyProjects() {
     const total = projects.length
     const active = projects.filter((p) => p.status === 'Active').length
     const pending = projects.filter((p) => p.status === 'Pending').length
-    return { total, active, pending }
+    const completed = projects.filter((p) => p.status === 'Completed').length
+    return { total, active, pending, completed }
   }, [projects])
 
   const filteredProjects = useMemo(() => {
@@ -154,14 +157,16 @@ export default function CompanyProjects() {
         {projectStats.map((stat, index) => {
           const Icon = stat.icon
           const value =
-            stat.title === 'Total Project'
+            stat.titleKey === 'companyProjects.totalProject'
               ? stats.total
-              : stat.title === 'Active Project'
+              : stat.titleKey === 'companyProjects.activeProject'
                 ? stats.active
-                : stats.pending
+                : stat.titleKey === 'companyProjects.pendingProject'
+                  ? stats.pending
+                  : stats.completed
           return (
             <motion.div
-              key={stat.title}
+              key={stat.titleKey}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -169,7 +174,7 @@ export default function CompanyProjects() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-base font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="text-base font-medium text-muted-foreground">{t(stat.titleKey)}</p>
                   <h3 className="text-3xl font-bold text-foreground mt-1">{value}</h3>
                 </div>
                 <div className={cn('p-3 rounded-lg', stat.iconBgColor)}>
@@ -184,12 +189,12 @@ export default function CompanyProjects() {
       {/* Project Status Section */}
       <div className=" border-0 ">
         <div className="flex flex-row items-center justify-between pb-6">
-          <h2 className="text-xl font-bold text-accent">Project Status</h2>
+          <h2 className="text-xl font-bold text-accent">{t('companyProjects.projectStatus')}</h2>
           <div className="flex items-center gap-3">
             <SearchInput
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search project...."
+              placeholder={t('companyProjects.searchProject')}
               className="w-[280px] bg-white"
               debounceMs={150}
             />
@@ -198,13 +203,12 @@ export default function CompanyProjects() {
               <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-full bg-primary text-white hover:bg-primary/90">
                   <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  {/* <SlidersHorizontal /> */}
-                  <SelectValue placeholder="Filter" />
+                  <SelectValue placeholder={t('companyProjects.filter')} />
                 </SelectTrigger>
                 <SelectContent>
                   {projectStatusFilterOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.labelKey)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -216,14 +220,14 @@ export default function CompanyProjects() {
               className="bg-primary hover:bg-primary/90 text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Project
+              {t('companyProjects.addProject')}
             </Button>
           </div>
         </div>
 
         <div className="space-y-6">
           {filteredProjects.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">No projects found</div>
+            <div className="py-12 text-center text-muted-foreground">{t('companyProjects.noProjectsFound')}</div>
           ) : (
             paginatedProjects.map((project) => {
               const statusColors = STATUS_COLORS[project.status] ?? { bg: 'bg-gray-100', text: 'text-gray-800' }
@@ -239,13 +243,13 @@ export default function CompanyProjects() {
                     <p className="text-sm text-muted-foreground mt-0.5">{project.category}</p>
                     <div className="flex flex-wrap gap-4 mt-5">
                       <div className="flex flex-col gap-2">
-                        <span className="text-sm text-muted-foreground block">Budget</span>
+                        <span className="text-sm text-muted-foreground block">{t('companyProjects.budget')}</span>
                         <span className=" font-bold text-accent">
                           {formatCurrency(project.totalBudget)}
                         </span>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <span className="text-sm text-muted-foreground block">Timeline</span>
+                        <span className="text-sm text-muted-foreground block">{t('companyProjects.timeline')}</span>
                         <span className=" font-bold text-accent ">{project.duration}</span>
                       </div>
                     </div>
@@ -268,14 +272,14 @@ export default function CompanyProjects() {
                         className="bg-[#FF383C1A] border   text-accent"
                       >
                         <Pencil className="h-4 w-4 mr-1" />
-                        Edit
+                        {t('common.edit')}
                       </Button>
                       <Button
                         type="button"
                         onClick={() => handleViewDetails(project)}
                         className="text-sm  bg-[#FF383C1A] border text-accent"
                       >
-                        View details
+                        {t('companyProjects.viewDetails')}
                       </Button>
                     </div>
                   </div>

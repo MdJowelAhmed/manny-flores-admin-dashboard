@@ -18,6 +18,7 @@ import {
 } from 'recharts'
 import { motion } from 'framer-motion'
 import { years } from './dashboardData'
+import { useTranslation } from 'react-i18next'
 
 interface ChartDataPoint {
     month: string
@@ -64,8 +65,8 @@ const renderLegend = (props: any) => {
     const { payload } = props;
     return (
         <div className="flex items-center justify-center gap-6 mt-4">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            payload.map((entry: any, index: number) => (
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {payload.map((entry: any, index: number) => (
                 <div key={`item-${index}`} className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }}></div>
                     <span className="text-sm text-gray-500 font-medium">{entry.value}</span>
@@ -76,6 +77,8 @@ const renderLegend = (props: any) => {
 };
 
 export function RevenueChart({ chartData, selectedYear, onYearChange }: RevenueChartProps) {
+    const { t } = useTranslation()
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -86,10 +89,10 @@ export function RevenueChart({ chartData, selectedYear, onYearChange }: RevenueC
             <Card className="h-full border-none shadow-sm  ">
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg font-semibold text-gray-800">Revenue & Expenses</CardTitle>
+                        <CardTitle className="text-lg font-semibold text-gray-800">{t('dashboard.revenueExpenses')}</CardTitle>
                         <Select value={selectedYear} onValueChange={onYearChange} >
                             <SelectTrigger className="w-[100px]  bg-primary text-white  border border-gray-200  focus:ring-0 focus:ring-offset-0">
-                                <SelectValue placeholder="Year" />
+                                <SelectValue placeholder={t('dashboard.year')} />
                             </SelectTrigger>
                             <SelectContent>
                                 {years.map((year) => (
@@ -129,13 +132,13 @@ export function RevenueChart({ chartData, selectedYear, onYearChange }: RevenueC
                                 <Legend content={renderLegend} verticalAlign="bottom" />
                                 <Bar 
                                     dataKey="revenue" 
-                                    name="Revenue" 
+                                    name={t('dashboard.revenue')} 
                                     fill="#00A843" 
                                     radius={[4, 4, 0, 0]} 
                                 />
                                 <Bar 
                                     dataKey="expenses" 
-                                    name="Expenses" 
+                                    name={t('dashboard.expenses')} 
                                     fill="#FFB800" 
                                     radius={[4, 4, 0, 0]} 
                                 />

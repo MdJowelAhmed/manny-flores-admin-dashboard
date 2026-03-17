@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Info, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { PayrollRecord,  } from '../payrollData'
@@ -19,26 +20,27 @@ export function PayrollTable({
   onEdit,
   onDelete,
 }: PayrollTableProps) {
+  const { t } = useTranslation()
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[700px]">
         <thead>
           <tr className="bg-secondary-foreground text-accent">
-            <th className="px-6 py-4 text-left text-sm font-semibold rounded-tl-lg">ID</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Name</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Pay Type</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Project</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Overtime</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Amount</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Status</th>
-            <th className="px-6 py-4 text-right text-sm font-semibold rounded-tr-lg">Action</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold rounded-tl-lg">{t('dashboard.id')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('common.name')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('payrollManagement.payType')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('companyProjects.project')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('payrollManagement.overtime')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('common.amount')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('common.status')}</th>
+            <th className="px-6 py-4 text-right text-sm font-semibold rounded-tr-lg">{t('common.actions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {records.length === 0 ? (
             <tr>
               <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground text-sm">
-                No payroll records found
+                {t('payrollManagement.noRecordsFound')}
               </td>
             </tr>
           ) : (

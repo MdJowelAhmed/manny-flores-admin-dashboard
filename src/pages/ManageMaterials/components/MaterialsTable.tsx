@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Eye, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Material } from '../manageMaterialsData'
@@ -17,27 +18,28 @@ export function MaterialsTable({
   onEdit,
   onDelete,
 }: MaterialsTableProps) {
+  const { t } = useTranslation()
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[900px]">
         <thead>
           <tr className="bg-secondary-foreground text-accent">
-            <th className="px-6 py-4 text-left text-sm font-semibold">Material Name</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Category</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Unit</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Current Stock</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Supplier</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Cost Price</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Project Rate</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Assigned Project</th>
-            <th className="px-6 py-4 text-right text-sm font-semibold">Action</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('manageMaterials.materialName')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('manageMaterials.category')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('manageMaterials.unit')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('manageMaterials.currentStock')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('manageMaterials.supplier')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('manageMaterials.costPrice')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('manageMaterials.projectRate')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('manageMaterials.assignedProject')}</th>
+            <th className="px-6 py-4 text-right text-sm font-semibold">{t('common.actions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {materials.length === 0 ? (
             <tr>
               <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground text-sm">
-                No materials found
+                {t('manageMaterials.noMaterialsFound')}
               </td>
             </tr>
           ) : (

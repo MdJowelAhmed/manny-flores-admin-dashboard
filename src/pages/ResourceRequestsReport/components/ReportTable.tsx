@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Info, Unlock, Trash2 } from 'lucide-react'
 import { Truck, Package, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,19 +26,20 @@ export function ReportTable({
   onEdit,
   onDelete,
 }: ReportTableProps) {
+  const { t } = useTranslation()
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[800px]">
         <thead>
           <tr className="bg-secondary-foreground text-accent">
-            <th className="px-6 py-4 text-left text-sm font-semibold rounded-tl-lg">Date</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Reported by</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Item</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Type</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Category</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Urgency</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">Status</th>
-            <th className="px-6 py-4 text-right text-sm font-semibold rounded-tr-lg">Action</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold rounded-tl-lg">{t('common.date')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('resourceRequests.reportedBy')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('resourceRequests.item')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('resourceRequests.resourceType')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('manageMaterials.category')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('resourceRequests.urgency')}</th>
+            <th className="px-6 py-4 text-left text-sm font-semibold">{t('common.status')}</th>
+            <th className="px-6 py-4 text-right text-sm font-semibold rounded-tr-lg">{t('common.actions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
@@ -47,7 +49,7 @@ export function ReportTable({
                 colSpan={8}
                 className="px-4 py-8 text-center text-muted-foreground text-sm"
               >
-                No reports found
+                {t('resourceRequests.noReportsFound')}
               </td>
             </tr>
           ) : (

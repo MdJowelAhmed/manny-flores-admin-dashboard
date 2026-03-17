@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Calendar, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -7,6 +8,7 @@ import { AddEditScheduleModal } from './components/AddEditScheduleModal'
 import { mockScheduledProjects, type ScheduledProject } from './projectSchedulingData'
 
 export default function ProjectScheduling() {
+  const { t } = useTranslation()
   const [schedules, setSchedules] = useState<ScheduledProject[]>(mockScheduledProjects)
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduledProject | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
@@ -90,9 +92,9 @@ export default function ProjectScheduling() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Project Scheduling</h1>
+          <h1 className="text-xl font-bold text-foreground">{t('projectScheduling.title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Schedule projects and manage crew availability
+            {t('projectScheduling.subtitle')}
           </p>
         </div>
         <Button
@@ -100,7 +102,7 @@ export default function ProjectScheduling() {
           className="bg-primary hover:bg-primary/90 text-white shrink-0"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Scheduled
+          {t('projectScheduling.addScheduled')}
         </Button>
       </div>
 
@@ -114,7 +116,9 @@ export default function ProjectScheduling() {
                 <span className="text-base font-medium text-foreground">{date}</span>
               </div>
               <span className="text-sm text-primary font-medium">
-                {items.length} Project{items.length !== 1 ? 's' : ''}
+                {items.length === 1
+                  ? t('projectScheduling.projectsCount', { count: items.length })
+                  : t('projectScheduling.projectsCountPlural', { count: items.length })}
               </span>
             </div>
 
@@ -131,19 +135,19 @@ export default function ProjectScheduling() {
                     <p className="text-sm text-muted-foreground mt-0.5">{schedule.category}</p>
                     <div className="flex flex-wrap gap-x-6 gap-y-1 mt-6">
                       <div>
-                        <span className="text-xs text-muted-foreground block mb-1">Project</span>
+                        <span className="text-xs text-muted-foreground block mb-1">{t('projectScheduling.project')}</span>
                         <span className="text-sm font-medium">{schedule.project}</span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground block mb-1">Upload Date</span>
+                        <span className="text-xs text-muted-foreground block mb-1">{t('projectScheduling.uploadDate')}</span>
                         <span className="text-sm font-medium">{schedule.uploadDate}</span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground block mb-1">Uploaded By</span>
+                        <span className="text-xs text-muted-foreground block mb-1">{t('projectScheduling.uploadedBy')}</span>
                         <span className="text-sm font-medium">{schedule.uploadedBy}</span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground block mb-1">Team</span>
+                        <span className="text-xs text-muted-foreground block mb-1">{t('projectScheduling.team')}</span>
                         <span className="text-sm font-medium">{schedule.team}</span>
                       </div>
                     </div>
@@ -155,7 +159,7 @@ export default function ProjectScheduling() {
                       className="h-9"
                       onClick={() => handleViewDetails(schedule)}
                     >
-                      View details
+                      {t('projectScheduling.viewDetails')}
                     </Button>
                     <Button
                       variant="outline"
@@ -163,7 +167,7 @@ export default function ProjectScheduling() {
                       className="h-9"
                       onClick={() => handleReschedule(schedule)}
                     >
-                      Reschedule
+                      {t('projectScheduling.reschedule')}
                     </Button>
                   </div>
                 </motion.div>
@@ -174,7 +178,7 @@ export default function ProjectScheduling() {
 
         {groupedByDate.length === 0 && (
           <div className="py-12 text-center text-muted-foreground text-sm">
-            No scheduled projects. Click Add Scheduled to create one.
+            {t('projectScheduling.noScheduledProjects')}
           </div>
         )}
       </div>

@@ -17,6 +17,7 @@ import {
 import type { UserRoleValue } from "@/redux/slices/authSlice";
 import { cn } from "@/utils/cn";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -32,6 +33,7 @@ export default function Login() {
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((state) => state.auth);
   const [showPassword, setShowPassword] = useState(false);
+  const { t } = useTranslation();
 
   const {
     register,
@@ -83,7 +85,7 @@ export default function Login() {
       );
 
       if (!matchedUser) {
-        dispatch(loginFailure("Invalid email or password"));
+        dispatch(loginFailure(t('auth.login.invalidCredentials')));
         return;
       }
 
@@ -102,7 +104,7 @@ export default function Login() {
 
       navigate("/dashboard", { replace: true });
     } catch {
-      dispatch(loginFailure("An error occurred. Please try again."));
+      dispatch(loginFailure(t('auth.login.errorOccurred')));
     }
   };
 
@@ -114,13 +116,13 @@ export default function Login() {
         <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
           <span className="text-primary-foreground font-bold text-xl">D</span>
         </div>
-        <span className="font-display font-bold text-2xl">Dashboard</span>
+        <span className="font-display font-bold text-2xl">{t('auth.dashboard')}</span>
       </div>
 
       <div className="space-y-2 text-center lg:text-left">
-        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t('auth.login.welcomeBack')}</h1>
         <p className="text-muted-foreground">
-          Enter your credentials to access your account
+          {t('auth.login.enterCredentials')}
         </p>
       </div>
 
@@ -136,13 +138,13 @@ export default function Login() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('auth.login.email')}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder={t('auth.login.emailPlaceholder')}
               className={cn("pl-10", errors.email && "border-destructive")}
               {...register("email")}
             />
@@ -154,14 +156,14 @@ export default function Login() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('auth.login.password')}</Label>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
+              placeholder={t('auth.login.passwordPlaceholder')}
               className={cn(
                 "pl-10 pr-10",
                 errors.password && "border-destructive"
@@ -199,14 +201,14 @@ export default function Login() {
               htmlFor="remember"
               className="text-sm font-normal cursor-pointer"
             >
-              Remember me for 30 days
+              {t('auth.login.rememberMe')}
             </Label>
           </div>
           <Link
             to="/auth/forgot-password"
             className="text-sm text-primary hover:underline"
           >
-            Forgot password?
+            {t('auth.login.forgotPassword')}
           </Link>
         </div>
 
@@ -218,7 +220,7 @@ export default function Login() {
         >
           {!isLoading && (
             <>
-              Sign In
+              {t('auth.login.signIn')}
               <ArrowRight className="ml-2 h-4 w-4" />
             </>
           )}
@@ -228,26 +230,18 @@ export default function Login() {
       <div className="relative">
         <Separator />
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-          Demo Credentials
+          {t('auth.login.demoCredentials')}
         </span>
       </div>
 
       <div className="p-4 rounded-lg bg-muted/50 border text-sm space-y-3">
-        <p className="font-semibold text-foreground">Demo Credentials:</p>
+        <p className="font-semibold text-foreground">{t('auth.login.demoCredentials')}:</p>
         <div className="space-y-2">
           <div>
-            <p className="font-medium">Super Admin:</p>
-            <p className="text-muted-foreground">Email: superadmin@example.com</p>
-            <p className="text-muted-foreground">Password: password</p>
+            <p className="font-medium">{t('auth.login.superAdmin')}:</p>
+            <p className="text-muted-foreground">{t('auth.login.email')}: superadmin@example.com</p>
+            <p className="text-muted-foreground">{t('auth.login.password')}: password</p>
           </div>
-          {/* <div>
-            <p className="font-medium">Admin:</p>
-            <p className="text-muted-foreground">admin@example.com / password</p>
-          </div>
-          <div>
-            <p className="font-medium">Marketing:</p>
-            <p className="text-muted-foreground">marketing@example.com / password</p>
-          </div> */}
         </div>
       </div>
     </div>

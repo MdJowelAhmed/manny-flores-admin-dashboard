@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/utils/cn'
 import { ITEMS_PER_PAGE_OPTIONS } from '@/utils/constants'
+import { useTranslation } from 'react-i18next'
 
 interface PaginationProps {
   currentPage: number
@@ -34,6 +35,7 @@ export function Pagination({
   showItemsPerPage = true,
   variant = 'default',
 }: PaginationProps) {
+  const { t } = useTranslation()
   const startItem = (currentPage - 1) * itemsPerPage + 1
   const endItem = Math.min(currentPage * itemsPerPage, totalItems)
 
@@ -91,7 +93,7 @@ export function Pagination({
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {variant === 'revenue' ? (
           <span className="flex items-center gap-2">
-            Result Per Page
+            {t('common.resultPerPage')}
             {showItemsPerPage && onItemsPerPageChange && (
               <Select
                 value={String(itemsPerPage)}
@@ -113,7 +115,7 @@ export function Pagination({
         ) : (
           <>
             <span>
-              Showing {startItem} to {endItem} of {totalItems} entries
+              {t('common.showing')} {startItem} {t('common.to')} {endItem} {t('common.of')} {totalItems} {t('common.entries')}
             </span>
             {showItemsPerPage && onItemsPerPageChange && (
               <Select

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { FormInput, FormSelect, FormTextarea, DatePicker } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ export function AddEditProjectFinanceModal({
   project,
   onSave,
 }: AddEditProjectFinanceModalProps) {
+  const { t } = useTranslation()
   const isEdit = !!project?.id
 
   const [projectName, setProjectName] = useState('')
@@ -138,9 +140,11 @@ export function AddEditProjectFinanceModal({
               onChange={(e) => setCompany(e.target.value)}
             />
             <FormSelect
-              label="Status"
+              label={t('common.status')}
               value={status}
-              options={projectStatusFilterOptions.filter((o) => o.value !== 'all')}
+              options={projectStatusFilterOptions
+                .filter((o) => o.value !== 'all')
+                .map((o) => ({ value: o.value, label: t(o.labelKey) }))}
               onChange={(v) => setStatus(v as ProjectStatus)}
             />
             <FormInput

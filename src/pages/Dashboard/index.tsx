@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { formatCurrency, formatCompactNumber } from '@/utils/formatters'
-// import { AvailableCars, RentalCars, TotalBooking, TotalRevenue } from '@/components/common/svg/DashboardSVG'
 import { StatCard } from './StatCard'
 import { RevenueChart } from './RevenueChart'
 import { RecentActivityCard } from './RecentActivityCard'
@@ -8,41 +7,42 @@ import { yearlyData } from './dashboardData'
 import {  DollarSignIcon, FileCheck, ListOrdered, Users } from 'lucide-react'
 import { PieChartComponent } from './PieChart'
 import { Chatbot } from './Chatbot/Chatbot'
-// import { TotalRevenue } from '@/components/common/svg/DashboardSVG'
+import { useTranslation } from 'react-i18next'
 
 export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState('2026')
+  const { t } = useTranslation()
 
   const chartData = useMemo(() => yearlyData[selectedYear], [selectedYear])
 
   const stats = [
     {
-      title: 'Active Projects',
+      title: t('dashboard.activeProjects'),
       value: formatCompactNumber(12543),
       change: 12.5,
       icon: ListOrdered,
-      description: 'vs last month',
+      description: t('dashboard.vsLastMonth'),
     },
     {
-      title: 'Total Employees',
+      title: t('dashboard.totalEmployees'),
       value: formatCompactNumber(3420),
       change: 8.2,
       icon: Users,
-      description: 'vs last month',
+      description: t('dashboard.vsLastMonth'),
     },
     {
-      title: 'Total Revenue',
+      title: t('dashboard.totalRevenue'),
       value: formatCurrency(142000),
       change: 3.1,
       icon: DollarSignIcon,
-      description: 'vs last month',
+      description: t('dashboard.vsLastMonth'),
     },
     {
-      title: 'Pending Approvals',
+      title: t('dashboard.pendingApprovals'),
       value: formatCompactNumber(142),
       change: -2.4,
       icon: FileCheck,
-      description: 'vs last month',
+      description: t('dashboard.vsLastMonth'),
     },
   ]
 

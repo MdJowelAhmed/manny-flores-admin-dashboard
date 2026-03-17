@@ -11,8 +11,10 @@ import { ViewProjectDetailsModal } from './components/ViewProjectDetailsModal'
 import type { CustomerProject } from '@/types'
 import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/utils/toast'
+import { useTranslation } from 'react-i18next'
 
 export default function CustomerManagement() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10))
@@ -67,15 +69,15 @@ export default function CustomerManagement() {
       setProjects((prev) => prev.filter((p) => p.id !== projectToDelete.id))
       toast({
         variant: 'success',
-        title: 'Deleted',
-        description: 'Project has been deleted successfully.',
+        title: t('common.deleted'),
+        description: t('customerManagement.deletedSuccess'),
       })
       setIsDeleteModalOpen(false)
       setProjectToDelete(null)
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to delete. Please try again.',
+        title: t('common.error'),
+        description: t('customerManagement.deleteFailed'),
         variant: 'destructive',
       })
     } finally {
@@ -122,7 +124,7 @@ export default function CustomerManagement() {
             className="bg-primary hover:bg-primary/90 text-white"
           >
             <Plus className="h-4 w-4 " />
-            Add Project
+            {t('customerManagement.addProject')}
           </Button>
         </div>
 
@@ -132,22 +134,22 @@ export default function CustomerManagement() {
               <thead>
                 <tr className="bg-secondary-foreground">
                   <th className="px-6 py-4 text-left text-sm font-bold text-slate-800">
-                    ID
+                    {t('customerManagement.id')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-slate-800">
-                    Customer Name
+                    {t('customerManagement.customerName')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-slate-800">
-                    Project
+                    {t('customerManagement.project')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-slate-800">
-                    Amount
+                    {t('customerManagement.amount')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-slate-800">
-                    Project dates
+                    {t('customerManagement.projectDates')}
                   </th>
                   <th className="px-6 py-4 text-right text-sm font-bold text-slate-800">
-                    Action
+                    {t('customerManagement.action')}
                   </th>
                 </tr>
               </thead>
@@ -158,7 +160,7 @@ export default function CustomerManagement() {
                       colSpan={6}
                       className="px-6 py-12 text-center text-muted-foreground"
                     >
-                      No projects found
+                       {t('customerManagement.noProjectsFound')}
                     </td>
                   </tr>
                 ) : (
@@ -261,9 +263,9 @@ export default function CustomerManagement() {
           setProjectToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Project"
-        description={`Are you sure you want to delete project #${projectToDelete?.id}? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('customerManagement.deleteProject')}
+        description={t('customerManagement.deleteConfirmation', { id: projectToDelete?.id })}
+        confirmText={t('common.delete')}
         variant="danger"
         isLoading={isDeleting}
       />

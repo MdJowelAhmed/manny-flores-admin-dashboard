@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Eye, Trash2 } from 'lucide-react'
 import { Pagination } from '@/components/common/Pagination'
@@ -10,6 +11,7 @@ import {
 } from './recentProjectsData'
 import { ProjectViewDetailsModal } from './components/ProjectViewDetailsModal'
 export default function RecentProjects() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = Math.max(
     1,
@@ -83,24 +85,24 @@ export default function RecentProjects() {
             <table className="w-full min-w-[980px]">
               <thead>
                 <tr className="bg-secondary-foreground text-accent">
-                  <th className="px-6 py-4 text-left text-sm font-bold">ID</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">{t('recentProjectsPage.id')}</th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
-                    Customer Name
+                    {t('recentProjectsPage.customerName')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
-                    Project
+                    {t('recentProjectsPage.project')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
-                    Status
+                    {t('recentProjectsPage.status')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
-                    Progress
+                    {t('recentProjectsPage.progress')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
-                    Value
+                    {t('recentProjectsPage.value')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
-                    Action
+                    {t('recentProjectsPage.action')}
                   </th>
                 </tr>
               </thead>
@@ -202,10 +204,10 @@ export default function RecentProjects() {
           setSelectedProject(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Are you Sure?"
-        description="Do you really want to delete these records? This process cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={t('common.areYouSure')}
+        description={t('common.deleteConfirmation')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
       />
     </div>

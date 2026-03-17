@@ -23,33 +23,15 @@ export interface ChangeOrder {
 }
 
 export const changeOrderStats = [
-  {
-    title: 'Total Change Orders',
-    value: 8,
-    icon: FileText,
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600',
-  },
-  {
-    title: 'Awaiting Response',
-    value: 2,
-    icon: Info,
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
-  },
-  {
-    title: 'Total Additional Revenue',
-    value: 34500,
-    icon: DollarSign,
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
-  },
+  { titleKey: 'changeOrders.totalChangeOrders' as const, value: 8, icon: FileText, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
+  { titleKey: 'changeOrders.awaitingResponse' as const, value: 2, icon: Info, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+  { titleKey: 'changeOrders.totalAdditionalRevenue' as const, value: 34500, icon: DollarSign, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
 ]
 
 export const statusFilterOptions = [
-  { value: 'all', label: 'All' },
-  { value: 'Pending', label: 'Pending' },
-  { value: 'Approved', label: 'Approved' },
+  { value: 'all', labelKey: 'common.all' as const },
+  { value: 'Pending', labelKey: 'dashboard.pending' as const },
+  { value: 'Approved', labelKey: 'documentsApprovals.approved' as const },
 ]
 
 export const statusUpdateOptions: { value: ChangeOrderStatus; label: string }[] = [

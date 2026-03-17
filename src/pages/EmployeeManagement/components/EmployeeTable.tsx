@@ -72,7 +72,7 @@ export function EmployeeTable({
                       <Switch
                         checked={employee.status === 'Active'}
                         onCheckedChange={(checked) =>
-                          onStatusChange(employee, checked ? 'Active' : 'Leave')
+                          onStatusChange(employee, checked ? 'Active' : 'inactive')
                         }
                         onClick={(e) => e.stopPropagation()}
                       />

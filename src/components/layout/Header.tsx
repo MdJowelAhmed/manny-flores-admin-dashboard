@@ -19,41 +19,42 @@ import { getInitials } from '@/utils/formatters'
 import { SAMPLE_NOTIFICATIONS } from '@/pages/Notifications/notificationData'
 import type { Notification } from '@/types/notification'
 import { formatDistanceToNow } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 
-const routeTitles: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/notifications': 'Notifications',
-  '/recent-projects': 'Recent Projects',
-  '/company-projects': 'Company & Projects',
-  '/customer-management': 'Customer Management',
-  '/employee-management': 'Employee Management',
-  '/attendance': 'Attendance',
-  '/communication': 'Communication',
-  '/customer-finance': 'Customer & Finance',
-  '/manage-materials': 'Manage Materials',
-  '/project-scheduling': 'Project Scheduling',
-  '/documents-approvals': 'Documents & Approvals',
-  '/payroll-management': 'Payroll Management',
-  '/resource-requests-report': 'Resource Requests & Report',
-  '/change-orders': 'Change Orders',
-  '/vehicle-maintenance': 'Vehicle Maintenance',
-  '/equipment-maintenance': 'Equipment Maintenance',
-  '/reviews': 'Reviews',
-  '/daily-safety-reports': 'Daily Safety Reports',
-  '/orders': 'Orders',
-  '/booking-management': 'Booking Management',
-  '/calender': 'Calendar',
-  '/transactions-history': 'Revenue List',
-  '/client-management': 'Client Management',
-  '/agency-management': 'Agency Management',
-  '/users': 'User Management',
-  '/products': 'Product Management',
-  '/categories': 'Category Management',
-  '/settings/profile': 'Profile Settings',
-  '/settings/password': 'Change Password',
-  '/settings/terms': 'Terms & Conditions',
-  '/settings/privacy': 'Privacy Policy',
-  '/settings/about-us': 'About Us',
+const routeTitleKeys: Record<string, string> = {
+  '/dashboard': 'header.routeTitles.dashboard',
+  '/notifications': 'header.routeTitles.notifications',
+  '/recent-projects': 'header.routeTitles.recentProjects',
+  '/company-projects': 'header.routeTitles.companyProjects',
+  '/customer-management': 'header.routeTitles.customerManagement',
+  '/employee-management': 'header.routeTitles.employeeManagement',
+  '/attendance': 'header.routeTitles.attendance',
+  '/communication': 'header.routeTitles.communication',
+  '/customer-finance': 'header.routeTitles.customerFinance',
+  '/manage-materials': 'header.routeTitles.manageMaterials',
+  '/project-scheduling': 'header.routeTitles.projectScheduling',
+  '/documents-approvals': 'header.routeTitles.documentsApprovals',
+  '/payroll-management': 'header.routeTitles.payrollManagement',
+  '/resource-requests-report': 'header.routeTitles.resourceRequestsReport',
+  '/change-orders': 'header.routeTitles.changeOrders',
+  '/vehicle-maintenance': 'header.routeTitles.vehicleMaintenance',
+  '/equipment-maintenance': 'header.routeTitles.equipmentMaintenance',
+  '/reviews': 'header.routeTitles.reviews',
+  '/daily-safety-reports': 'header.routeTitles.dailySafetyReports',
+  '/orders': 'header.routeTitles.orders',
+  '/booking-management': 'header.routeTitles.bookingManagement',
+  '/calender': 'header.routeTitles.calendar',
+  '/transactions-history': 'header.routeTitles.revenueList',
+  '/client-management': 'header.routeTitles.clientManagement',
+  '/agency-management': 'header.routeTitles.agencyManagement',
+  '/users': 'header.routeTitles.userManagement',
+  '/products': 'header.routeTitles.productManagement',
+  '/categories': 'header.routeTitles.categoryManagement',
+  '/settings/profile': 'header.routeTitles.profileSettings',
+  '/settings/password': 'header.routeTitles.changePassword',
+  '/settings/terms': 'header.routeTitles.termsConditions',
+  '/settings/privacy': 'header.routeTitles.privacyPolicy',
+  '/settings/about-us': 'header.routeTitles.aboutUs',
 }
 
 const RECENT_NOTIFICATIONS_COUNT = 3
@@ -83,8 +84,11 @@ export function Header() {
   // const { theme } = useAppSelector((state) => state.ui)
   const { user } = useAppSelector((state) => state.auth)
   const location = useLocation()
-  const [language, setLanguage] = useState('en')
-  const pageTitle = routeTitles[location.pathname] || 'Dashboard'
+  const { t, i18n } = useTranslation()
+  const currentLanguage = i18n.language
+
+  const titleKey = routeTitleKeys[location.pathname] || 'header.routeTitles.dashboard'
+  const pageTitle = t(titleKey)
   const recentNotifications = SAMPLE_NOTIFICATIONS.slice(0, RECENT_NOTIFICATIONS_COUNT)
 
   const handleViewAllNotifications = () => {
@@ -98,8 +102,8 @@ export function Header() {
   }
 
   const handleLanguageToggle = () => {
-    setLanguage(language === 'en' ? 'es' : 'en')
-    console.log(language)
+    const newLang = currentLanguage === 'en' ? 'es' : 'en'
+    i18n.changeLanguage(newLang)
   }
 
   return (
@@ -118,38 +122,13 @@ export function Header() {
           <div>
             <h1 className="text-xl font-semibold text-accent">{pageTitle}</h1>
             <p className="text-sm text-accent hidden sm:block">
-              Welcome back, {user?.firstName || 'Admin'}
+              {t('header.welcomeBack')} {user?.firstName || 'Admin'}
             </p>
           </div>
         </div>
 
-        {/* Center - Search (hidden on mobile) */}
-        {/* <div className="hidden md:flex flex-1 max-w-md mx-8">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search anything..."
-              className="pl-9 bg-muted/50"
-            />
-          </div>
-        </div> */}
-
         {/* Right side */}
         <div className="flex items-center gap-6">
-          {/* Theme toggle */}
-          {/* <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => dispatch(toggleTheme())}
-          >
-            {theme === 'light' ? (
-              <Moon className="h-5 w-5 text-accent" />
-            ) : (
-              <Sun className="h-5 w-5 text-accent" />
-            )}
-          </Button> */}
-
           {/* Language Toggle (English, Spanish) */}
           <Button
             variant="ghost"
@@ -157,7 +136,7 @@ export function Header() {
             onClick={handleLanguageToggle}
           >
             {
-              language === 'en' ? (
+              currentLanguage === 'en' ? (
                 <div className="h-8 w-8 text-accent flex items-center gap-2">
                   <img src="/assets/english.png" alt="English" className="h-6 w-7 rounded-full" />
                   <span className="text-xs text-accent">ENG</span>
@@ -184,7 +163,7 @@ export function Header() {
           <ModalWrapper
             open={notificationModalOpen}
             onClose={() => setNotificationModalOpen(false)}
-            title="Notifications"
+            title={t('header.notifications')}
             size="md"
             className="bg-white"
             footer={
@@ -193,7 +172,7 @@ export function Header() {
                 className="w-full"
                 onClick={handleViewAllNotifications}
               >
-                View All
+                {t('header.viewAll')}
               </Button>
             }
           >
@@ -220,7 +199,7 @@ export function Header() {
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium">
-                    {user ? `${user.firstName} ${user.lastName}` : 'Admin User'}
+                    {user ? `${user.firstName} ${user.lastName}` : t('header.adminUser')}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {user?.email || 'superadmin@example.com'}
@@ -230,16 +209,16 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/settings/profile')}>
                 <User className="h-4 w-4 mr-2" />
-                Profile
+                {t('header.profile')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/settings/password')}>
                 <Settings className="h-4 w-4 mr-2" />
-                Settings
+                {t('header.settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                 <LogOut className="h-4 w-4 mr-2" />
-                Log out
+                {t('header.logOut')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Info, Pencil, Trash2, Truck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'
@@ -18,25 +19,26 @@ export function VehicleTable({
   onEdit,
   onDelete,
 }: VehicleTableProps) {
+  const { t } = useTranslation()
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[700px]">
         <thead>
           <tr className="bg-secondary-foreground text-accent">
-            <th className="px-6 py-4 text-left text-sm font-bold">Vehicle</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Type</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Assign to</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Usage</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Next Service</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
-            <th className="px-6 py-4 text-right text-sm font-bold">Action</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.vehicle')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('resourceRequests.type')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.assignTo')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.usage')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.nextService')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('common.status')}</th>
+            <th className="px-6 py-4 text-right text-sm font-bold">{t('common.actions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {vehicles.length === 0 ? (
             <tr>
               <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                No vehicles found
+                {t('vehicleMaintenance.noVehiclesFound')}
               </td>
             </tr>
           ) : (

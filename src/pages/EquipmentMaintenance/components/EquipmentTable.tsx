@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Info, Pencil, Trash2, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'
@@ -18,25 +19,26 @@ export function EquipmentTable({
   onEdit,
   onDelete,
 }: EquipmentTableProps) {
+  const { t } = useTranslation()
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[700px]">
         <thead>
           <tr className="bg-secondary-foreground text-accent">
-            <th className="px-6 py-4 text-left text-sm font-bold">Equipment</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Type</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Assign to</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Usage</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Next Service</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
-            <th className="px-6 py-4 text-right text-sm font-bold">Action</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('equipmentMaintenance.equipment')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('resourceRequests.type')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('equipmentMaintenance.assignTo')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('equipmentMaintenance.usage')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('equipmentMaintenance.nextService')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">{t('common.status')}</th>
+            <th className="px-6 py-4 text-right text-sm font-bold">{t('common.actions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {equipment.length === 0 ? (
             <tr>
               <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                No equipment found
+                {t('equipmentMaintenance.noEquipmentFound')}
               </td>
             </tr>
           ) : (

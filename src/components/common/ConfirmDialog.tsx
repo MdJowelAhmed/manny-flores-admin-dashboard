@@ -1,4 +1,4 @@
-
+import { useTranslation } from 'react-i18next'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +58,7 @@ export function ConfirmDialog({
   isLoading = false,
   onSuccess,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation()
   const config = variantConfig[variant]
   const Icon = config.icon
 
@@ -98,6 +99,7 @@ export function ConfirmDialog({
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
+                <span className="sr-only">{t('common.processing')}</span>
                 <svg
                   className="animate-spin h-4 w-4"
                   xmlns="http://www.w3.org/2000/svg"
@@ -118,7 +120,7 @@ export function ConfirmDialog({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                <span>Processing...</span>
+                <span>{t('common.processing')}</span>
               </div>
             ) : (
               confirmText

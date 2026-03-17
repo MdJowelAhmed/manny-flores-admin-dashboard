@@ -15,27 +15,9 @@ export interface PayrollRecord {
 }
 
 export const payrollStats = [
-  {
-    title: 'Total Employees Paid',
-    value: 250,
-    icon: Users,
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-  },
-  {
-    title: 'Total Pending',
-    value: 235,
-    icon: FolderClock,
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
-  },
-  {
-    title: 'Total Payroll Amount',
-    value: 15,
-    icon: Wallet,
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600',
-  },
+  { titleKey: 'payrollManagement.totalEmployeesPaid' as const, value: 250, icon: Users, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+  { titleKey: 'payrollManagement.totalPending' as const, value: 235, icon: FolderClock, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+  { titleKey: 'payrollManagement.totalPayrollAmount' as const, value: 15, icon: Wallet, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
 ]
 
 export const PAY_TYPE_STYLES: Record<PayType, { bg: string; text: string }> = {

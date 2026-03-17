@@ -9,6 +9,7 @@ import {
 } from '@/pages/RecentProjects/recentProjectsData'
 import { ProjectViewDetailsModal } from '@/pages/RecentProjects/components/ProjectViewDetailsModal'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
+import { useTranslation } from 'react-i18next'
 
 export function RecentActivityCard() {
     const navigate = useNavigate()
@@ -17,6 +18,7 @@ export function RecentActivityCard() {
     const [selectedProject, setSelectedProject] = useState<RecentProject | null>(
         null
     )
+    const { t } = useTranslation()
 
     const handleViewDetails = (project: RecentProject) => {
         setSelectedProject(project)
@@ -44,12 +46,12 @@ export function RecentActivityCard() {
         >
             <Card className="bg-white border-0">
                 <CardHeader className="flex flex-row items-center justify-between pb-6">
-                    <CardTitle className="text-xl font-bold text-slate-800">Recent Projects</CardTitle>
+                    <CardTitle className="text-xl font-bold text-slate-800">{t('dashboard.recentProjects')}</CardTitle>
                     <Link
                         to="/recent-projects"
                         className="text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors"
                     >
-                        view all
+                        {t('dashboard.viewAll')}
                     </Link>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -57,13 +59,13 @@ export function RecentActivityCard() {
                         <table className="w-full min-w-[980px]">
                             <thead>
                                 <tr className="bg-gray-50/80 text-slate-800 border-b border-gray-100">
-                                    <th className="px-6 py-4 text-left text-sm font-bold">ID</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">Customer Name</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">Project</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">Progress</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">Value</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">Action</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.id')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.customerName')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.project')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.status')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.progress')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.value')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.action')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-slate-700">
@@ -159,10 +161,10 @@ export function RecentActivityCard() {
                     setSelectedProject(null)
                 }}
                 onConfirm={handleConfirmDelete}
-                title="Are you Sure?"
-                description="Do you really want to delete these records? This process cannot be undone."
-                confirmText="Delete"
-                cancelText="Cancel"
+                title={t('common.areYouSure')}
+                description={t('common.deleteConfirmation')}
+                confirmText={t('common.delete')}
+                cancelText={t('common.cancel')}
                 variant="danger"
             />
         </motion.div>

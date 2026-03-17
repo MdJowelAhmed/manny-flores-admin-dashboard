@@ -1,4 +1,5 @@
 import { FileText } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -22,6 +23,7 @@ function DetailRow({ label, value, highlight }: { label: string; value: string |
 }
 
 export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectDetailsModalProps) {
+  const { t } = useTranslation()
   if (!project) return null
 
   return (
@@ -41,12 +43,12 @@ export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectD
             <div className="p-1.5 rounded bg-primary/10">
               <FileText className="h-4 w-4 text-primary" />
             </div>
-            <h3 className="text-sm font-semibold text-foreground">Project Information</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('companyProjects.projectInformation')}</h3>
           </div>
           <div className="space-y-1 pl-8">
-            <DetailRow label="Customer" value={project.customer} />
-            <DetailRow label="Email" value={project.email} />
-            <DetailRow label="Company" value={project.company} />
+            <DetailRow label={t('companyProjects.customer')} value={project.customer} />
+            <DetailRow label={t('common.email')} value={project.email} />
+            <DetailRow label={t('companyProjects.company')} value={project.company} />
           </div>
         </div>
 
@@ -58,15 +60,15 @@ export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectD
             <div className="p-1.5 rounded bg-primary/10">
               <FileText className="h-4 w-4 text-primary" />
             </div>
-            <h3 className="text-sm font-semibold text-foreground">Project Information</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('companyProjects.projectDetails')}</h3>
           </div>
           <div className="space-y-1 pl-8">
-            <DetailRow label="Project Name" value={project.projectName} />
-            <DetailRow label="Start Date" value={project.startDate} />
-            <DetailRow label="Total Budget" value={formatCurrency(project.totalBudget)} />
-            <DetailRow label="Amount Spent" value={formatCurrency(project.amountSpent)} highlight />
-            <DetailRow label="Duration" value={project.duration} />
-            <DetailRow label="Remaining" value={formatCurrency(project.remaining)} />
+            <DetailRow label={t('companyProjects.projectName')} value={project.projectName} />
+            <DetailRow label={t('companyProjects.startDate')} value={project.startDate} />
+            <DetailRow label={t('companyProjects.totalBudget')} value={formatCurrency(project.totalBudget)} />
+            <DetailRow label={t('companyProjects.amountSpent')} value={formatCurrency(project.amountSpent)} highlight />
+            <DetailRow label={t('common.duration')} value={project.duration} />
+            <DetailRow label={t('companyProjects.remaining')} value={formatCurrency(project.remaining)} />
           </div>
         </div>
 
@@ -78,7 +80,7 @@ export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectD
                 <div className="p-1.5 rounded bg-primary/10">
                   <FileText className="h-4 w-4 text-primary" />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground">Description</h3>
+                <h3 className="text-sm font-semibold text-foreground">{t('common.description')}</h3>
               </div>
               <p className="text-sm text-muted-foreground pl-8 leading-relaxed">{project.description}</p>
             </div>
@@ -87,7 +89,7 @@ export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectD
 
         <div className="flex justify-end pt-4 border-t">
           <Button onClick={onClose} className="bg-primary hover:bg-primary/90 text-white">
-            Close
+            {t('common.close')}
           </Button>
         </div>
       </div>

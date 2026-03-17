@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { FormInput, FormSelect, FormTextarea, DatePicker } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ const customerOptions = [
 ]
 
 export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditProjectModalProps) {
+  const { t } = useTranslation()
   const isEdit = !!project
 
   const [projectName, setProjectName] = useState('')
@@ -86,8 +88,8 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
       description: description.trim() || undefined,
     })
     toast({
-      title: 'Success',
-      description: isEdit ? 'Project updated successfully.' : 'Project created successfully.',
+      title: t('common.success'),
+      description: isEdit ? t('companyProjects.projectUpdated') : t('companyProjects.projectCreated'),
       variant: 'success',
     })
     onClose()
@@ -97,50 +99,52 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit Project' : 'Add Project'}
+      title={isEdit ? t('companyProjects.editProject') : t('companyProjects.addProject')}
       size="xl"
       className="max-w-3xl bg-white max-h-[90vh] overflow-y-auto"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <div>
-          <h3 className="text-sm font-semibold mb-4 text-foreground">Basic Information</h3>
+          <h3 className="text-sm font-semibold mb-4 text-foreground">{t('companyProjects.basicInformation')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
-              label="Project Name"
-              placeholder="Enter project name"
+              label={t('companyProjects.projectName')}
+              placeholder={t('companyProjects.projectNamePlaceholder')}
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               required
             />
             <FormSelect
-              label="Customer"
+              label={t('companyProjects.customer')}
               value={customer}
               options={customerOptions}
               onChange={setCustomer}
-              placeholder="Enter customer name"
+              placeholder={t('companyProjects.customerPlaceholder')}
             />
             <FormSelect
-              label="Payment Method"
+              label={t('companyProjects.paymentMethod')}
               value={paymentMethod}
               options={paymentMethodOptions}
               onChange={setPaymentMethod}
             />
             <FormInput
-              label="Company"
-              placeholder="Enter company name"
+              label={t('companyProjects.company')}
+              placeholder={t('companyProjects.companyPlaceholder')}
               value={company}
               onChange={(e) => setCompany(e.target.value)}
             />
             <FormSelect
-              label="Status"
+              label={t('common.status')}
               value={status === 'all' ? 'Active' : status}
-              options={projectStatusFilterOptions.filter((o) => o.value !== 'all')}
+              options={projectStatusFilterOptions
+                .filter((o) => o.value !== 'all')
+                .map((o) => ({ value: o.value, label: t(o.labelKey) }))}
               onChange={(v) => setStatus(v as ProjectStatus)}
             />
             <FormInput
-              label="Amount Due"
-              placeholder="Enter amount"
+              label={t('companyProjects.amountDue')}
+              placeholder={t('companyProjects.amountPlaceholder')}
               type="number"
               value={amountDue}
               onChange={(e) => setAmountDue(e.target.value)}
@@ -150,23 +154,23 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
 
         {/* Timeline & Budget */}
         <div>
-          <h3 className="text-sm font-semibold mb-4 text-foreground">Timeline & Budget</h3>
+          <h3 className="text-sm font-semibold mb-4 text-foreground">{t('companyProjects.timelineBudget')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DatePicker
-              label="Start date"
+              label={t('companyProjects.startDate')}
               value={startDate}
               onChange={setStartDate}
             />
             <FormInput
-              label="Total Budget"
-              placeholder="Enter total budget"
+              label={t('companyProjects.totalBudget')}
+              placeholder={t('companyProjects.totalBudgetPlaceholder')}
               type="number"
               value={totalBudget}
               onChange={(e) => setTotalBudget(e.target.value)}
             />
             <FormInput
-              label="Amount Spent"
-              placeholder="Enter amount spent"
+              label={t('companyProjects.amountSpent')}
+              placeholder={t('companyProjects.amountSpentPlaceholder')}
               type="number"
               value={amountSpent}
               onChange={(e) => setAmountSpent(e.target.value)}
@@ -176,17 +180,17 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
 
         {/* Customer Contact */}
         <div>
-          <h3 className="text-sm font-semibold mb-4 text-foreground">Customer Contact</h3>
+          <h3 className="text-sm font-semibold mb-4 text-foreground">{t('companyProjects.customerContact')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
-              label="Customer name"
-              placeholder="enter customer name"
+              label={t('companyProjects.customer')}
+              placeholder={t('companyProjects.customerPlaceholder')}
               value={customer}
               onChange={(e) => setCustomer(e.target.value)}
             />
             <FormInput
-              label="Email"
-              placeholder="Enter email address"
+              label={t('common.email')}
+              placeholder={t('companyProjects.emailPlaceholder')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -197,8 +201,8 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
         {/* Project Description */}
         <div>
           <FormTextarea
-            label="Project Description"
-            placeholder="Enter project description..."
+            label={t('companyProjects.projectDescription')}
+            placeholder={t('companyProjects.projectDescriptionPlaceholder')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
@@ -209,7 +213,7 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
         <div className="flex justify-end gap-3 ">
         
           <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
-            Save Project
+            {t('companyProjects.saveProject')}
           </Button>
         </div>
       </form>

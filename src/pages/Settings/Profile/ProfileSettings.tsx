@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import { FormInput } from '@/components/common'
 import { toast } from '@/utils/toast'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -27,6 +28,7 @@ type ProfileFormData = z.infer<typeof profileSchema>
 export default function ProfileSettings() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [avatar, setAvatar] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Admin')
+  const { t } = useTranslation()
 
   const {
     register,
@@ -66,8 +68,8 @@ export default function ProfileSettings() {
     console.log('Profile data:', data)
     
     toast({
-      title: 'Profile Updated',
-      description: 'Your profile has been updated successfully.',
+      title: t('settings.profileUpdated'),
+      description: t('settings.profileUpdatedDesc'),
     })
     
     setIsSubmitting(false)
@@ -82,9 +84,9 @@ export default function ProfileSettings() {
     >
       <Card>
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
+          <CardTitle>{t('settings.profileInformation')}</CardTitle>
           <CardDescription>
-            Update your personal information and profile picture
+            {t('settings.updateProfileDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -111,9 +113,9 @@ export default function ProfileSettings() {
                 </label>
               </div>
               <div>
-                <h3 className="font-semibold">Profile Picture</h3>
+                <h3 className="font-semibold">{t('settings.profilePicture')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  JPG, PNG or WebP. Max size 5MB.
+                  {t('settings.imageHint')}
                 </p>
               </div>
             </div>
@@ -122,18 +124,18 @@ export default function ProfileSettings() {
 
             {/* Personal Information */}
             <div className="space-y-4">
-              <h3 className="font-semibold">Personal Information</h3>
+              <h3 className="font-semibold">{t('settings.personalInformation')}</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormInput
-                  label="First Name"
-                  placeholder="Enter first name"
+                  label={t('settings.firstName')}
+                  placeholder={t('settings.firstNamePlaceholder')}
                   error={errors.firstName?.message}
                   required
                   {...register('firstName')}
                 />
                 <FormInput
-                  label="Last Name"
-                  placeholder="Enter last name"
+                  label={t('settings.lastName')}
+                  placeholder={t('settings.lastNamePlaceholder')}
                   error={errors.lastName?.message}
                   required
                   {...register('lastName')}
@@ -141,16 +143,16 @@ export default function ProfileSettings() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormInput
-                  label="Email"
+                  label={t('settings.email')}
                   type="email"
-                  placeholder="Enter email"
+                  placeholder={t('settings.emailPlaceholder')}
                   error={errors.email?.message}
                   required
                   {...register('email')}
                 />
                 <FormInput
-                  label="Phone"
-                  placeholder="Enter phone number"
+                  label={t('settings.phone')}
+                  placeholder={t('settings.phonePlaceholder')}
                   error={errors.phone?.message}
                   required
                   {...register('phone')}
@@ -162,23 +164,23 @@ export default function ProfileSettings() {
 
             {/* Address Information */}
             <div className="space-y-4">
-              <h3 className="font-semibold">Address</h3>
+              <h3 className="font-semibold">{t('settings.addressSection')}</h3>
               <FormInput
-                label="Street Address"
-                placeholder="Enter street address"
+                label={t('settings.streetAddress')}
+                placeholder={t('settings.streetAddressPlaceholder')}
                 error={errors.address?.message}
                 {...register('address')}
               />
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormInput
-                  label="City"
-                  placeholder="Enter city"
+                  label={t('settings.city')}
+                  placeholder={t('settings.cityPlaceholder')}
                   error={errors.city?.message}
                   {...register('city')}
                 />
                 <FormInput
-                  label="Country"
-                  placeholder="Enter country"
+                  label={t('settings.country')}
+                  placeholder={t('settings.countryPlaceholder')}
                   error={errors.country?.message}
                   {...register('country')}
                 />
@@ -191,10 +193,10 @@ export default function ProfileSettings() {
 
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline">
-                Cancel
+                {t('settings.cancel')}
               </Button>
               <Button type="submit" isLoading={isSubmitting}>
-                Save Changes
+                {t('settings.saveChanges')}
               </Button>
             </div>
           </form>

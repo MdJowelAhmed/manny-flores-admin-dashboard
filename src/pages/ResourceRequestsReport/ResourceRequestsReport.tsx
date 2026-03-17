@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Pagination } from '@/components/common/Pagination'
@@ -17,6 +18,7 @@ import {
 import { toast } from '@/utils/toast'
 
 export default function ResourceRequestsReport() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab') || 'request'
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
@@ -88,13 +90,13 @@ export default function ResourceRequestsReport() {
         setRequests((prev) => prev.filter((rec) => rec.id !== requestToDelete.id))
         toast({
           variant: 'success',
-          title: 'Request Deleted',
-          description: 'Resource request has been removed.',
+          title: t('resourceRequests.requestDeleted'),
+          description: t('resourceRequests.requestRemoved'),
         })
         setIsConfirmOpen(false)
         setRequestToDelete(null)
       } catch {
-        toast({ title: 'Error', description: 'Failed to delete.', variant: 'destructive' })
+        toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' })
       } finally {
         setIsDeleting(false)
       }
@@ -106,13 +108,13 @@ export default function ResourceRequestsReport() {
         setReports((prev) => prev.filter((rec) => rec.id !== reportToDelete.id))
         toast({
           variant: 'success',
-          title: 'Report Deleted',
-          description: 'Resource report has been removed.',
+          title: t('resourceRequests.reportDeleted'),
+          description: t('resourceRequests.reportRemoved'),
         })
         setIsConfirmOpen(false)
         setReportToDelete(null)
       } catch {
-        toast({ title: 'Error', description: 'Failed to delete.', variant: 'destructive' })
+        toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' })
       } finally {
         setIsDeleting(false)
       }
@@ -135,10 +137,10 @@ export default function ResourceRequestsReport() {
           <div className="  pb-4">
             <TabsList className="h-[40px] bg-gray-100 p-1">
               <TabsTrigger value="request" className="px-5 py-2 text-sm data-[state=active]:bg-secondary data-[state=active]:text-white">
-                Request
+                {t('resourceRequests.request')}
               </TabsTrigger>
               <TabsTrigger value="report" className="px-5 py-2 text-sm data-[state=active]:bg-secondary data-[state=active]:text-white">
-                Report
+                {t('resourceRequests.report')}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -194,7 +196,7 @@ export default function ResourceRequestsReport() {
         onClose={() => setViewRequest(null)}
         record={viewRequest}
         onApproved={() =>
-          toast({ variant: 'success', title: 'Approved', description: 'Request approved.' })
+          toast({ variant: 'success', title: t('resourceRequests.approved'), description: t('resourceRequests.requestApproved') })
         }
       />
 
@@ -212,15 +214,10 @@ export default function ResourceRequestsReport() {
           setReportToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title={
-          requestToDelete ? 'Delete Resource Request' : 'Delete Resource Report'
-        }
-        description={
-          requestToDelete
-            ? 'Are you sure you want to delete this resource request? This action cannot be undone.'
-            : 'Are you sure you want to delete this report? This action cannot be undone.'
-        }
-        confirmText="Delete"
+        title={requestToDelete ? t('resourceRequests.deleteRequest') : t('resourceRequests.deleteReport')}
+        description={requestToDelete ? t('resourceRequests.deleteRequestConfirm') : t('resourceRequests.deleteReportConfirm')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeleting}
       />

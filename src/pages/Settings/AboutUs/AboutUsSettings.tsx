@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Info, Save, Eye } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -44,6 +45,7 @@ const defaultAboutUs = `<h1>About Us</h1>
 <p><em>If you have any questions about us, please contact us at <a href="mailto:info@example.com">info@example.com</a></em></p>`
 
 export default function AboutUsSettings() {
+  const { t } = useTranslation()
   const [aboutUs, setAboutUs] = useState(defaultAboutUs)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState('preview')
@@ -51,12 +53,11 @@ export default function AboutUsSettings() {
   const handleSave = async () => {
     setIsSubmitting(true)
 
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
     toast({
-      title: 'About Us Updated',
-      description: 'About Us content has been updated successfully.',
+      title: t('settings.aboutUsPage.updated'),
+      description: t('settings.aboutUsPage.updatedDesc'),
     })
 
     setIsSubmitting(false)
@@ -77,16 +78,14 @@ export default function AboutUsSettings() {
                 <Info className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>About Us</CardTitle>
-                <CardDescription>
-                  Manage your platform's About Us page
-                </CardDescription>
+                <CardTitle>{t('settings.aboutUsPage.title')}</CardTitle>
+                <CardDescription>{t('settings.aboutUsPage.description')}</CardDescription>
               </div>
             </div>
             <div className="flex gap-2">
               <Button onClick={handleSave} isLoading={isSubmitting} className="bg-primary text-white hover:bg-primary/80">
                 <Save className="h-4 w-4 mr-2" />
-                Save Changes
+                {t('settings.aboutUsPage.saveChanges')}
               </Button>
             </div>
           </div>
@@ -96,11 +95,11 @@ export default function AboutUsSettings() {
             <TabsList className="mb-4">
               <TabsTrigger value="edit" className="gap-2">
                 <Info className="h-4 w-4" />
-                Edit
+                {t('settings.aboutUsPage.edit')}
               </TabsTrigger>
               <TabsTrigger value="preview" className="gap-2">
                 <Eye className="h-4 w-4" />
-                Preview
+                {t('settings.aboutUsPage.preview')}
               </TabsTrigger>
             </TabsList>
 
@@ -108,7 +107,7 @@ export default function AboutUsSettings() {
               <TiptapEditor
                 content={aboutUs}
                 onChange={setAboutUs}
-                placeholder="Write your About Us content here..."
+                placeholder={t('settings.aboutUsPage.placeholder')}
                 className="min-h-[500px]"
               />
             </TabsContent>

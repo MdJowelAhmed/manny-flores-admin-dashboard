@@ -4,7 +4,6 @@ import userReducer from './slices/userSlice'
 import productReducer from './slices/productSlice'
 import categoryReducer from './slices/categorySlice'
 import uiReducer from './slices/uiSlice'
-import bookingReducer from './slices/bookingSlice'
 import carReducer from './slices/carSlice'
 import clientReducer from './slices/clientSlice'
 import agencyReducer from './slices/agencySlice'
@@ -29,7 +28,6 @@ export const store = configureStore({
     products: productReducer,
     categories: categoryReducer,
     ui: uiReducer,
-    bookings: bookingReducer,
     cars: carReducer,
     clients: clientReducer,
     agencies: agencyReducer,

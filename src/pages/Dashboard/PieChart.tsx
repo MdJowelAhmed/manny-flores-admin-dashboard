@@ -7,14 +7,18 @@ import {
     ResponsiveContainer,
 } from 'recharts'
 import { motion } from 'framer-motion'
-const projectStatusData = [
-    { name: 'Completed', value: 182, color: '#10B981' },
-    { name: 'Pending', value: 65, color: '#F59E0B' },
-    { name: 'Scheduled', value: 85, color: '#A855F7' },
-    { name: 'In Progress', value: 125, color: '#3B82F6' },
-]
+import { useTranslation } from 'react-i18next'
 
 export function PieChartComponent() {
+    const { t } = useTranslation()
+
+    const projectStatusData = [
+        { name: t('dashboard.completed'), value: 182, color: '#10B981' },
+        { name: t('dashboard.pending'), value: 65, color: '#F59E0B' },
+        { name: t('dashboard.scheduled'), value: 85, color: '#A855F7' },
+        { name: t('dashboard.inProgress'), value: 125, color: '#3B82F6' },
+    ]
+
     return (
        <motion.div
        initial={{ opacity: 0, y: 20 }}
@@ -24,8 +28,8 @@ export function PieChartComponent() {
        >
  <Card className="h-full border-none shadow-sm bg-white ">
             <CardHeader className="pb-0">
-                <CardTitle className="text-lg font-semibold text-gray-800">Project Status</CardTitle>
-                <p className="text-sm text-gray-400 mt-1">Current distribution</p>
+                <CardTitle className="text-lg font-semibold text-gray-800">{t('dashboard.projectStatus')}</CardTitle>
+                <p className="text-sm text-gray-400 mt-1">{t('dashboard.currentDistribution')}</p>
             </CardHeader>
             <CardContent>
                 <div className="h-[240px] w-full flex items-center justify-center mt-4">
@@ -68,19 +72,19 @@ export function PieChartComponent() {
                 <div className="grid grid-cols-2 gap-y-4 gap-x-8 w-fit mx-auto mt-6">
                     <div className="flex items-center gap-3">
                         <div className="w-4 h-4 rounded-sm bg-[#10B981]"></div>
-                        <span className="text-sm text-gray-600 font-medium">Completed</span>
+                        <span className="text-sm text-gray-600 font-medium">{t('dashboard.completed')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="w-4 h-4 rounded-sm bg-[#3B82F6]"></div>
-                        <span className="text-sm text-gray-600 font-medium">In Progress</span>
+                        <span className="text-sm text-gray-600 font-medium">{t('dashboard.inProgress')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="w-4 h-4 rounded-sm bg-[#A855F7]"></div>
-                        <span className="text-sm text-gray-600 font-medium">Scheduled</span>
+                        <span className="text-sm text-gray-600 font-medium">{t('dashboard.scheduled')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="w-4 h-4 rounded-sm bg-[#F59E0B]"></div>
-                        <span className="text-sm text-gray-600 font-medium">Pending</span>
+                        <span className="text-sm text-gray-600 font-medium">{t('dashboard.pending')}</span>
                     </div>
                 </div>
             </CardContent>

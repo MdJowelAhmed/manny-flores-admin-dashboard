@@ -1,31 +1,31 @@
 import { Monitor, FileText,  CheckCircle, Circle } from 'lucide-react'
 import type { Project } from '@/types'
 
-// Stats for the top section (Total Project, Active Project, Pending Project)
+// Stats for the top section - titleKey is used for i18n
 export const projectStats = [
   {
-    title: 'Total Project',
+    titleKey: 'companyProjects.totalProject' as const,
     value: 27,
     icon: Monitor,
     iconBgColor: 'bg-green-100',
     iconColor: 'text-green-600',
   },
   {
-    title: 'Active Project',
+    titleKey: 'companyProjects.activeProject' as const,
     value: 21,
     icon: FileText,
     iconBgColor: 'bg-purple-100',
     iconColor: 'text-purple-600',
   },
   {
-    title: 'Pending Project',
+    titleKey: 'companyProjects.pendingProject' as const,
     value: 6,
     icon: Circle,
     iconBgColor: 'bg-orange-100',
     iconColor: 'text-orange-600',
   },
   {
-    title: 'Completed Project',
+    titleKey: 'companyProjects.completedProject' as const,
     value: 10,
     icon: CheckCircle,
     iconBgColor: 'bg-green-100',
@@ -33,12 +33,12 @@ export const projectStats = [
   },
 ]
 
-// Filter options for project status
+// Filter options for project status - labelKey is used for i18n
 export const projectStatusFilterOptions = [
-  { value: 'all', label: 'All Status' },
-  { value: 'Active', label: 'Active' },
-  { value: 'Completed', label: 'Completed' },
-  { value: 'Pending', label: 'Pending' },
+  { value: 'all', labelKey: 'companyProjects.allStatus' as const },
+  { value: 'Active', labelKey: 'common.active' as const },
+  { value: 'Completed', labelKey: 'dashboard.completed' as const },
+  { value: 'Pending', labelKey: 'dashboard.pending' as const },
 ]
 
 // Payment method options for edit form

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
@@ -10,6 +11,7 @@ interface SafetyChecklistCardProps {
 }
 
 export function SafetyChecklistCard({ submission, onViewReport }: SafetyChecklistCardProps) {
+  const { t } = useTranslation()
   return (
     <Card className="rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -31,7 +33,7 @@ export function SafetyChecklistCard({ submission, onViewReport }: SafetyChecklis
           <p className="text-sm text-muted-foreground">{submission.supervisorRole}</p>
         </div>
         <div className="mt-3">
-          <p className="text-xs text-muted-foreground">Date Submitted</p>
+          <p className="text-xs text-muted-foreground">{t('dailySafetyReports.dateSubmitted')}</p>
           <p className="text-sm font-medium text-foreground mt-0.5">{submission.dateSubmitted}</p>
         </div>
       </CardContent>
@@ -41,7 +43,7 @@ export function SafetyChecklistCard({ submission, onViewReport }: SafetyChecklis
           className="bg-primary hover:bg-primary/90 text-white h-9"
           onClick={() => onViewReport(submission)}
         >
-          View Report
+          {t('dailySafetyReports.viewReport')}
         </Button>
       </CardFooter>
     </Card>

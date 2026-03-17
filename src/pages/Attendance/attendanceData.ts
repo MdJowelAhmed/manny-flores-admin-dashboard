@@ -16,28 +16,28 @@ export interface AttendanceRecord {
 
 export const attendanceStats = [
   {
-    title: 'Total Employee',
+    titleKey: 'attendance.totalEmployee' as const,
     value: 250,
     icon: Users,
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600',
   },
   {
-    title: 'Present Today',
+    titleKey: 'attendance.presentToday' as const,
     value: 167,
     icon: UserCheck,
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-600',
   },
   {
-    title: 'Absent Today',
+    titleKey: 'attendance.absentToday' as const,
     value: 42,
     icon: UserX,
     iconBg: 'bg-amber-100',
     iconColor: 'text-amber-600',
   },
   {
-    title: 'Late Arrivals',
+    titleKey: 'attendance.lateArrivals' as const,
     value: 15,
     icon: Clock,
     iconBg: 'bg-green-100',

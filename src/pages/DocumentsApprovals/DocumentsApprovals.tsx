@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { FileText, Clock, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,38 +12,15 @@ import {
 } from './documentsApprovalsData'
 import { cn } from '@/utils/cn'
 
-const statCards = [
-  {
-    title: 'Total Documents',
-    value: 'totalDocuments',
-    icon: FileText,
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-  },
-  {
-    title: 'Pending Approval',
-    value: 'pendingApproval',
-    icon: Clock,
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
-  },
-  {
-    title: 'Approved',
-    value: 'approved',
-    icon: Check,
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
-  },
-  {
-    title: 'Rejected',
-    value: 'rejected',
-    icon: X,
-    iconBg: 'bg-red-100',
-    iconColor: 'text-red-600',
-  },
+const statCardKeys = [
+  { titleKey: 'documentsApprovals.totalDocuments', value: 'totalDocuments', icon: FileText, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+  { titleKey: 'documentsApprovals.pendingApproval', value: 'pendingApproval', icon: Clock, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+  { titleKey: 'documentsApprovals.approved', value: 'approved', icon: Check, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+  { titleKey: 'documentsApprovals.rejected', value: 'rejected', icon: X, iconBg: 'bg-red-100', iconColor: 'text-red-600' },
 ]
 
 export default function DocumentsApprovals() {
+  const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [documents, setDocuments] = useState<DocumentEntry[]>(mockDocumentsData)
   const [selectedDoc, setSelectedDoc] = useState<DocumentEntry | null>(null)
@@ -89,12 +67,12 @@ export default function DocumentsApprovals() {
     >
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((card, index) => {
+        {statCardKeys.map((card, index) => {
           const Icon = card.icon
           const value = stats[card.value as keyof typeof stats]
           return (
             <motion.div
-              key={card.title}
+              key={card.titleKey}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -102,7 +80,7 @@ export default function DocumentsApprovals() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t(card.titleKey)}</p>
                   <h3 className="text-2xl font-bold text-foreground mt-1">{value}</h3>
                 </div>
                 <div className={cn('p-2.5 rounded-lg', card.iconBg)}>
@@ -117,11 +95,11 @@ export default function DocumentsApprovals() {
       {/* Project Status Section */}
       <div className="border-0">
         <div className="flex flex-row items-center justify-between gap-4 pb-4">
-          <h2 className="text-lg font-bold text-accent">Project Status</h2>
+          <h2 className="text-lg font-bold text-accent">{t('documentsApprovals.projectStatus')}</h2>
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Search documents...."
+            placeholder={t('documentsApprovals.searchDocuments')}
             className="w-[240px] bg-white"
             debounceMs={150}
           />
@@ -130,7 +108,7 @@ export default function DocumentsApprovals() {
         <div className="space-y-6">
           {filteredDocuments.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground text-sm">
-              No documents found
+              {t('documentsApprovals.noDocumentsFound')}
             </div>
           ) : (
             filteredDocuments.map((doc) => (
@@ -145,19 +123,19 @@ export default function DocumentsApprovals() {
                   <p className="text-sm text-muted-foreground mt-0.5">{doc.category}</p>
                   <div className="flex flex-wrap gap-x-6 gap-y-1 mt-5">
                     <div>
-                      <span className="text-xs text-muted-foreground block mb-1">Project</span>
+                      <span className="text-xs text-muted-foreground block mb-1">{t('documentsApprovals.project')}</span>
                       <span className="text-sm font-medium">{doc.project}</span>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground block mb-1">Upload Date</span>
+                      <span className="text-xs text-muted-foreground block mb-1">{t('documentsApprovals.uploadDateShort')}</span>
                       <span className="text-sm font-medium">{doc.uploadDate}</span>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground block mb-1">Uploaded By</span>
+                      <span className="text-xs text-muted-foreground block mb-1">{t('documentsApprovals.uploadedBy')}</span>
                       <span className="text-sm font-medium">{doc.uploadedBy}</span>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground block mb-1">Timeline</span>
+                      <span className="text-xs text-muted-foreground block mb-1">{t('common.timeline')}</span>
                       <span className="text-sm font-medium">{doc.timeline}</span>
                     </div>
                   </div>
@@ -170,7 +148,7 @@ export default function DocumentsApprovals() {
                     onClick={() => handleViewDetails(doc)}
                     className="text-sm   bg-secondary-foreground text-accent h-9"
                   >
-                    View details
+                    {t('documentsApprovals.viewDetails')}
                   </Button>
                   {doc.status === 'pending' && (
                     <>
@@ -180,7 +158,7 @@ export default function DocumentsApprovals() {
                         className="bg-gray-700 hover:bg-gray-800 text-white h-9"
                         onClick={(e) => handleApprove(doc, e)}
                       >
-                        Approve
+                        {t('documentsApprovals.approve')}
                       </Button>
                       <Button
                         size="sm"
@@ -188,7 +166,7 @@ export default function DocumentsApprovals() {
                         className="h-9  text-white"
                         onClick={(e) => handleReject(doc, e)}
                       >
-                        Reject
+                        {t('documentsApprovals.reject')}
                       </Button>
                     </>
                   )}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FileText, Save, Eye } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -49,21 +50,21 @@ const defaultTerms = `<h1>Terms and Conditions</h1>
 <p><em>If you have any questions about these Terms and Conditions, please contact us at <a href="mailto:legal@example.com">legal@example.com</a></em></p>`
 
 export default function TermsSettings() {
+  const { t } = useTranslation()
   const [terms, setTerms] = useState(defaultTerms)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState('preview')
 
   const handleSave = async () => {
     setIsSubmitting(true)
-    
-    // Simulate API call
+
     await new Promise((resolve) => setTimeout(resolve, 1500))
-    
+
     toast({
-      title: 'Terms Updated',
-      description: 'Terms and Conditions have been updated successfully.',
+      title: t('settings.termsPage.updated'),
+      description: t('settings.termsPage.updatedDesc'),
     })
-    
+
     setIsSubmitting(false)
   }
 
@@ -84,17 +85,14 @@ export default function TermsSettings() {
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>Terms & Conditions</CardTitle>
-                <CardDescription>
-                  Manage your platform's Terms and Conditions
-                </CardDescription>
+                <CardTitle>{t('settings.termsPage.title')}</CardTitle>
+                <CardDescription>{t('settings.termsPage.description')}</CardDescription>
               </div>
             </div>
             <div className="flex gap-2">
-            
               <Button onClick={handleSave} isLoading={isSubmitting} className="bg-primary text-white hover:bg-primary/80">
                 <Save className="h-4 w-4 mr-2" />
-                Save Changes
+                {t('settings.termsPage.saveChanges')}
               </Button>
             </div>
           </div>
@@ -104,11 +102,11 @@ export default function TermsSettings() {
             <TabsList className="mb-4">
               <TabsTrigger value="edit" className="gap-2">
                 <FileText className="h-4 w-4" />
-                Edit
+                {t('settings.termsPage.edit')}
               </TabsTrigger>
               <TabsTrigger value="preview" className="gap-2">
                 <Eye className="h-4 w-4" />
-                Preview
+                {t('settings.termsPage.preview')}
               </TabsTrigger>
             </TabsList>
 
@@ -116,7 +114,7 @@ export default function TermsSettings() {
               <TiptapEditor
                 content={terms}
                 onChange={setTerms}
-                placeholder="Write your terms and conditions here..."
+                placeholder={t('settings.termsPage.placeholder')}
                 className="min-h-[500px]"
               />
             </TabsContent>

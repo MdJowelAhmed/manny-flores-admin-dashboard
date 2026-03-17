@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import type { Equipment } from '@/types'
 import { toast } from '@/utils/toast'
 
 export default function EquipmentMaintenance() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get('search') ?? ''
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
@@ -140,8 +142,8 @@ export default function EquipmentMaintenance() {
       setEquipment((prev) => prev.filter((e) => e.id !== equipmentToDelete.id))
       toast({
         variant: 'success',
-        title: 'Equipment Deleted',
-        description: `${equipmentToDelete.equipmentName} has been removed.`,
+        title: t('equipmentMaintenance.equipmentDeleted'),
+        description: t('equipmentMaintenance.equipmentRemoved', { name: equipmentToDelete.equipmentName }),
       })
       setIsConfirmOpen(false)
       setEquipmentToDelete(null)
@@ -152,8 +154,8 @@ export default function EquipmentMaintenance() {
       }
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to delete equipment.',
+        title: t('common.error'),
+        description: t('equipmentMaintenance.failedToDelete'),
         variant: 'destructive',
       })
     } finally {
@@ -170,18 +172,18 @@ export default function EquipmentMaintenance() {
     >
       <div className="border-0">
         <div className="flex flex-row items-center justify-between pb-6">
-          <h2 className="text-xl font-bold text-accent">Track Equipment</h2>
+          <h2 className="text-xl font-bold text-accent">{t('equipmentMaintenance.trackEquipment')}</h2>
           <div className="flex items-center gap-3">
             <SearchInput
               value={searchQuery}
               onChange={setSearch}
-              placeholder="Search equipment..."
+              placeholder={t('equipmentMaintenance.searchEquipment')}
               className="w-[280px] bg-white"
               debounceMs={150}
             />
             <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-white">
               <Plus className="h-4 w-4 mr-2" />
-              Add Equipment
+              {t('equipmentMaintenance.addEquipment')}
             </Button>
           </div>
         </div>
@@ -237,9 +239,10 @@ export default function EquipmentMaintenance() {
           setEquipmentToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Equipment"
-        description={`Are you sure you want to delete "${equipmentToDelete?.equipmentName}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title={t('equipmentMaintenance.deleteEquipment')}
+        description={t('equipmentMaintenance.deleteEquipmentConfirm', { name: equipmentToDelete?.equipmentName ?? '' })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeleting}
       />

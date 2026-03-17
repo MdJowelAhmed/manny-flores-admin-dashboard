@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/utils/cn'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 
 const resetPasswordSchema = z.object({
   password: z
@@ -31,6 +32,7 @@ export default function ResetPassword() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const { t } = useTranslation()
 
   const {
     register,
@@ -44,10 +46,10 @@ export default function ResetPassword() {
   const password = watch('password', '')
 
   const passwordRequirements = [
-    { label: 'At least 8 characters', met: password.length >= 8 },
-    { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
-    { label: 'One lowercase letter', met: /[a-z]/.test(password) },
-    { label: 'One number', met: /[0-9]/.test(password) },
+    { label: t('auth.resetPassword.atLeast8Chars'), met: password.length >= 8 },
+    { label: t('auth.resetPassword.oneUppercase'), met: /[A-Z]/.test(password) },
+    { label: t('auth.resetPassword.oneLowercase'), met: /[a-z]/.test(password) },
+    { label: t('auth.resetPassword.oneNumber'), met: /[0-9]/.test(password) },
   ]
 
   const onSubmit = async (data: ResetPasswordFormData) => {
@@ -72,7 +74,7 @@ export default function ResetPassword() {
         <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
           <span className="text-primary-foreground font-bold text-xl">D</span>
         </div>
-        <span className="font-display font-bold text-2xl">Dashboard</span>
+        <span className="font-display font-bold text-2xl">{t('auth.dashboard')}</span>
       </div>
 
       <AnimatePresence mode="wait">
@@ -89,25 +91,25 @@ export default function ResetPassword() {
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t('auth.resetPassword.back')}
             </Link>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight">Set new password</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{t('auth.resetPassword.setNewPassword')}</h1>
               <p className="text-muted-foreground">
-                Your new password must be different from previous passwords.
+                {t('auth.resetPassword.description')}
               </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
+                <Label htmlFor="password">{t('auth.resetPassword.newPassword')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter new password"
+                    placeholder={t('auth.resetPassword.newPasswordPlaceholder')}
                     className={cn('pl-10 pr-10', errors.password && 'border-destructive')}
                     {...register('password')}
                   />
@@ -126,7 +128,7 @@ export default function ResetPassword() {
 
               {/* Password Requirements */}
               <div className="p-3 rounded-lg border bg-muted/30 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">Password Requirements</p>
+                <p className="text-xs font-medium text-muted-foreground">{t('auth.resetPassword.passwordRequirements')}</p>
                 <div className="grid grid-cols-2 gap-1">
                   {passwordRequirements.map((req) => (
                     <div
@@ -149,13 +151,13 @@ export default function ResetPassword() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{t('auth.resetPassword.confirmPassword')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm new password"
+                    placeholder={t('auth.resetPassword.confirmPasswordPlaceholder')}
                     className={cn('pl-10 pr-10', errors.confirmPassword && 'border-destructive')}
                     {...register('confirmPassword')}
                   />
@@ -175,7 +177,7 @@ export default function ResetPassword() {
               <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
                 {!isLoading && (
                   <>
-                    Reset Password
+                    {t('auth.resetPassword.resetPassword')}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
@@ -194,14 +196,14 @@ export default function ResetPassword() {
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight">Password reset successful</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{t('auth.resetPassword.passwordResetSuccessful')}</h1>
               <p className="text-muted-foreground">
-                Your password has been successfully reset. You can now log in with your new password.
+                {t('auth.resetPassword.successDescription')}
               </p>
             </div>
 
             <Button onClick={() => navigate('/auth/login')} className="w-full" size="lg">
-              Back to Login
+              {t('auth.resetPassword.backToLogin')}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </motion.div>
@@ -210,4 +212,3 @@ export default function ResetPassword() {
     </div>
   )
 }
-

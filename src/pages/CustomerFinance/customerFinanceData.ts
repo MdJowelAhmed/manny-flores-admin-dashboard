@@ -2,41 +2,17 @@ import { DollarSign, CreditCard, Wallet, TrendingUp } from 'lucide-react'
 import type { Project, } from '@/types'
 
 export const financeStats = [
-  {
-    title: 'Total Revenue',
-    value: 542300,
-    icon: DollarSign,
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-  },
-  {
-    title: 'Cash Payments',
-    value: 186500,
-    icon: CreditCard,
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600',
-  },
-  {
-    title: 'Financed Amount',
-    value: 355800,
-    icon: Wallet,
-    iconBg: 'bg-purple-200',
-    iconColor: 'text-purple-700',
-  },
-  {
-    title: 'Pending Payments',
-    value: 42100,
-    icon: TrendingUp,
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
-  },
+  { titleKey: 'customerFinance.totalRevenue' as const, value: 542300, icon: DollarSign, iconBg: 'bg-green-100', iconColor: 'text-green-600' },
+  { titleKey: 'customerFinance.cashPayments' as const, value: 186500, icon: CreditCard, iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
+  { titleKey: 'customerFinance.financedAmount' as const, value: 355800, icon: Wallet, iconBg: 'bg-purple-200', iconColor: 'text-purple-700' },
+  { titleKey: 'customerFinance.pendingPayments' as const, value: 42100, icon: TrendingUp, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
 ]
 
 export const projectStatusFilterOptions = [
-  { value: 'all', label: 'All Status' },
-  { value: 'Active', label: 'Active' },
-  { value: 'Completed', label: 'Completed' },
-  { value: 'Pending', label: 'Pending' },
+  { value: 'all', labelKey: 'customerFinance.allStatus' as const },
+  { value: 'Active', labelKey: 'common.active' as const },
+  { value: 'Completed', labelKey: 'dashboard.completed' as const },
+  { value: 'Pending', labelKey: 'dashboard.pending' as const },
 ]
 
 export const paymentMethodOptions = [

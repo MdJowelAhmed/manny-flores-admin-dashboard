@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { CreditCard,  } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ import { toast } from '@/utils/toast'
 import { cn } from '@/utils/cn'
 
 export default function PayrollManagement() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
@@ -130,13 +132,13 @@ export default function PayrollManagement() {
       setRecords((prev) => prev.filter((rec) => rec.id !== recordToDelete.id))
       toast({
         variant: 'success',
-        title: 'Record Deleted',
-        description: 'Payroll record has been removed.',
+        title: t('payrollManagement.recordDeleted'),
+        description: t('payrollManagement.recordRemoved'),
       })
       setIsConfirmOpen(false)
       setRecordToDelete(null)
     } catch {
-      toast({ title: 'Error', description: 'Failed to delete.', variant: 'destructive' })
+      toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' })
     } finally {
       setIsDeleting(false)
     }
@@ -155,7 +157,7 @@ export default function PayrollManagement() {
           const Icon = stat.icon
           return (
             <motion.div
-              key={stat.title}
+              key={stat.titleKey}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -163,7 +165,7 @@ export default function PayrollManagement() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t(stat.titleKey)}</p>
                   <h3 className="text-xl font-bold text-foreground mt-1">{stat.value}</h3>
                 </div>
                 <div className={cn('p-2.5 rounded-lg', stat.iconBg)}>
@@ -176,7 +178,7 @@ export default function PayrollManagement() {
       </div>
 
       <div className="flex items-center justify-between ">
-          <h2 className="text-base font-semibold text-accent">Employee Payroll Details</h2>
+          <h2 className="text-base font-semibold text-accent">{t('payrollManagement.employeePayrollDetails')}</h2>
           <Button
             size="sm"
             onClick={handleCreate}
@@ -185,7 +187,7 @@ export default function PayrollManagement() {
             <span className="flex items-center justify-center w-6 h-6 rounded mr-2">
               <CreditCard className="h-3.5 w-3.5" />
             </span>
-            Create Payment
+            {t('payrollManagement.createPayment')}
           </Button>
         </div>
 
@@ -241,9 +243,10 @@ export default function PayrollManagement() {
           setRecordToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Payroll Record"
-        description="Are you sure you want to delete this payroll record? This action cannot be undone."
-        confirmText="Delete"
+        title={t('payrollManagement.deletePayrollRecord')}
+        description={t('payrollManagement.deletePayrollRecordConfirm')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeleting}
       />

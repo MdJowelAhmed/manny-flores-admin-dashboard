@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,7 @@ type ReportTab = 'checklist' | 'incident'
 const DEFAULT_ITEMS_PER_PAGE = 10
 
 export default function DailySafetyReports() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<ReportTab>('checklist')
   const [checklistSubmissions, setChecklistSubmissions] = useState(mockSafetyChecklistSubmissions)
   const [incidentSubmissions] = useState(mockIncidentReportSubmissions)
@@ -134,7 +136,7 @@ export default function DailySafetyReports() {
                 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-gray-100'
               )}
             >
-              Daily Safety Checklist
+              {t('dailySafetyReports.dailySafetyChecklist')}
             </TabsTrigger>
             <TabsTrigger
               value="incident"
@@ -144,7 +146,7 @@ export default function DailySafetyReports() {
                 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-gray-100'
               )}
             >
-              Incident Report
+              {t('dailySafetyReports.incidentReport')}
             </TabsTrigger>
           </TabsList>
 
@@ -153,7 +155,7 @@ export default function DailySafetyReports() {
               className="bg-primary hover:bg-primary/90 text-white"
               onClick={handleViewTemplate}
             >
-              View Template
+              {t('dailySafetyReports.viewTemplate')}
             </Button>
          
           </div>
@@ -161,7 +163,7 @@ export default function DailySafetyReports() {
 
         {/* Recent Submissions */}
         <div className="mt-6">
-          <h2 className="text-base font-bold text-foreground mb-4">Recent Submissions</h2>
+          <h2 className="text-base font-bold text-foreground mb-4">{t('dailySafetyReports.recentSubmissions')}</h2>
 
           <TabsContent value="checklist" className="m-0">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -258,14 +260,10 @@ export default function DailySafetyReports() {
         onConfirm={() => {
           if (itemToDelete) handleDeleteTemplateItem(itemToDelete)
         }}
-        title="Delete template item?"
-        description={
-          itemToDelete
-            ? `Are you sure you want to delete "${itemToDelete.label}"? This action cannot be undone.`
-            : ''
-        }
-        confirmText="Delete"
-        cancelText="Cancel"
+        title={t('dailySafetyReports.deleteTemplateItem')}
+        description={itemToDelete ? t('dailySafetyReports.deleteTemplateConfirm', { label: itemToDelete.label }) : ''}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
         variant="danger"
       />
 

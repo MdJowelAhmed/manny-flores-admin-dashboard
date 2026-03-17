@@ -4,19 +4,19 @@ import type { SelectOption } from '@/types'
 
 export const employeeStats = [
   {
-    title: 'Total Employee',
+    titleKey: 'employeeManagement.totalEmployee' as const,
     icon: Users,
     iconBgColor: 'bg-blue-100',
     iconColor: 'text-blue-600',
   },
   {
-    title: 'Active Now',
+    titleKey: 'employeeManagement.activeNow' as const,
     icon: User,
     iconBgColor: 'bg-orange-100',
     iconColor: 'text-orange-600',
   },
   {
-    title: 'Absent',
+    titleKey: 'employeeManagement.absent' as const,
     icon: Calendar,
     iconBgColor: 'bg-green-100',
     iconColor: 'text-green-600',
