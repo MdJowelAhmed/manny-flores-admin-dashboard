@@ -120,7 +120,7 @@ export function Header() {
             <Menu className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-xl font-semibold text-accent">{pageTitle}</h1>
+            <h1 className="text-sm lg:text-xl font-semibold text-accent">{pageTitle}</h1>
             <p className="text-sm text-accent hidden sm:block">
               {t('header.welcomeBack')} {user?.firstName || 'Admin'}
             </p>
