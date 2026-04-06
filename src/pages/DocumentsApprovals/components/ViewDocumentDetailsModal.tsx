@@ -84,11 +84,11 @@ export function ViewDocumentDetailsModal({
       onClose={onClose}
       title={document.projectTitle}
       size="lg"
-      className="max-w-xl bg-white sm:rounded-2xl"
+      className="max-w-3xl bg-white "
       footer={
         <Button
           type="button"
-          className="w-full h-11 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+          className="w-full h-11 rounded-lg bg-primary hover:bg-primary/90 text-white gap-2"
           onClick={handleDownloadReport}
         >
           <Download className="h-4 w-4" />

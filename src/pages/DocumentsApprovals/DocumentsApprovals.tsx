@@ -116,7 +116,7 @@ export default function DocumentsApprovals() {
           <Button
             type="button"
             onClick={() => setIsUploadOpen(true)}
-            className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground h-11 gap-2"
+            className="rounded-lg bg-primary hover:bg-primary/90 text-white h-11 gap-2"
           >
             <Plus className="h-4 w-4" />
             {t('documentsApprovals.newUpload')}

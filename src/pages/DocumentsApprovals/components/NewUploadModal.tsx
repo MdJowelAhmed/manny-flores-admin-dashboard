@@ -102,7 +102,7 @@ export function NewUploadModal({ open, onClose, onCreated }: NewUploadModalProps
       onClose={onClose}
       title={t('documentsApprovals.newUpload')}
       size="lg"
-      className="max-w-lg bg-white sm:rounded-2xl"
+      className="max-w-3xl bg-white "
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-muted-foreground">{t('documentsApprovals.newUploadHint')}</p>
@@ -179,10 +179,8 @@ export function NewUploadModal({ open, onClose, onCreated }: NewUploadModalProps
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" className="rounded-lg" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button type="submit" className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground">
+       
+          <Button type="submit" className="rounded-lg bg-primary hover:bg-primary/90 text-white">
             {t('documentsApprovals.submitUpload')}
           </Button>
         </div>
