@@ -1,23 +1,41 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { FileText, Clock, Check, X } from 'lucide-react'
+import { Plus, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { SearchInput } from '@/components/common/SearchInput'
 import { ViewDocumentDetailsModal } from './components/ViewDocumentDetailsModal'
+import { NewUploadModal } from './components/NewUploadModal'
 import {
-  mockDocumentStats,
   mockDocumentsData,
+  documentCategoryFilterOptions,
   type DocumentEntry,
+  type DocumentTrailStatus,
 } from './documentsApprovalsData'
+import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 
-const statCardKeys = [
-  { titleKey: 'documentsApprovals.totalDocuments', value: 'totalDocuments', icon: FileText, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
-  { titleKey: 'documentsApprovals.pendingApproval', value: 'pendingApproval', icon: Clock, iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
-  { titleKey: 'documentsApprovals.approved', value: 'approved', icon: Check, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
-  { titleKey: 'documentsApprovals.rejected', value: 'rejected', icon: X, iconBg: 'bg-red-100', iconColor: 'text-red-600' },
-]
+function statusClass(status: DocumentTrailStatus): string {
+  switch (status) {
+    case 'review':
+      return 'text-orange-600 font-medium'
+    case 'signing':
+      return 'text-purple-600 font-medium'
+    case 'approved':
+      return 'text-primary font-medium'
+    case 'rejected':
+      return 'text-destructive font-medium'
+    default:
+      return 'text-foreground'
+  }
+}
 
 export default function DocumentsApprovals() {
   const { t } = useTranslation()
@@ -25,19 +43,24 @@ export default function DocumentsApprovals() {
   const [documents, setDocuments] = useState<DocumentEntry[]>(mockDocumentsData)
   const [selectedDoc, setSelectedDoc] = useState<DocumentEntry | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-
-  const stats = mockDocumentStats
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
   const filteredDocuments = useMemo(() => {
-    if (!searchQuery.trim()) return documents
-    const q = searchQuery.toLowerCase()
-    return documents.filter(
-      (d) =>
+    return documents.filter((d) => {
+      const matchesCategory =
+        categoryFilter === 'all' || d.documentCategory === categoryFilter
+      if (!matchesCategory) return false
+      if (!searchQuery.trim()) return true
+      const q = searchQuery.toLowerCase()
+      return (
         d.projectTitle.toLowerCase().includes(q) ||
-        d.category.toLowerCase().includes(q) ||
-        d.uploadedBy.toLowerCase().includes(q)
-    )
-  }, [documents, searchQuery])
+        d.documentTypeLabel.toLowerCase().includes(q) ||
+        d.uploadedBy.toLowerCase().includes(q) ||
+        d.projectName.toLowerCase().includes(q)
+      )
+    })
+  }, [documents, searchQuery, categoryFilter])
 
   const handleViewDetails = (doc: DocumentEntry) => {
     setSelectedDoc(doc)
@@ -49,13 +72,11 @@ export default function DocumentsApprovals() {
     setDocuments((prev) =>
       prev.map((d) => (d.id === doc.id ? { ...d, status: 'approved' as const } : d))
     )
+    setSelectedDoc((s) => (s?.id === doc.id ? { ...s, status: 'approved' } : s))
   }
 
-  const handleReject = (doc: DocumentEntry, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setDocuments((prev) =>
-      prev.map((d) => (d.id === doc.id ? { ...d, status: 'rejected' as const } : d))
-    )
+  const handleCreated = (doc: DocumentEntry) => {
+    setDocuments((prev) => [doc, ...prev])
   }
 
   return (
@@ -63,118 +84,139 @@ export default function DocumentsApprovals() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6"
+      className="space-y-6 min-h-[60vh]"
     >
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statCardKeys.map((card, index) => {
-          const Icon = card.icon
-          const value = stats[card.value as keyof typeof stats]
-          return (
-            <motion.div
-              key={card.titleKey}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="bg-white rounded-xl px-5 py-6 shadow-sm border border-gray-100"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{t(card.titleKey)}</p>
-                  <h3 className="text-2xl font-bold text-foreground mt-1">{value}</h3>
-                </div>
-                <div className={cn('p-2.5 rounded-lg', card.iconBg)}>
-                  <Icon className={cn('h-6 w-6', card.iconColor)} />
-                </div>
-              </div>
-            </motion.div>
-          )
-        })}
-      </div>
-
-      {/* Project Status Section */}
-      <div className="border-0">
-        <div className="flex flex-row items-center justify-between gap-4 pb-4">
-          <h2 className="text-lg font-bold text-accent">{t('documentsApprovals.projectStatus')}</h2>
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          {t('documentsApprovals.pageTitle')}
+        </h1>
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder={t('documentsApprovals.searchDocuments')}
-            className="w-[240px] bg-white"
+            className="w-full sm:w-[280px] bg-white rounded-lg border-gray-200"
             debounceMs={150}
           />
+          <div className="w-full sm:w-[200px]">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full bg-primary text-white hover:bg-primary/90 border-0 h-11 [&_svg]:text-white">
+                <SlidersHorizontal className="h-4 w-4 mr-2 shrink-0" />
+                <SelectValue placeholder={t('documentsApprovals.filterTitle')} />
+              </SelectTrigger>
+              <SelectContent>
+                {documentCategoryFilterOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {t(option.labelKey)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            type="button"
+            onClick={() => setIsUploadOpen(true)}
+            className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground h-11 gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {t('documentsApprovals.newUpload')}
+          </Button>
         </div>
+      </div>
 
-        <div className="space-y-6">
-          {filteredDocuments.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground text-sm">
-              {t('documentsApprovals.noDocumentsFound')}
-            </div>
-          ) : (
-            filteredDocuments.map((doc) => (
-              <motion.div
-                key={doc.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl shadow-sm bg-white border border-gray-100"
-              >
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-accent text-base truncate">{doc.projectTitle}</h4>
-                  <p className="text-sm text-muted-foreground mt-0.5">{doc.category}</p>
-                  <div className="flex flex-wrap gap-x-6 gap-y-1 mt-5">
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-1">{t('documentsApprovals.project')}</span>
-                      <span className="text-sm font-medium">{doc.project}</span>
+      <div className="w-full overflow-x-auto rounded-xl border border-gray-200/90 bg-white shadow-sm">
+        <table className="w-full min-w-[900px] border-collapse">
+          <thead>
+            <tr className="bg-muted/60 text-left">
+              <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-foreground/90">
+                {t('documentsApprovals.colDocumentProject')}
+              </th>
+              <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-foreground/90">
+                {t('documentsApprovals.version')}
+              </th>
+              <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-foreground/90">
+                {t('documentsApprovals.uploadedBy')}
+              </th>
+              <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-foreground/90">
+                {t('documentsApprovals.budget')}
+              </th>
+              <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-foreground/90">
+                {t('common.timeline')}
+              </th>
+              <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-foreground/90">
+                {t('documentsApprovals.statusLabel')}
+              </th>
+              <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wide text-foreground/90 text-right">
+                {t('common.actions')}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredDocuments.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="px-5 py-12 text-center text-muted-foreground text-sm"
+                >
+                  {t('documentsApprovals.noDocumentsFound')}
+                </td>
+              </tr>
+            ) : (
+              filteredDocuments.map((doc, index) => (
+                <motion.tr
+                  key={doc.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.02 }}
+                  className="border-t border-gray-100 bg-white hover:bg-muted/20"
+                >
+                  <td className="px-5 py-4 align-top">
+                    <div className="font-semibold text-foreground leading-snug max-w-[240px]">
+                      {doc.projectTitle}
                     </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-1">{t('documentsApprovals.uploadDateShort')}</span>
-                      <span className="text-sm font-medium">{doc.uploadDate}</span>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-1">{t('documentsApprovals.uploadedBy')}</span>
-                      <span className="text-sm font-medium">{doc.uploadedBy}</span>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-1">{t('common.timeline')}</span>
-                      <span className="text-sm font-medium">{doc.timeline}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewDetails(doc)}
-                    className="text-sm   bg-secondary-foreground text-accent h-9"
-                  >
-                    {t('documentsApprovals.viewDetails')}
-                  </Button>
-                  {doc.status === 'pending' && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="bg-gray-700 hover:bg-gray-800 text-white h-9"
-                        onClick={(e) => handleApprove(doc, e)}
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {doc.documentTypeLabel} • {doc.uploadDate}
+                    </p>
+                  </td>
+                  <td className="px-5 py-4 align-top text-sm font-medium text-foreground">
+                    {doc.version}
+                  </td>
+                  <td className="px-5 py-4 align-top text-sm text-foreground">{doc.uploadedBy}</td>
+                  <td className="px-5 py-4 align-top text-sm font-medium text-foreground">
+                    {formatCurrency(doc.budgetAmount)}
+                  </td>
+                  <td className="px-5 py-4 align-top text-sm text-foreground">{doc.timeline}</td>
+                  <td className="px-5 py-4 align-top">
+                    <span className={cn('text-sm', statusClass(doc.status))}>
+                      {t(`documentsApprovals.status.${doc.status}`)}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 align-top text-right">
+                    <div className="flex flex-wrap justify-end items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleViewDetails(doc)}
+                        className="text-sm font-medium text-primary hover:underline"
                       >
-                        {t('documentsApprovals.approve')}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="h-9  text-white"
-                        onClick={(e) => handleReject(doc, e)}
-                      >
-                        {t('documentsApprovals.reject')}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            ))
-          )}
-        </div>
+                        {t('documentsApprovals.viewDetails')}
+                      </button>
+                      {doc.status === 'review' && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-8 rounded-lg bg-zinc-800 hover:bg-zinc-900 text-white"
+                          onClick={(e) => handleApprove(doc, e)}
+                        >
+                          {t('documentsApprovals.approve')}
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </motion.tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       <ViewDocumentDetailsModal
@@ -184,6 +226,12 @@ export default function DocumentsApprovals() {
           setSelectedDoc(null)
         }}
         document={selectedDoc}
+      />
+
+      <NewUploadModal
+        open={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        onCreated={handleCreated}
       />
     </motion.div>
   )

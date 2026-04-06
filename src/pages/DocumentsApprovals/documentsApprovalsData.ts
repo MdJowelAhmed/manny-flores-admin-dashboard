@@ -1,113 +1,151 @@
-export type DocumentStatus = 'pending' | 'approved' | 'rejected'
+export type DocumentTrailStatus = 'review' | 'signing' | 'approved' | 'rejected'
+
+export type DocumentCategoryFilter =
+  | 'customer_contract'
+  | 'financial_loan'
+  | 'project_documentation'
+
+export interface AuditTrailEntry {
+  title: string
+  by: string
+  date: string
+}
 
 export interface DocumentEntry {
   id: string
+  /** Table / modal title */
   projectTitle: string
-  category: string
-  project: string
+  /** e.g. Customer Contract — used in subtitle */
+  documentTypeLabel: string
+  documentCategory: DocumentCategoryFilter
   uploadDate: string
+  version: string
   uploadedBy: string
+  budgetAmount: number
   timeline: string
-  status: DocumentStatus
-  customer: string
-  email: string
-  company: string
+  status: DocumentTrailStatus
+  /** Modal subtitle under title */
+  modalSubtitle: string
   projectName: string
   startDate: string
-  totalBudget: number
-  amountSpent: number
-  duration: string
-  remaining: number
-  description: string
+  auditTrail: AuditTrailEntry[]
 }
 
-export const mockDocumentStats = {
-  totalDocuments: 248,
-  pendingApproval: 7,
-  approved: 215,
-  rejected: 25,
-}
+export const DOCUMENT_CATEGORY_FILTERS: DocumentCategoryFilter[] = [
+  'customer_contract',
+  'financial_loan',
+  'project_documentation',
+]
+
+/** Select filter options — same pattern as Company Projects */
+export const documentCategoryFilterOptions = [
+  { value: 'all', labelKey: 'documentsApprovals.filterAll' as const },
+  {
+    value: 'customer_contract',
+    labelKey: 'documentsApprovals.filterCategories.customer_contract' as const,
+  },
+  {
+    value: 'financial_loan',
+    labelKey: 'documentsApprovals.filterCategories.financial_loan' as const,
+  },
+  {
+    value: 'project_documentation',
+    labelKey: 'documentsApprovals.filterCategories.project_documentation' as const,
+  },
+] as const
 
 export const mockDocumentsData: DocumentEntry[] = [
   {
     id: 'doc-1',
     projectTitle: 'Residential Backyard Renovation',
-    category: 'Garden Design & Installation',
-    project: 'Backyard Renovation',
+    documentTypeLabel: 'Customer Contract',
+    documentCategory: 'customer_contract',
     uploadDate: 'Feb 18, 2026',
-    uploadedBy: 'John Davis',
-    timeline: '8 weeks',
-    status: 'pending',
-    customer: 'John Smith',
-    email: 'john.smith@email.com',
-    company: 'Smith & Co',
+    version: 'v2.1',
+    uploadedBy: 'Mike Ross',
+    budgetAmount: 880,
+    timeline: '12 months',
+    status: 'review',
+    modalSubtitle: 'Customer Contract',
     projectName: 'Residential Backyard Renovation',
-    startDate: 'Feb 1, 2026',
-    totalBudget: 45000,
-    amountSpent: 28500,
-    duration: '8 weeks',
-    remaining: 16500,
-    description:
-      'Complete backyard renovation including new patio installation, landscaping with native plants, and a custom pergola. The project will transform the existing lawn into a modern outdoor living space with sustainable materials.',
+    startDate: 'January 15, 2026',
+    auditTrail: [
+      {
+        title: 'Document Uploaded (v2.1)',
+        by: 'Mike Ross',
+        date: 'Feb 10, 2026',
+      },
+    ],
   },
   {
     id: 'doc-2',
-    projectTitle: 'Office Building Facade Upgrade',
-    category: 'Commercial Renovation',
-    project: 'Facade Upgrade',
-    uploadDate: 'Feb 15, 2026',
-    uploadedBy: 'Sarah Miller',
-    timeline: '12 weeks',
+    projectTitle: 'Permit: Springfield North Utility',
+    documentTypeLabel: 'Project Documentation',
+    documentCategory: 'project_documentation',
+    uploadDate: 'Feb 12, 2026',
+    version: 'v3.0',
+    uploadedBy: 'Mike Ross',
+    budgetAmount: 500,
+    timeline: '6 months',
     status: 'approved',
-    customer: 'ABC Corp',
-    email: 'contact@abccorp.com',
-    company: 'ABC Corporation',
-    projectName: 'Office Building Facade Upgrade',
-    startDate: 'Jan 20, 2026',
-    totalBudget: 125000,
-    amountSpent: 45000,
-    duration: '12 weeks',
-    remaining: 80000,
-    description: 'Modernization of the building exterior with energy-efficient windows and improved insulation.',
+    modalSubtitle: 'Project Documentation',
+    projectName: 'Springfield North Utility',
+    startDate: 'January 15, 2026',
+    auditTrail: [
+      {
+        title: 'Document Uploaded (v2.1)',
+        by: 'Mike Ross',
+        date: 'Feb 10, 2026',
+      },
+      {
+        title: 'Version updated (v3.0)',
+        by: 'Mike Ross',
+        date: 'Feb 12, 2026',
+      },
+    ],
   },
   {
     id: 'doc-3',
-    projectTitle: 'Kitchen Remodel – Downtown Apartment',
-    category: 'Interior Renovation',
-    project: 'Kitchen Remodel',
-    uploadDate: 'Feb 12, 2026',
-    uploadedBy: 'Mike Johnson',
-    timeline: '4 weeks',
-    status: 'approved',
-    customer: 'Emily Brown',
-    email: 'emily.brown@email.com',
-    company: 'N/A',
-    projectName: 'Kitchen Remodel – Downtown Apartment',
-    startDate: 'Feb 5, 2026',
-    totalBudget: 25000,
-    amountSpent: 12000,
-    duration: '4 weeks',
-    remaining: 13000,
-    description: 'Full kitchen renovation with custom cabinets and granite countertops.',
+    projectTitle: 'Office Park Financing',
+    documentTypeLabel: 'Financial/Loan Docs',
+    documentCategory: 'financial_loan',
+    uploadDate: 'Feb 8, 2026',
+    version: 'v1.0',
+    uploadedBy: 'Sarah Miller',
+    budgetAmount: 125000,
+    timeline: '18 months',
+    status: 'signing',
+    modalSubtitle: 'Financial/Loan Docs',
+    projectName: 'Office Park Financing',
+    startDate: 'Feb 1, 2026',
+    auditTrail: [
+      {
+        title: 'Document Uploaded (v1.0)',
+        by: 'Sarah Miller',
+        date: 'Feb 5, 2026',
+      },
+    ],
   },
   {
     id: 'doc-4',
     projectTitle: 'Warehouse Floor Coating',
-    category: 'Industrial Maintenance',
-    project: 'Floor Coating',
-    uploadDate: 'Feb 10, 2026',
+    documentTypeLabel: 'Customer Contract',
+    documentCategory: 'customer_contract',
+    uploadDate: 'Feb 5, 2026',
+    version: 'v1.2',
     uploadedBy: 'Tom Wilson',
-    timeline: '2 weeks',
-    status: 'rejected',
-    customer: 'Logistics Inc',
-    email: 'ops@logistics.com',
-    company: 'Logistics Inc',
+    budgetAmount: 3500,
+    timeline: '2 months',
+    status: 'approved',
+    modalSubtitle: 'Customer Contract',
     projectName: 'Warehouse Floor Coating',
-    startDate: 'Feb 8, 2026',
-    totalBudget: 35000,
-    amountSpent: 0,
-    duration: '2 weeks',
-    remaining: 35000,
-    description: 'Epoxy floor coating for warehouse facility to improve durability.',
+    startDate: 'Jan 28, 2026',
+    auditTrail: [
+      {
+        title: 'Document Uploaded (v1.2)',
+        by: 'Tom Wilson',
+        date: 'Feb 1, 2026',
+      },
+    ],
   },
 ]
