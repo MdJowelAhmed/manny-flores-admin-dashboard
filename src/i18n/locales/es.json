@@ -204,6 +204,7 @@
     "progress": "Progreso",
     "projectPlan": "Plan del proyecto",
     "downloadPlan": "Descargar plan",
+    "removePlan": "Eliminar plan",
     "noPlansYet": "Aún no hay planes de proyecto.",
     "description": "Descripción"
   },

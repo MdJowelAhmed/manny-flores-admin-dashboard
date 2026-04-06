@@ -16,7 +16,8 @@ import { useTranslation } from 'react-i18next'
 
 export function RecentActivityCard() {
     const navigate = useNavigate()
-    const { projects, addPlanFiles, removeProject } = useRecentProjects()
+    const { projects, addPlanFiles, removePlanFile, removeProject } =
+        useRecentProjects()
     const [showViewModal, setShowViewModal] = useState(false)
     const [showPlanModal, setShowPlanModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -135,23 +136,15 @@ export function RecentActivityCard() {
                                             {project.value}
                                         </td>
                                         <td className="px-6 py-5">
-                                            {(project.planFiles?.length ?? 0) > 0 ? (
-                                                <button
-                                                    type="button"
-                                                    disabled
-                                                    className="rounded-md border border-gray-200 bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-not-allowed"
-                                                >
-                                                    {t('dashboard.planUploaded')}
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleUploadPlan(project)}
-                                                    className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
-                                                >
-                                                    {t('dashboard.uploadPlan')}
-                                                </button>
-                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleUploadPlan(project)}
+                                                className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
+                                            >
+                                                {(project.planFiles?.length ?? 0) > 0
+                                                    ? t('dashboard.planUploaded')
+                                                    : t('dashboard.uploadPlan')}
+                                            </button>
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
@@ -192,6 +185,12 @@ export function RecentActivityCard() {
                     setSelectedProject(null)
                 }}
                 project={resolvedViewProject}
+                onRemovePlanFile={
+                    resolvedViewProject
+                        ? (planFileId) =>
+                              removePlanFile(resolvedViewProject.id, planFileId)
+                        : undefined
+                }
             />
 
             <ProjectPlanUploadModal

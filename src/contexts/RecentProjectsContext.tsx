@@ -21,6 +21,7 @@ function cloneProjects(data: RecentProject[]): RecentProject[] {
 interface RecentProjectsContextValue {
   projects: RecentProject[]
   addPlanFiles: (projectId: string, files: File[]) => void
+  removePlanFile: (projectId: string, planFileId: string) => void
   removeProject: (projectId: string) => void
 }
 
@@ -51,6 +52,20 @@ export function RecentProjectsProvider({ children }: { children: ReactNode }) {
     )
   }, [])
 
+  const removePlanFile = useCallback((projectId: string, planFileId: string) => {
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id !== projectId) return p
+        const plan = p.planFiles?.find((f) => f.id === planFileId)
+        if (plan?.blobUrl) URL.revokeObjectURL(plan.blobUrl)
+        return {
+          ...p,
+          planFiles: p.planFiles?.filter((f) => f.id !== planFileId) ?? [],
+        }
+      })
+    )
+  }, [])
+
   const removeProject = useCallback((projectId: string) => {
     setProjects((prev) => {
       const removed = prev.find((p) => p.id === projectId)
@@ -62,8 +77,8 @@ export function RecentProjectsProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ projects, addPlanFiles, removeProject }),
-    [projects, addPlanFiles, removeProject]
+    () => ({ projects, addPlanFiles, removePlanFile, removeProject }),
+    [projects, addPlanFiles, removePlanFile, removeProject]
   )
 
   return (

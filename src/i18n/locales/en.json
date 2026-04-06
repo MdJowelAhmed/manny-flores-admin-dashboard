@@ -204,6 +204,7 @@
     "progress": "Progress",
     "projectPlan": "Project plan",
     "downloadPlan": "Download plan",
+    "removePlan": "Remove plan",
     "noPlansYet": "No project plans uploaded yet.",
     "description": "Description"
   },

@@ -16,7 +16,8 @@ import {
 
 export default function RecentProjects() {
   const { t } = useTranslation()
-  const { projects, addPlanFiles, removeProject } = useRecentProjects()
+  const { projects, addPlanFiles, removePlanFile, removeProject } =
+    useRecentProjects()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = Math.max(
     1,
@@ -166,23 +167,15 @@ export default function RecentProjects() {
                       {project.value}
                     </td>
                     <td className="px-6 py-5">
-                      {(project.planFiles?.length ?? 0) > 0 ? (
-                        <button
-                          type="button"
-                          disabled
-                          className="rounded-md border border-gray-200 bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-not-allowed"
-                        >
-                          {t('recentProjectsPage.planUploaded')}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleUploadPlan(project)}
-                          className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
-                        >
-                          {t('recentProjectsPage.uploadPlan')}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleUploadPlan(project)}
+                        className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
+                      >
+                        {(project.planFiles?.length ?? 0) > 0
+                          ? t('recentProjectsPage.planUploaded')
+                          : t('recentProjectsPage.uploadPlan')}
+                      </button>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
@@ -229,6 +222,12 @@ export default function RecentProjects() {
           setSelectedProject(null)
         }}
         project={resolvedViewProject}
+        onRemovePlanFile={
+          resolvedViewProject
+            ? (planFileId) =>
+                removePlanFile(resolvedViewProject.id, planFileId)
+            : undefined
+        }
       />
 
       <ProjectPlanUploadModal

@@ -1,6 +1,5 @@
-import { Briefcase, Download, FileText, Info } from 'lucide-react'
+import { Briefcase, Download, FileText, Info, Trash2 } from 'lucide-react'
 import { ModalWrapper } from '@/components/common'
-import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import type { RecentProject } from '../recentProjectsData'
 import { cn } from '@/utils/cn'
@@ -12,6 +11,8 @@ interface ProjectViewDetailsModalProps {
   open: boolean
   onClose: () => void
   project: RecentProject | null
+  /** When set, each plan row shows a delete control to remove that file */
+  onRemovePlanFile?: (planFileId: string) => void
 }
 
 function DetailRow({
@@ -33,6 +34,7 @@ export function ProjectViewDetailsModal({
   open,
   onClose,
   project,
+  onRemovePlanFile,
 }: ProjectViewDetailsModalProps) {
   const { t } = useTranslation()
 
@@ -54,7 +56,7 @@ export function ProjectViewDetailsModal({
         <p className="text-sm text-muted-foreground -mt-2">{project.project}</p>
 
         <div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-1">
             <div className="p-1.5 rounded bg-green-100">
               <FileText className="h-4 w-4 text-green-600" />
             </div>
@@ -72,10 +74,10 @@ export function ProjectViewDetailsModal({
           </div>
         </div>
 
-        <Separator />
+      
 
         <div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-1">
             <div className="p-1.5 rounded bg-green-100">
               <FileText className="h-4 w-4 text-green-600" />
             </div>
@@ -105,10 +107,10 @@ export function ProjectViewDetailsModal({
           </div>
         </div>
 
-        <Separator />
+     
 
         <div>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-1">
             <div className="p-1.5 rounded bg-green-100">
               <Briefcase className="h-4 w-4 text-green-600" />
             </div>
@@ -130,16 +132,30 @@ export function ProjectViewDetailsModal({
                   <span className="text-sm font-medium text-foreground truncate min-w-0">
                     {plan.name}
                   </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0 text-gray-500 hover:text-gray-800"
-                    aria-label={t('projectDetailsModal.downloadPlan')}
-                    onClick={() => downloadProjectPlanFile(plan)}
-                  >
-                    <Download className="h-5 w-5" />
-                  </Button>
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-gray-500 hover:text-gray-800"
+                      aria-label={t('projectDetailsModal.downloadPlan')}
+                      onClick={() => downloadProjectPlanFile(plan)}
+                    >
+                      <Download className="h-5 w-5" />
+                    </Button>
+                    {onRemovePlanFile && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-400 hover:text-red-600"
+                        aria-label={t('projectDetailsModal.removePlan')}
+                        onClick={() => onRemovePlanFile(plan.id)}
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -148,9 +164,9 @@ export function ProjectViewDetailsModal({
 
         {project.description && (
           <>
-            <Separator />
+            
             <div>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-1">
                 <div
                   className={cn(
                     'p-1.5 rounded-full bg-green-100 flex items-center justify-center'
