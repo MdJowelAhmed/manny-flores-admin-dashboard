@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { RefreshCw, Smartphone, Bell } from 'lucide-react'
+import { RefreshCw, Smartphone, Bell, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { ReviewCard } from './components/ReviewCard'
@@ -183,7 +183,7 @@ export default function ReviewList() {
           <div className="flex items-start justify-between gap-3">
             <div className="flex gap-3 w-full">
               <div className="h-11 w-11 rounded-lg bg-blue-500/20 flex items-center justify-center text-lg font-bold text-blue-300">
-                G
+                <Search className="h-5 w-5 text-blue-300" />
               </div>
               <div className="flex justify-between items-center w-full">
                 <h3 className="font-semibold text-white">{t('reviews.gmbTitle')}</h3>
