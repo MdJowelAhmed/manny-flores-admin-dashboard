@@ -143,7 +143,7 @@ export default function ReviewList() {
         ))}
       </div>
 
-      <AutomationBanner />
+      {/* <AutomationBanner /> */}
 
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">
@@ -181,13 +181,13 @@ export default function ReviewList() {
       <div className="grid gap-4 lg:grid-cols-2 pt-2">
         <div className="rounded-xl bg-slate-900 text-white p-5 sm:p-6 shadow-md border border-slate-800">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex gap-3">
+            <div className="flex gap-3 w-full">
               <div className="h-11 w-11 rounded-lg bg-blue-500/20 flex items-center justify-center text-lg font-bold text-blue-300">
                 G
               </div>
-              <div>
+              <div className="flex justify-between items-center w-full">
                 <h3 className="font-semibold text-white">{t('reviews.gmbTitle')}</h3>
-                <span className="inline-block mt-2 text-xs font-bold px-2 py-0.5 rounded bg-primary text-primary-foreground">
+                <span className="inline-block mt-2 text-xs font-bold px-2 py-1 rounded bg-primary text-white">
                   {t('reviews.gmbConnected')}
                 </span>
               </div>

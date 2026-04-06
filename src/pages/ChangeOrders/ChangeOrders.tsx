@@ -97,7 +97,7 @@ export default function ChangeOrders() {
           />
           <div className="w-full sm:w-[140px] shrink-0">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 border-0 [&_svg]:text-primary-foreground">
+              <SelectTrigger className="w-full h-11 bg-primary text-white hover:bg-primary/90 border-0 [&_svg]:text-white">
                 <SlidersHorizontal className="h-4 w-4 mr-2 shrink-0" />
                 <SelectValue placeholder={t('changeOrders.filter')} />
               </SelectTrigger>
@@ -113,7 +113,7 @@ export default function ChangeOrders() {
           <Button
             type="button"
             onClick={() => setIsNewOrderOpen(true)}
-            className="h-11 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+            className="h-11 rounded-lg bg-primary hover:bg-primary/90 text-white gap-2"
           >
             <Plus className="h-4 w-4" />
             {t('changeOrders.newOrder')}

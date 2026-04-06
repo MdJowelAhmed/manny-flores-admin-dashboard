@@ -49,7 +49,7 @@ export function ReviewCard({ review, onApprovePush, onRejectInternal, onFollowUp
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-bold text-foreground">{review.customerName}</h3>
             {review.projectId && (
-              <span className="text-xs font-medium text-muted-foreground px-2 py-0.5 rounded-md bg-muted">
+              <span className="text-xs font-medium text-muted-foreground px-2 py-0.5 rounded-md bg-secondary-foreground">
                 {review.projectId}
               </span>
             )}
@@ -74,7 +74,7 @@ export function ReviewCard({ review, onApprovePush, onRejectInternal, onFollowUp
               <Button
                 type="button"
                 size="sm"
-                className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 h-9 sm:h-10"
+                className="rounded-lg bg-primary hover:bg-primary/90 text-white gap-1.5 h-9 sm:h-10"
                 onClick={onApprovePush}
               >
                 <ThumbsUp className="h-3.5 w-3.5" />

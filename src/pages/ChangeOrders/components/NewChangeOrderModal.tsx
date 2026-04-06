@@ -114,7 +114,7 @@ export function NewChangeOrderModal({ open, onClose, onCreate }: NewChangeOrderM
       onClose={onClose}
       title={t('changeOrders.newChangeOrder')}
       size="xl"
-      className="max-w-2xl bg-white sm:rounded-2xl"
+      className="max-w-3xl bg-white "
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-1.5">
@@ -228,10 +228,10 @@ export function NewChangeOrderModal({ open, onClose, onCreate }: NewChangeOrderM
         </div>
 
         <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
-          <Button type="button" variant="outline" className="rounded-lg border-gray-200" onClick={onClose}>
+          {/* <Button type="button" variant="outline" className="rounded-lg border-gray-200" onClick={onClose}>
             {t('common.cancel')}
-          </Button>
-          <Button type="submit" className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground">
+          </Button> */}
+          <Button type="submit" className="rounded-lg bg-primary hover:bg-primary/90 text-white">
             {t('changeOrders.generateChangeOrder')}
           </Button>
         </div>

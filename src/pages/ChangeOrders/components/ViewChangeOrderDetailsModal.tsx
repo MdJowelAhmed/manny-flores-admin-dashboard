@@ -32,7 +32,7 @@ function DetailRow({
   valueClassName?: string
 }) {
   return (
-    <div className="flex justify-between items-start gap-4 py-2.5 border-b border-gray-100 last:border-0">
+    <div className="flex justify-between items-start gap-4 py-2.5  last:border-0">
       <span className="text-sm text-muted-foreground shrink-0">{label}:</span>
       <span className={cn('text-sm font-medium text-foreground text-right', valueClassName)}>
         {typeof value === 'number' ? formatCurrency(value) : value}
@@ -93,15 +93,13 @@ export function ViewChangeOrderDetailsModal({
       title={order.orderId}
       description={t('changeOrders.detailsSubtitle')}
       size="xl"
-      className="max-w-2xl bg-white sm:rounded-2xl"
+      className="max-w-3xl bg-white "
       footer={
         <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full">
-          <Button type="button" variant="outline" className="rounded-lg border-gray-200" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
+       
           <Button
             type="button"
-            className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="rounded-lg bg-primary hover:bg-primary/90 text-white"
             onClick={handleSendToClient}
           >
             {t('changeOrders.sendToClient')}
@@ -112,7 +110,7 @@ export function ViewChangeOrderDetailsModal({
       <div className="space-y-6 -mt-1">
         <div>
           <SectionHeader icon={CalendarDays} title={t('changeOrders.sectionProjectInfo')} />
-          <div className="rounded-xl border border-gray-100 bg-muted/20 px-4">
+          <div className="rounded-xl  bg-muted/20 px-4">
             <DetailRow label={t('changeOrders.projectName')} value={order.projectName} />
             <DetailRow label={t('changeOrders.projectId')} value={order.projectId} />
             <DetailRow label={t('changeOrders.siteAddress')} value={order.siteAddress} />
@@ -122,7 +120,7 @@ export function ViewChangeOrderDetailsModal({
 
         <div>
           <SectionHeader icon={CircleDollarSign} title={t('changeOrders.sectionFinancialImpact')} />
-          <div className="rounded-xl border border-gray-100 bg-muted/20 px-4">
+          <div className="rounded-xl  bg-muted/20 px-4">
             <DetailRow label={t('changeOrders.originalCost')} value={order.originalCost} />
             <DetailRow
               label={t('changeOrders.additionalCost')}
@@ -139,7 +137,7 @@ export function ViewChangeOrderDetailsModal({
 
         <div>
           <SectionHeader icon={User} title={t('changeOrders.sectionCustomerInfo')} />
-          <div className="rounded-xl border border-gray-100 bg-muted/20 px-4">
+          <div className="rounded-xl  bg-muted/20 px-4">
             <DetailRow label={t('changeOrders.customerName')} value={order.customerName} />
             <DetailRow label={t('changeOrders.contactNumber')} value={order.contactNumber} />
             <DetailRow label={t('changeOrders.emailField')} value={order.email} />
@@ -149,7 +147,7 @@ export function ViewChangeOrderDetailsModal({
 
         <div>
           <SectionHeader icon={Info} title={t('changeOrders.reasonForChange')} />
-          <p className="text-sm text-muted-foreground leading-relaxed rounded-xl border border-gray-100 bg-white px-4 py-3">
+          <p className="text-sm text-muted-foreground leading-relaxed rounded-xl  bg-white px-4 py-3">
             {order.reasonForChange}
           </p>
         </div>
@@ -157,7 +155,7 @@ export function ViewChangeOrderDetailsModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <SectionHeader icon={Paperclip} title={t('changeOrders.attachments')} />
-            <div className="rounded-xl border border-gray-100 bg-white divide-y divide-gray-100">
+            <div className="rounded-xl  bg-white divide-y divide-gray-100">
               {order.attachments.length === 0 ? (
                 <p className="text-sm text-muted-foreground px-4 py-3">{t('changeOrders.noAttachments')}</p>
               ) : (

@@ -63,15 +63,12 @@ export function FollowUpModal({ open, onClose, review }: FollowUpModalProps) {
         name: review.customerName.toUpperCase(),
       })}
       size="lg"
-      className="max-w-lg bg-white sm:rounded-2xl"
+      className="max-w-xl bg-white "
       footer={
         <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full">
-          <Button type="button" variant="outline" className="rounded-lg border-gray-200" onClick={onClose}>
-            {t('reviews.discard')}
-          </Button>
           <Button
             type="button"
-            className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+            className="rounded-lg bg-primary hover:bg-primary/90 text-white gap-2"
             onClick={handleSend}
           >
             <Send className="h-4 w-4" />
@@ -81,7 +78,7 @@ export function FollowUpModal({ open, onClose, review }: FollowUpModalProps) {
       }
     >
       <div className="space-y-5 -mt-1">
-        <div className="rounded-xl border border-orange-200 bg-orange-50/90 px-4 py-3">
+        <div className="rounded-xl  bg-orange-50/90 px-4 py-3">
           <p className="text-[11px] font-bold tracking-wide text-orange-700 uppercase mb-2">
             {t('reviews.customerFeedbackLabel')}
           </p>
@@ -112,7 +109,7 @@ export function FollowUpModal({ open, onClose, review }: FollowUpModalProps) {
                 className={cn(
                   'rounded-full px-3 py-2 text-xs font-medium border transition-colors',
                   action === key
-                    ? 'bg-primary text-primary-foreground border-primary'
+                    ? 'bg-primary text-white border-primary'
                     : 'bg-white text-muted-foreground border-gray-200 hover:bg-muted/50'
                 )}
               >
@@ -135,7 +132,7 @@ export function FollowUpModal({ open, onClose, review }: FollowUpModalProps) {
         </div>
 
         <label className="flex items-center gap-2 cursor-pointer">
-          <Checkbox checked={notifyManager} onCheckedChange={(v) => setNotifyManager(v === true)} />
+          <Checkbox checked={notifyManager} onCheckedChange={(v) => setNotifyManager(v === true)} className="data-[state=checked]:bg-primary data-[state=checked]:text-white" />
           <span className="text-sm text-foreground">{t('reviews.notifyAccountManager')}</span>
         </label>
       </div>
