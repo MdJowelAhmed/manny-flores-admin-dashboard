@@ -32,13 +32,6 @@ export default function ManageMaterials() {
     setIsAddEditModalOpen(true)
   }
 
-  const handleOpenEditFromView = () => {
-    if (selectedMaterial) {
-      setIsViewModalOpen(false)
-      setIsAddEditModalOpen(true)
-    }
-  }
-
   const handleAdd = () => {
     setSelectedMaterial(null)
     setIsAddEditModalOpen(true)
@@ -47,15 +40,25 @@ export default function ManageMaterials() {
   const handleSave = (data: Partial<Material>) => {
     if (data.id) {
       setMaterials((prev) =>
-        prev.map((m) => (m.id === data.id ? { ...m, ...data } : m))
+        prev.map((m) =>
+          m.id === data.id
+            ? {
+                ...m,
+                ...data,
+                allocated: data.allocated ?? m.allocated,
+                jobAllocations: data.jobAllocations ?? m.jobAllocations,
+              }
+            : m
+        )
       )
     } else {
       const newMaterial: Material = {
         id: `mat-${Date.now()}`,
         materialName: data.materialName ?? '',
         category: data.category ?? '',
-        unit: data.unit ?? 'unit',
+        unit: data.unit ?? 'bag',
         currentStock: data.currentStock ?? 0,
+        allocated: 0,
         supplier: data.supplier ?? '',
         costPrice: data.costPrice ?? 0,
         projectRate: data.projectRate ?? 0,
@@ -66,24 +69,15 @@ export default function ManageMaterials() {
         supplierContact: data.supplierContact ?? '',
         lastPurchaseDate: data.lastPurchaseDate ?? '',
         assignedProjects: data.assignedProjects ?? [],
+        jobAllocations: [],
       }
       setMaterials((prev) => [newMaterial, ...prev])
     }
-    setIsAddEditModalOpen(false)
-    setSelectedMaterial(null)
   }
 
   const handleDelete = (m: Material) => {
     setMaterialToDelete(m)
     setIsConfirmOpen(true)
-  }
-
-  const handleDeleteFromView = () => {
-    if (selectedMaterial) {
-      setMaterialToDelete(selectedMaterial)
-      setIsViewModalOpen(false)
-      setIsConfirmOpen(true)
-    }
   }
 
   const handleConfirmDelete = async () => {
@@ -117,10 +111,12 @@ export default function ManageMaterials() {
       className="space-y-6"
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-xl font-bold text-foreground">{t('manageMaterials.title')}</h1>
+        <h1 className="text-xl font-bold text-slate-800">
+          {t('manageMaterials.pageTitle')}
+        </h1>
         <Button
           onClick={handleAdd}
-          className="bg-primary hover:bg-primary/90 text-white shrink-0"
+          className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
         >
           <Plus className="h-4 w-4 mr-2" />
           {t('manageMaterials.addMaterial')}
@@ -143,8 +139,6 @@ export default function ManageMaterials() {
           setSelectedMaterial(null)
         }}
         material={selectedMaterial}
-        onEdit={handleOpenEditFromView}
-        onDelete={handleDeleteFromView}
       />
 
       <AddEditMaterialModal

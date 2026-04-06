@@ -1,10 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
-import { FormInput, DatePicker } from '@/components/common/Form'
+import { FormInput } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { Material } from '../manageMaterialsData'
+import { MATERIAL_CATEGORIES } from '../manageMaterialsData'
 import { toast } from '@/utils/toast'
-import { parseFlexibleDate, formatDateDayMonth } from '@/utils/formatters'
 
 interface AddEditMaterialModalProps {
   open: boolean
@@ -19,170 +28,165 @@ export function AddEditMaterialModal({
   material,
   onSave,
 }: AddEditMaterialModalProps) {
+  const { t } = useTranslation()
   const isEdit = !!material?.id
 
   const [materialName, setMaterialName] = useState('')
-  const [category, setCategory] = useState('')
+  const [category, setCategory] = useState<string>(MATERIAL_CATEGORIES[0])
   const [unitPrice, setUnitPrice] = useState('')
-  const [currentStock, setCurrentStock] = useState('')
+  const [totalStock, setTotalStock] = useState('')
   const [minimumStock, setMinimumStock] = useState('')
-  const [supplierName, setSupplierName] = useState('')
-  const [supplierEmail, setSupplierEmail] = useState('')
-  const [supplierContact, setSupplierContact] = useState('')
-  const [lastPurchaseDate, setLastPurchaseDate] = useState<Date | undefined>(undefined)
+
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>([...MATERIAL_CATEGORIES])
+    if (material?.category) set.add(material.category)
+    return Array.from(set)
+  }, [material?.category, open])
 
   useEffect(() => {
     if (material) {
       setMaterialName(material.materialName)
-      setCategory(material.category)
-      setUnitPrice(String(material.unitPrice ?? material.costPrice))
-      setCurrentStock(String(material.currentStock))
+      setCategory(material.category || MATERIAL_CATEGORIES[0])
+      setUnitPrice(String(material.unitPrice ?? material.costPrice ?? ''))
+      setTotalStock(String(material.currentStock))
       setMinimumStock(String(material.minimumStock ?? 0))
-      setSupplierName(material.supplier)
-      setSupplierEmail(material.supplierEmail)
-      setSupplierContact(material.supplierContact)
-      setLastPurchaseDate(parseFlexibleDate(material.lastPurchaseDate) ?? undefined)
     } else {
       setMaterialName('')
-      setCategory('')
+      setCategory(MATERIAL_CATEGORIES[0])
       setUnitPrice('')
-      setCurrentStock('')
+      setTotalStock('')
       setMinimumStock('')
-      setSupplierName('')
-      setSupplierEmail('')
-      setSupplierContact('')
-      setLastPurchaseDate(undefined)
     }
   }, [material, open])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const cost = parseFloat(unitPrice) || 0
-    const stock = parseInt(currentStock, 10) || 0
+    if (!materialName.trim()) {
+      toast({
+        title: t('common.error'),
+        description: t('manageMaterials.nameRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const price = parseFloat(unitPrice.replace(/[^0-9.-]/g, '')) || 0
+    const stock = parseInt(totalStock, 10) || 0
     const minStock = parseInt(minimumStock, 10) || 0
+
     onSave({
       id: material?.id,
       materialName: materialName.trim(),
-      category: category.trim(),
-      unitPrice: cost,
-      costPrice: cost,
-      projectRate: cost * 2,
+      category,
+      unitPrice: price,
+      costPrice: price,
+      projectRate: price * 2,
       currentStock: stock,
       minimumStock: minStock,
-      supplier: supplierName.trim(),
-      supplierEmail: supplierEmail.trim(),
-      supplierContact: supplierContact.trim(),
-      lastPurchaseDate: lastPurchaseDate ? formatDateDayMonth(lastPurchaseDate) : '',
-      unit: material?.unit ?? 'unit',
+      supplier: material?.supplier ?? '',
+      supplierEmail: material?.supplierEmail ?? '',
+      supplierContact: material?.supplierContact ?? '',
+      lastPurchaseDate: material?.lastPurchaseDate ?? '',
+      unit: material?.unit ?? 'bag',
       assignedProject: material?.assignedProject ?? '',
       assignedProjects: material?.assignedProjects ?? [],
+      allocated: material?.allocated ?? 0,
+      jobAllocations: material?.jobAllocations ?? [],
     })
+
     toast({
-      title: 'Success',
-      description: isEdit ? 'Material updated successfully.' : 'Material added successfully.',
+      title: t('common.success'),
+      description: isEdit
+        ? t('manageMaterials.materialUpdated')
+        : t('manageMaterials.materialCreated'),
       variant: 'success',
     })
     onClose()
   }
 
+
+
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit Material' : 'Add Material'}
+      title={isEdit ? t('manageMaterials.editMaterial') : t('manageMaterials.addMaterialTitle')}
       size="lg"
-      className="max-w-3xl bg-white"
+      className="max-w-2xl bg-white"
+      footer={
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            form="add-material-form"
+            className="min-w-[100px] bg-[#00AB41] hover:bg-[#009638] text-white font-semibold"
+          >
+            {isEdit ? t('common.updateMaterial') : t('manageMaterials.addMaterial')}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* General Information */}
-        <div>
-          <h3 className="text-sm font-semibold mb-3 text-foreground">General Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form id="add-material-form" onSubmit={handleSubmit} className="space-y-5">
+        <div className=" space-y-4">
+          <h3 className="text-sm font-bold text-foreground">
+            {t('manageMaterials.generalInformation')}
+          </h3>
+          <div className="space-y-4">
             <FormInput
-              label="Material Name"
-              placeholder="e.g. Topsoil"
+              label={t('manageMaterials.materialName')}
+              placeholder="Topsoil"
               value={materialName}
               onChange={(e) => setMaterialName(e.target.value)}
               required
             />
-            <FormInput
-              label="Category"
-              placeholder="e.g. Raw Material"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            />
+            <div className="space-y-2">
+              <Label>{t('manageMaterials.category')}</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="h-11 rounded-md border-gray-200 bg-background">
+                  <SelectValue placeholder={t('manageMaterials.selectCategory')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryOptions.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
-        {/* Price & Rate */}
-        <div>
-          <h3 className="text-sm font-semibold mb-3 text-foreground">Price & Rate</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className=" space-y-4">
+          <h3 className="text-sm font-bold text-foreground">
+            {t('manageMaterials.priceAndRate')}
+          </h3>
+          <div className="">
             <FormInput
-              label="Unit Price"
-              placeholder="e.g. $12"
+              label={t('manageMaterials.unitPrice')}
+              placeholder="$12"
               value={unitPrice}
               onChange={(e) => setUnitPrice(e.target.value)}
-              type="text"
             />
             <FormInput
-              label="Current Stock"
-              placeholder="e.g. 10"
-              value={currentStock}
-              onChange={(e) => setCurrentStock(e.target.value)}
+              label={t('manageMaterials.totalStockLabel')}
+              placeholder="10"
+              value={totalStock}
+              onChange={(e) => setTotalStock(e.target.value)}
               type="number"
+              min={0}
             />
             <FormInput
-              label="Minimum Stock"
-              placeholder="e.g. 2"
+              className="sm:col-span-2"
+              label={t('manageMaterials.minimumStock')}
+              placeholder="2"
               value={minimumStock}
               onChange={(e) => setMinimumStock(e.target.value)}
               type="number"
+              min={0}
             />
           </div>
-        </div>
-
-        {/* Supplier Details */}
-        <div>
-          <h3 className="text-sm font-semibold mb-3 text-foreground">Supplier Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormInput
-              label="Name"
-              placeholder="e.g. Agro Co."
-              value={supplierName}
-              onChange={(e) => setSupplierName(e.target.value)}
-            />
-            <FormInput
-              label="Email"
-              placeholder="e.g. agro@mail.com"
-              type="email"
-              value={supplierEmail}
-              onChange={(e) => setSupplierEmail(e.target.value)}
-            />
-            <FormInput
-              label="Contact"
-              placeholder="e.g. +2847 4387 2389"
-              value={supplierContact}
-              onChange={(e) => setSupplierContact(e.target.value)}
-            />
-            <DatePicker
-              label="Last Purchase Date"
-              value={lastPurchaseDate}
-              onChange={setLastPurchaseDate}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          {/* <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </Button> */}
-          <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
-            {isEdit ? 'Update Material' : 'Add Material'}
-          </Button>
         </div>
       </form>
     </ModalWrapper>
   )
 }
-

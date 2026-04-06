@@ -1,21 +1,20 @@
 import { ModalWrapper } from '@/components/common'
-import { Button } from '@/components/ui/button'
 import type { Material } from '../manageMaterialsData'
 import { formatCurrency } from '@/utils/formatters'
+import { getAvailableStock } from '../manageMaterialsData'
+import { useTranslation } from 'react-i18next'
 
 interface ViewMaterialDetailsModalProps {
   open: boolean
   onClose: () => void
   material: Material | null
-  onEdit: () => void
-  onDelete: () => void
 }
 
 function DetailRow({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="flex justify-between py-2 gap-4">
+    <div className="flex justify-between gap-6 py-2">
       <span className="text-sm text-muted-foreground">{label}:</span>
-      <span className="text-sm ">{value}</span>
+      <span className="text-sm font-medium text-foreground text-right">{value}</span>
     </div>
   )
 }
@@ -24,73 +23,104 @@ export function ViewMaterialDetailsModal({
   open,
   onClose,
   material,
-  onEdit,
-  onDelete,
 }: ViewMaterialDetailsModalProps) {
+  const { t } = useTranslation()
+
   if (!material) return null
+
+  const available = getAvailableStock(material)
+  const rows = material.jobAllocations ?? []
 
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title="Material Details"
+      title={t('manageMaterials.materialDetailsTitle')}
       size="lg"
       className="max-w-2xl bg-white"
     >
-      <div className="space-y-5">
-        {/* Material Overview */}
+      <div className="space-y-8">
         <div>
-          <h3 className="text-sm font-semibold mb-3 text-foreground">Material Overview</h3>
-          <div className="space-y-1">
-            <DetailRow label="Material Name" value={material.materialName} />
-            <DetailRow label="Category" value={material.category} />
-            <DetailRow label="Unit Measure" value={material.unit} />
-            <DetailRow label="Available Stock" value={`${material.currentStock}${material.unit}`} />
-            <DetailRow label="Unit Price" value={formatCurrency(material.costPrice)} />
-            <DetailRow label="Project Rate" value={formatCurrency(material.projectRate)} />
+          <h3 className="text-sm font-bold text-foreground mb-3">
+            {t('manageMaterials.materialOverview')}
+          </h3>
+          <div className="space-y-0.5">
+            <DetailRow
+              label={t('manageMaterials.materialName')}
+              value={material.materialName}
+            />
+            <DetailRow label={t('manageMaterials.category')} value={material.category} />
+            <DetailRow label={t('manageMaterials.unit')} value={material.unit} />
+            <DetailRow
+              label={t('manageMaterials.totalStock')}
+              value={material.currentStock}
+            />
+            <DetailRow
+              label={t('manageMaterials.allocated')}
+              value={material.allocated}
+            />
+            <DetailRow
+              label={t('manageMaterials.availableStock')}
+              value={available}
+            />
+            <DetailRow
+              label={t('manageMaterials.unitPrice')}
+              value={formatCurrency(material.unitPrice)}
+            />
+            <DetailRow
+              label={t('manageMaterials.projectRate')}
+              value={formatCurrency(material.projectRate)}
+            />
           </div>
         </div>
 
-        {/* Assign Project */}
         <div>
-          <h3 className="text-sm font-semibold mb-3 text-foreground">Assign Project</h3>
-          <div className="space-y-1.5">
-            {material.assignedProjects?.length ? (
-              material.assignedProjects.map((p, i) => (
-                <div
-                  key={i}
-                  className="py-2 px-3 rounded-md bg-gray-50 text-sm text-slate-700"
-                >
-                  {p}
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No projects assigned</p>
-            )}
+          <h3 className="text-sm font-bold text-foreground mb-3">
+            {t('manageMaterials.activeJobAllocation')}
+          </h3>
+          <div className="overflow-hidden rounded-lg border border-gray-200">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 text-left text-slate-700">
+                  <th className="px-4 py-2.5 font-semibold">
+                    {t('manageMaterials.jobName')}
+                  </th>
+                  <th className="px-4 py-2.5 font-semibold">{t('manageMaterials.qty')}</th>
+                  <th className="px-4 py-2.5 font-semibold">
+                    {t('manageMaterials.totalCost')}
+                  </th>
+                  <th className="px-4 py-2.5 font-semibold">
+                    {t('manageMaterials.jobStatus')}
+                  </th>
+                  <th className="px-4 py-2.5 font-semibold">{t('manageMaterials.date')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {rows.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-6 text-center text-muted-foreground"
+                    >
+                      {t('manageMaterials.noJobAllocations')}
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((row) => (
+                    <tr key={row.id}>
+                      <td className="px-4 py-3 text-slate-800">{row.projectName}</td>
+                      <td className="px-4 py-3 text-slate-700">{row.qty}</td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {formatCurrency(row.totalCost)}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-blue-600">{row.status}</td>
+                      <td className="px-4 py-3 text-slate-600">{row.date}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
-
-        {/* Supplier Details */}
-        <div>
-          <h3 className="text-sm font-semibold mb-3 text-foreground">Supplier Details</h3>
-          <div className="space-y-1">
-            <DetailRow label="Name" value={material.supplier} />
-            <DetailRow label="Email" value={material.supplierEmail} />
-            <DetailRow label="Contact" value={material.supplierContact} />
-            <DetailRow label="Last Purchase Date" value={material.lastPurchaseDate} />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button
-            onClick={onEdit}
-            className="bg-primary hover:bg-primary/90 text-white px-6"
-          >
-            Edit
-          </Button>
-          <Button variant="destructive" onClick={onDelete} className="bg-destructive hover:bg-destructive/90 text-white">
-            Delete
-          </Button>
         </div>
       </div>
     </ModalWrapper>
