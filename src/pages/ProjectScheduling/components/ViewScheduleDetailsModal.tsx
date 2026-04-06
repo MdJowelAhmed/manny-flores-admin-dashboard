@@ -1,6 +1,6 @@
-import { FileText } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Calendar, FileText } from 'lucide-react'
 import { ModalWrapper } from '@/components/common'
-import { Button } from '@/components/ui/button'
 import type { ScheduledProject } from '../projectSchedulingData'
 
 interface ViewScheduleDetailsModalProps {
@@ -11,9 +11,9 @@ interface ViewScheduleDetailsModalProps {
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-start py-2 gap-4">
+    <div className="flex justify-between items-start gap-6 py-2.5 border-b border-gray-100 last:border-0">
       <span className="text-sm text-muted-foreground shrink-0">{label}:</span>
-      <span className="text-sm font-medium text-right">{value}</span>
+      <span className="text-sm font-medium text-foreground text-right">{value}</span>
     </div>
   )
 }
@@ -23,6 +23,7 @@ export function ViewScheduleDetailsModal({
   onClose,
   schedule,
 }: ViewScheduleDetailsModalProps) {
+  const { t } = useTranslation()
   if (!schedule) return null
 
   return (
@@ -31,45 +32,41 @@ export function ViewScheduleDetailsModal({
       onClose={onClose}
       title={schedule.projectTitle}
       size="lg"
-      className="max-w-xl bg-white"
+      className="max-w-xl bg-white sm:rounded-2xl"
     >
-      <div className="space-y-5">
-        <p className="text-sm text-muted-foreground -mt-2">{schedule.category}</p>
+      <div className="space-y-6 px-1 -mt-1">
+        <p className="text-sm text-muted-foreground">{schedule.category}</p>
 
-        {/* Project Information - Customer */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded bg-primary/10">
+            <div className="p-1.5 rounded-lg bg-primary/10">
               <FileText className="h-4 w-4 text-primary" />
             </div>
-            <h3 className="text-sm font-semibold text-primary">Customer Information</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              {t('projectScheduling.customerInformation')}
+            </h3>
           </div>
-          <div className="space-y-1 pl-8">
-            <DetailRow label="Customer Name" value={schedule.customer} />
-            <DetailRow label="Email" value={schedule.email} />
-            <DetailRow label="Company" value={schedule.company} />
+          <div className="rounded-xl border border-gray-100 bg-muted/20 px-4">
+            <DetailRow label={t('projectScheduling.customerName')} value={schedule.customer} />
+            <DetailRow label={t('projectScheduling.email')} value={schedule.email} />
+            <DetailRow label={t('projectScheduling.company')} value={schedule.company} />
           </div>
         </div>
 
-        {/* Project Information - Details */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded bg-primary/10">
-              <FileText className="h-4 w-4 text-primary" />
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <Calendar className="h-4 w-4 text-primary" />
             </div>
-            <h3 className="text-sm font-semibold text-primary">Project Information</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              {t('projectScheduling.projectInformation')}
+            </h3>
           </div>
-          <div className="space-y-1 pl-8">
-            <DetailRow label="Project Name" value={schedule.projectTitle} />
-            <DetailRow label="Upload Date" value={schedule.uploadDate} />
-            <DetailRow label="Team" value={schedule.team} />
+          <div className="rounded-xl border border-gray-100 bg-muted/20 px-4">
+            <DetailRow label={t('projectScheduling.projectName')} value={schedule.projectTitle} />
+            <DetailRow label={t('projectScheduling.uploadDate')} value={schedule.uploadDate} />
+            <DetailRow label={t('projectScheduling.team')} value={schedule.team} />
           </div>
-        </div>
-
-        <div className="flex justify-end pt-4 border-t">
-          <Button onClick={onClose} className="bg-primary hover:bg-primary/90 text-white">
-            Close
-          </Button>
         </div>
       </div>
     </ModalWrapper>

@@ -10,6 +10,10 @@ export interface ScheduledProject {
   customer: string
   email: string
   company: string
+  serviceLocation: string
+  eta: string
+  /** Profile image URLs for assigned crew */
+  assignedAvatarUrls: string[]
 }
 
 export const mockScheduledProjects: ScheduledProject[] = [
@@ -25,6 +29,13 @@ export const mockScheduledProjects: ScheduledProject[] = [
     customer: 'John Davis',
     email: 'john@email.com',
     company: 'Garden Design & Installation',
+    serviceLocation: '12 Maple Ave, Springfield',
+    eta: '09:30 AM',
+    assignedAvatarUrls: [
+      'https://i.pravatar.cc/150?img=12',
+      'https://i.pravatar.cc/150?img=33',
+      'https://i.pravatar.cc/150?img=47',
+    ],
   },
   {
     id: 'sch-2',
@@ -38,6 +49,12 @@ export const mockScheduledProjects: ScheduledProject[] = [
     customer: 'Jhon Lura',
     email: 'jhon@email.com',
     company: 'Green Villa Inc',
+    serviceLocation: '88 Oak Rd, Riverside',
+    eta: '10:00 AM',
+    assignedAvatarUrls: [
+      'https://i.pravatar.cc/150?img=15',
+      'https://i.pravatar.cc/150?img=27',
+    ],
   },
   {
     id: 'sch-3',
@@ -51,5 +68,13 @@ export const mockScheduledProjects: ScheduledProject[] = [
     customer: 'Sarah Miller',
     email: 'sarah@email.com',
     company: 'Office Park Corp',
+    serviceLocation: '400 Commerce Blvd, Metro City',
+    eta: '08:45 AM',
+    assignedAvatarUrls: [
+      'https://i.pravatar.cc/150?img=5',
+      'https://i.pravatar.cc/150?img=9',
+      'https://i.pravatar.cc/150?img=14',
+      'https://i.pravatar.cc/150?img=60',
+    ],
   },
 ]

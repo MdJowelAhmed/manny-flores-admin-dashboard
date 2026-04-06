@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { FormInput, DatePicker } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
 import type { ScheduledProject } from '../projectSchedulingData'
 import { toast } from '@/utils/toast'
 import { parseFlexibleDate, formatDateDisplay } from '@/utils/formatters'
+import { cn } from '@/utils/cn'
 
 interface AddEditScheduleModalProps {
   open: boolean
@@ -13,12 +15,16 @@ interface AddEditScheduleModalProps {
   onSave: (data: Partial<ScheduledProject>) => void
 }
 
+const inputClass =
+  'rounded-lg bg-muted/50 border-gray-200/80 focus-visible:ring-primary/30 h-11'
+
 export function AddEditScheduleModal({
   open,
   onClose,
   schedule,
   onSave,
 }: AddEditScheduleModalProps) {
+  const { t } = useTranslation()
   const isEdit = !!schedule?.id
 
   const [projectName, setProjectName] = useState('')
@@ -58,8 +64,10 @@ export function AddEditScheduleModal({
       team: team.trim(),
     })
     toast({
-      title: 'Success',
-      description: isEdit ? 'Schedule updated successfully.' : 'Schedule added successfully.',
+      title: t('common.success'),
+      description: isEdit
+        ? t('projectScheduling.scheduleUpdated')
+        : t('projectScheduling.scheduleAdded'),
       variant: 'success',
     })
     onClose()
@@ -69,64 +77,76 @@ export function AddEditScheduleModal({
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit Schedule' : 'Add New Schedule'}
+      title={isEdit ? t('projectScheduling.editSchedule') : t('projectScheduling.addNewSchedule')}
       size="lg"
-      className="max-w-xl bg-white"
+      className="max-w-xl bg-white sm:rounded-2xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <h3 className="text-sm font-semibold mb-3 text-foreground">Basic Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h3 className="text-sm font-semibold text-foreground mb-4">
+            {t('projectScheduling.basicInformation')}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
             <FormInput
-              label="Project Name"
-              placeholder="Enter project name"
+              label={t('projectScheduling.projectName')}
+              placeholder={t('projectScheduling.placeholderProjectName')}
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               required
+              className={cn(inputClass)}
             />
             <DatePicker
-              label="Upload Date"
+              label={t('projectScheduling.uploadDate')}
               value={uploadDate}
               onChange={setUploadDate}
+              className="[&_button]:rounded-lg [&_button]:bg-muted/50 [&_button]:border-gray-200/80 [&_button]:h-11 [&_button]:font-normal"
             />
             <FormInput
-              label="Upload by"
-              placeholder="Enter name"
+              label={t('projectScheduling.uploadBy')}
+              placeholder={t('projectScheduling.placeholderUploadBy')}
               value={uploadedBy}
               onChange={(e) => setUploadedBy(e.target.value)}
+              className={cn(inputClass)}
             />
             <FormInput
-              label="Email"
-              placeholder="Enter email"
+              label={t('projectScheduling.email')}
+              placeholder={t('projectScheduling.placeholderEmail')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className={cn(inputClass)}
             />
             <FormInput
-              label="Company"
-              placeholder="Enter company"
+              label={t('projectScheduling.company')}
+              placeholder={t('projectScheduling.placeholderCompany')}
               value={company}
               onChange={(e) => setCompany(e.target.value)}
+              className={cn(inputClass)}
             />
             <FormInput
-              label="Team"
-              placeholder="e.g. Team A"
+              label={t('projectScheduling.team')}
+              placeholder={t('projectScheduling.placeholderTeam')}
               value={team}
               onChange={(e) => setTeam(e.target.value)}
+              className={cn(inputClass)}
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+        <div className="flex justify-end gap-3 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="rounded-lg border-gray-200 min-w-[100px]"
+          >
+            {t('common.cancel')}
           </Button>
-          <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
-            Save
+          <Button type="submit" className="bg-primary hover:bg-primary/90 text-white rounded-lg min-w-[100px]">
+            {t('common.save')}
           </Button>
         </div>
       </form>
     </ModalWrapper>
   )
 }
-
