@@ -324,6 +324,11 @@
     "projectCreated": "Project created successfully."
   },
   "customerManagement": {
+    "recentProjects": "Recent Projects",
+    "staffMode": "Staff Mode",
+    "clientMode": "Client Mode",
+    "readOnlyAccess": "READ ONLY ACCESS",
+    "readOnlyNotice": "You are viewing this project as a client. You have read-only access and cannot edit or delete project information.",
     "addProject": "Add Project",
     "id": "ID",
     "customerName": "Customer Name",
