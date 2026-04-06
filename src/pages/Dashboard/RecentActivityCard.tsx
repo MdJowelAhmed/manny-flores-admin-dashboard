@@ -3,14 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 import { Eye, Trash2 } from 'lucide-react'
-import {
-    recentProjectsData,
-    type RecentProject,
-} from '@/pages/RecentProjects/recentProjectsData'
+import type { RecentProject } from '@/pages/RecentProjects/recentProjectsData'
+import { useRecentProjects } from '@/contexts/RecentProjectsContext'
 import { ProjectViewDetailsModal } from '@/pages/RecentProjects/components/ProjectViewDetailsModal'
 import { ProjectPlanUploadModal } from '@/pages/RecentProjects/components/ProjectPlanUploadModal'
 import {
-    getProjectStatusBadgeClass,
+    getProjectStatusBadgeStyle,
     getProjectStatusTranslationKey,
 } from '@/pages/RecentProjects/projectStatus'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
@@ -18,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 
 export function RecentActivityCard() {
     const navigate = useNavigate()
+    const { projects, addPlanFiles, removeProject } = useRecentProjects()
     const [showViewModal, setShowViewModal] = useState(false)
     const [showPlanModal, setShowPlanModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -43,10 +42,15 @@ export function RecentActivityCard() {
 
     const handleConfirmDelete = () => {
         if (!selectedProject) return
+        removeProject(selectedProject.id)
         setShowDeleteModal(false)
         setSelectedProject(null)
         navigate('/recent-projects')
     }
+
+    const resolvedViewProject: RecentProject | null = selectedProject
+        ? projects.find((p) => p.id === selectedProject.id) ?? selectedProject
+        : null
 
     return (
         <motion.div
@@ -83,7 +87,7 @@ export function RecentActivityCard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-slate-700">
-                                {recentProjectsData.slice(0, 4).map((project, index) => (
+                                {projects.slice(0, 4).map((project, index) => (
                                     <motion.tr
                                         key={`${project.id}`}
                                         initial={{ opacity: 0, x: -20 }}
@@ -108,9 +112,10 @@ export function RecentActivityCard() {
                                         </td>
                                         <td className="px-6 py-5">
                                             <span
-                                                className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium ${getProjectStatusBadgeClass(
+                                                className="inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium"
+                                                style={getProjectStatusBadgeStyle(
                                                     project.status
-                                                )}`}
+                                                )}
                                             >
                                                 {t(getProjectStatusTranslationKey(project.status))}
                                             </span>
@@ -130,13 +135,23 @@ export function RecentActivityCard() {
                                             {project.value}
                                         </td>
                                         <td className="px-6 py-5">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleUploadPlan(project)}
-                                                className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
-                                            >
-                                                {t('dashboard.uploadPlan')}
-                                            </button>
+                                            {(project.planFiles?.length ?? 0) > 0 ? (
+                                                <button
+                                                    type="button"
+                                                    disabled
+                                                    className="rounded-md border border-gray-200 bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-not-allowed"
+                                                >
+                                                    {t('dashboard.planUploaded')}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleUploadPlan(project)}
+                                                    className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
+                                                >
+                                                    {t('dashboard.uploadPlan')}
+                                                </button>
+                                            )}
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
@@ -176,7 +191,7 @@ export function RecentActivityCard() {
                     setShowViewModal(false)
                     setSelectedProject(null)
                 }}
-                project={selectedProject}
+                project={resolvedViewProject}
             />
 
             <ProjectPlanUploadModal
@@ -186,6 +201,7 @@ export function RecentActivityCard() {
                     setSelectedProject(null)
                 }}
                 project={selectedProject}
+                onUploadSuccess={(projectId, files) => addPlanFiles(projectId, files)}
             />
 
             <ConfirmDialog

@@ -4,6 +4,13 @@ export type ProjectStatus =
   | 'Scheduled'
   | 'Overdue'
 
+/** Attached project plans (blobUrl set when user uploads in-session) */
+export interface ProjectPlanFile {
+  id: string
+  name: string
+  blobUrl?: string
+}
+
 export interface RecentProject {
   id: string
   customerName: string
@@ -13,6 +20,7 @@ export interface RecentProject {
   value: string
   startDate: string
   endDate: string
+  planFiles?: ProjectPlanFile[]
   // Extended fields for view details modal
   email?: string
   company?: string
@@ -33,6 +41,7 @@ export const recentProjectsData: RecentProject[] = [
     email: 'emily@email.com',
     company: 'Garden Design & Installation',
     projectName: 'Residential Backyard Renovation',
+    planFiles: [{ id: 'seed-patio', name: 'patio_sketch.png' }],
     description:
       'Complete backyard transformation including patio installation, garden beds, irrigation system, and landscape lighting. Customer wants a modern outdoor living space with low-maintenance plants.',
   },

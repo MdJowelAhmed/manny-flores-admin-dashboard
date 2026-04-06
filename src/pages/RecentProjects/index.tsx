@@ -5,19 +5,18 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Eye, Trash2 } from 'lucide-react'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
-import {
-  recentProjectsData,
-  type RecentProject,
-} from './recentProjectsData'
+import { useRecentProjects } from '@/contexts/RecentProjectsContext'
+import type { RecentProject } from './recentProjectsData'
 import { ProjectViewDetailsModal } from './components/ProjectViewDetailsModal'
 import { ProjectPlanUploadModal } from './components/ProjectPlanUploadModal'
 import {
-  getProjectStatusBadgeClass,
+  getProjectStatusBadgeStyle,
   getProjectStatusTranslationKey,
 } from './projectStatus'
 
 export default function RecentProjects() {
   const { t } = useTranslation()
+  const { projects, addPlanFiles, removeProject } = useRecentProjects()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = Math.max(
     1,
@@ -32,7 +31,6 @@ export default function RecentProjects() {
   const [selectedProject, setSelectedProject] = useState<RecentProject | null>(
     null
   )
-  const [projects, setProjects] = useState<RecentProject[]>(recentProjectsData)
 
   const setPage = (p: number) => {
     const next = new URLSearchParams(searchParams)
@@ -76,10 +74,14 @@ export default function RecentProjects() {
 
   const handleConfirmDelete = () => {
     if (!selectedProject) return
-    setProjects((prev) => prev.filter((p) => p.id !== selectedProject.id))
+    removeProject(selectedProject.id)
     setSelectedProject(null)
     setShowDeleteModal(false)
   }
+
+  const resolvedViewProject: RecentProject | null = selectedProject
+    ? projects.find((p) => p.id === selectedProject.id) ?? selectedProject
+    : null
 
   return (
     <div className="space-y-6">
@@ -141,9 +143,8 @@ export default function RecentProjects() {
                     </td>
                     <td className="px-6 py-5">
                       <span
-                        className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium ${getProjectStatusBadgeClass(
-                          project.status
-                        )}`}
+                        className="inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium"
+                        style={getProjectStatusBadgeStyle(project.status)}
                       >
                         {t(getProjectStatusTranslationKey(project.status))}
                       </span>
@@ -165,13 +166,23 @@ export default function RecentProjects() {
                       {project.value}
                     </td>
                     <td className="px-6 py-5">
-                      <button
-                        type="button"
-                        onClick={() => handleUploadPlan(project)}
-                        className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
-                      >
-                        {t('recentProjectsPage.uploadPlan')}
-                      </button>
+                      {(project.planFiles?.length ?? 0) > 0 ? (
+                        <button
+                          type="button"
+                          disabled
+                          className="rounded-md border border-gray-200 bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-not-allowed"
+                        >
+                          {t('recentProjectsPage.planUploaded')}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleUploadPlan(project)}
+                          className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
+                        >
+                          {t('recentProjectsPage.uploadPlan')}
+                        </button>
+                      )}
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
@@ -217,7 +228,7 @@ export default function RecentProjects() {
           setShowViewModal(false)
           setSelectedProject(null)
         }}
-        project={selectedProject}
+        project={resolvedViewProject}
       />
 
       <ProjectPlanUploadModal
@@ -227,6 +238,7 @@ export default function RecentProjects() {
           setSelectedProject(null)
         }}
         project={selectedProject}
+        onUploadSuccess={(projectId, files) => addPlanFiles(projectId, files)}
       />
 
       <ConfirmDialog

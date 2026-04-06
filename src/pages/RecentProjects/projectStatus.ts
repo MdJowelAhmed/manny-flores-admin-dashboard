@@ -1,18 +1,32 @@
+import type { CSSProperties } from 'react'
 import type { ProjectStatus, RecentProject } from './recentProjectsData'
 
-/** Matches design: green / yellow / purple / red */
-export function getProjectStatusBadgeClass(
+/** Brand hex per status */
+export const PROJECT_STATUS_HEX: Record<RecentProject['status'], string> = {
+  Completed: '#00A63E',
+  'In Progress': '#FFCC00',
+  Scheduled: '#3B82F6',
+  Overdue: '#FF383C',
+}
+
+/**
+ * Pill badge using hex colors: light tint background + readable foreground.
+ * Yellow uses dark text for contrast; others use the brand hex on tint.
+ */
+export function getProjectStatusBadgeStyle(
   status: RecentProject['status']
-): string {
-  switch (status) {
-    case 'Completed':
-      return 'bg-emerald-100 text-emerald-800'
-    case 'In Progress':
-      return 'bg-amber-100 text-amber-800'
-    case 'Scheduled':
-      return 'bg-purple-100 text-purple-800'
-    case 'Overdue':
-      return 'bg-red-100 text-red-800'
+): CSSProperties {
+  const hex = PROJECT_STATUS_HEX[status]
+  const backgroundColor = `${hex}26`
+
+  const color =
+    status === 'In Progress'
+      ? '#3D3300' /* readable on light yellow */
+      : hex
+
+  return {
+    backgroundColor,
+    color,
   }
 }
 

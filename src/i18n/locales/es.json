@@ -188,7 +188,24 @@
     "startDate": "Fecha de inicio",
     "endDate": "Fecha de fin",
     "projectPlan": "Plan del proyecto",
-    "uploadPlan": "Subir plan"
+    "uploadPlan": "Subir plan",
+    "planUploaded": "Plan subido"
+  },
+  "projectDetailsModal": {
+    "customerInformation": "Información del cliente",
+    "projectInformation": "Información del proyecto",
+    "customerName": "Nombre del cliente",
+    "email": "Correo electrónico",
+    "company": "Empresa",
+    "projectName": "Nombre del proyecto",
+    "totalBudget": "Presupuesto total",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de fin",
+    "progress": "Progreso",
+    "projectPlan": "Plan del proyecto",
+    "downloadPlan": "Descargar plan",
+    "noPlansYet": "Aún no hay planes de proyecto.",
+    "description": "Descripción"
   },
   "projectPlanModal": {
     "title": "Plan del proyecto",
@@ -199,7 +216,8 @@
     "uploadLinePrefix": "Subir documento",
     "fileTypesHighlight": "(pdf, jpg)",
     "uploadSuccess": "Plan del proyecto enviado correctamente.",
-    "selectFile": "Elija un archivo PDF o JPG para subir."
+    "selectFile": "Elija al menos un archivo PDF o JPG para subir.",
+    "multipleHint": "Puede seleccionar varios archivos a la vez."
   },
   "common": {
     "add": "Agregar",
@@ -668,6 +686,7 @@
     "endDate": "Fecha de fin",
     "projectPlan": "Plan del proyecto",
     "uploadPlan": "Subir plan",
+    "planUploaded": "Plan subido",
     "inProgress": "En Progreso",
     "pendingApproval": "Aprobación Pendiente",
     "completed": "Completado",
