@@ -8,12 +8,18 @@ import {
     type RecentProject,
 } from '@/pages/RecentProjects/recentProjectsData'
 import { ProjectViewDetailsModal } from '@/pages/RecentProjects/components/ProjectViewDetailsModal'
+import { ProjectPlanUploadModal } from '@/pages/RecentProjects/components/ProjectPlanUploadModal'
+import {
+    getProjectStatusBadgeClass,
+    getProjectStatusTranslationKey,
+} from '@/pages/RecentProjects/projectStatus'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useTranslation } from 'react-i18next'
 
 export function RecentActivityCard() {
     const navigate = useNavigate()
     const [showViewModal, setShowViewModal] = useState(false)
+    const [showPlanModal, setShowPlanModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [selectedProject, setSelectedProject] = useState<RecentProject | null>(
         null
@@ -28,6 +34,11 @@ export function RecentActivityCard() {
     const handleDeleteClick = (project: RecentProject) => {
         setSelectedProject(project)
         setShowDeleteModal(true)
+    }
+
+    const handleUploadPlan = (project: RecentProject) => {
+        setSelectedProject(project)
+        setShowPlanModal(true)
     }
 
     const handleConfirmDelete = () => {
@@ -56,15 +67,18 @@ export function RecentActivityCard() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="w-full overflow-auto">
-                        <table className="w-full min-w-[980px]">
+                        <table className="w-full min-w-[1180px]">
                             <thead>
                                 <tr className="bg-gray-50/80 text-slate-800 border-b border-gray-100">
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.id')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.customerName')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.project')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.startDate')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.endDate')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.status')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.progress')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.value')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.projectPlan')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.action')}</th>
                                 </tr>
                             </thead>
@@ -86,24 +100,26 @@ export function RecentActivityCard() {
                                         <td className="px-6 py-5 text-sm">
                                             {project.project}
                                         </td>
+                                        <td className="px-6 py-5 text-sm whitespace-nowrap">
+                                            {project.startDate}
+                                        </td>
+                                        <td className="px-6 py-5 text-sm whitespace-nowrap">
+                                            {project.endDate}
+                                        </td>
                                         <td className="px-6 py-5">
                                             <span
-                                                className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium ${
-                                                    project.status === 'In Progress'
-                                                        ? 'bg-purple-100 text-purple-600'
-                                                        : project.status === 'Pending Approval'
-                                                            ? 'bg-red-100 text-red-500'
-                                                            : 'bg-green-100 text-green-600'
-                                                }`}
+                                                className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium ${getProjectStatusBadgeClass(
+                                                    project.status
+                                                )}`}
                                             >
-                                                {project.status}
+                                                {t(getProjectStatusTranslationKey(project.status))}
                                             </span>
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-2 w-24 rounded-full bg-gray-100 overflow-hidden">
-                                                    <div 
-                                                        className={`h-full rounded-full ${project.status === 'In Progress' ? 'bg-green-500' : 'bg-gray-300'}`}
+                                                <div className="h-2 w-24 min-w-[6rem] rounded-full bg-gray-100 overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full bg-emerald-500"
                                                         style={{ width: `${project.progress}%` }}
                                                     />
                                                 </div>
@@ -112,6 +128,15 @@ export function RecentActivityCard() {
                                         </td>
                                         <td className="px-6 py-5 text-sm font-medium">
                                             {project.value}
+                                        </td>
+                                        <td className="px-6 py-5">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleUploadPlan(project)}
+                                                className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
+                                            >
+                                                {t('dashboard.uploadPlan')}
+                                            </button>
                                         </td>
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
@@ -149,6 +174,15 @@ export function RecentActivityCard() {
                 open={showViewModal}
                 onClose={() => {
                     setShowViewModal(false)
+                    setSelectedProject(null)
+                }}
+                project={selectedProject}
+            />
+
+            <ProjectPlanUploadModal
+                open={showPlanModal}
+                onClose={() => {
+                    setShowPlanModal(false)
                     setSelectedProject(null)
                 }}
                 project={selectedProject}

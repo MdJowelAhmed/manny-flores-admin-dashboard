@@ -10,6 +10,12 @@ import {
   type RecentProject,
 } from './recentProjectsData'
 import { ProjectViewDetailsModal } from './components/ProjectViewDetailsModal'
+import { ProjectPlanUploadModal } from './components/ProjectPlanUploadModal'
+import {
+  getProjectStatusBadgeClass,
+  getProjectStatusTranslationKey,
+} from './projectStatus'
+
 export default function RecentProjects() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -21,6 +27,7 @@ export default function RecentProjects() {
     parseInt(searchParams.get('limit') || '10', 10) || 10
 
   const [showViewModal, setShowViewModal] = useState(false)
+  const [showPlanModal, setShowPlanModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedProject, setSelectedProject] = useState<RecentProject | null>(
     null
@@ -62,18 +69,16 @@ export default function RecentProjects() {
     setShowDeleteModal(true)
   }
 
+  const handleUploadPlan = (project: RecentProject) => {
+    setSelectedProject(project)
+    setShowPlanModal(true)
+  }
+
   const handleConfirmDelete = () => {
     if (!selectedProject) return
     setProjects((prev) => prev.filter((p) => p.id !== selectedProject.id))
     setSelectedProject(null)
     setShowDeleteModal(false)
-  }
-
-  const getStatusClasses = (status: string) => {
-    if (status === 'In Progress')
-      return 'bg-purple-100 text-purple-600'
-    if (status === 'Pending Approval') return 'bg-red-100 text-red-500'
-    return 'bg-green-100 text-green-600'
   }
 
   return (
@@ -82,7 +87,7 @@ export default function RecentProjects() {
        
         <CardContent className="p-0">
           <div className="w-full overflow-auto">
-            <table className="w-full min-w-[980px]">
+            <table className="w-full min-w-[1180px]">
               <thead>
                 <tr className="bg-secondary-foreground text-accent">
                   <th className="px-6 py-4 text-left text-sm font-bold">{t('recentProjectsPage.id')}</th>
@@ -93,6 +98,12 @@ export default function RecentProjects() {
                     {t('recentProjectsPage.project')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
+                    {t('recentProjectsPage.startDate')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">
+                    {t('recentProjectsPage.endDate')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">
                     {t('recentProjectsPage.status')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
@@ -100,6 +111,9 @@ export default function RecentProjects() {
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
                     {t('recentProjectsPage.value')}
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-bold">
+                    {t('recentProjectsPage.projectPlan')}
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-bold">
                     {t('recentProjectsPage.action')}
@@ -119,26 +133,26 @@ export default function RecentProjects() {
                       {project.customerName}
                     </td>
                     <td className="px-6 py-5 text-sm">{project.project}</td>
+                    <td className="px-6 py-5 text-sm whitespace-nowrap">
+                      {project.startDate}
+                    </td>
+                    <td className="px-6 py-5 text-sm whitespace-nowrap">
+                      {project.endDate}
+                    </td>
                     <td className="px-6 py-5">
                       <span
-                        className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium ${getStatusClasses(
+                        className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium ${getProjectStatusBadgeClass(
                           project.status
                         )}`}
                       >
-                        {project.status}
+                        {t(getProjectStatusTranslationKey(project.status))}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="h-2 w-24 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-2 w-24 min-w-[6rem] rounded-full bg-gray-100 overflow-hidden">
                           <div
-                            className={`h-full rounded-full ${
-                              project.status === 'In Progress'
-                                ? 'bg-green-500'
-                                : project.status === 'Completed'
-                                  ? 'bg-green-500'
-                                  : 'bg-gray-300'
-                            }`}
+                            className="h-full rounded-full bg-emerald-500"
                             style={{ width: `${project.progress}%` }}
                           />
                         </div>
@@ -149,6 +163,15 @@ export default function RecentProjects() {
                     </td>
                     <td className="px-6 py-5 text-sm font-medium">
                       {project.value}
+                    </td>
+                    <td className="px-6 py-5">
+                      <button
+                        type="button"
+                        onClick={() => handleUploadPlan(project)}
+                        className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
+                      >
+                        {t('recentProjectsPage.uploadPlan')}
+                      </button>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
@@ -192,6 +215,15 @@ export default function RecentProjects() {
         open={showViewModal}
         onClose={() => {
           setShowViewModal(false)
+          setSelectedProject(null)
+        }}
+        project={selectedProject}
+      />
+
+      <ProjectPlanUploadModal
+        open={showPlanModal}
+        onClose={() => {
+          setShowPlanModal(false)
           setSelectedProject(null)
         }}
         project={selectedProject}

@@ -184,7 +184,22 @@
     "status": "Status",
     "progress": "Progress",
     "value": "Value",
-    "action": "Action"
+    "action": "Action",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "projectPlan": "Project Plan",
+    "uploadPlan": "Upload plan"
+  },
+  "projectPlanModal": {
+    "title": "Project Plan",
+    "projectName": "Project Name",
+    "projectInformation": "Project Information",
+    "projectInformationPlaceholder": "Enter Project Information",
+    "uploadDocument": "Upload document",
+    "uploadLinePrefix": "Upload document",
+    "fileTypesHighlight": "(pdf, jpg)",
+    "uploadSuccess": "Project plan submitted successfully.",
+    "selectFile": "Please choose a PDF or JPG file to upload."
   },
   "common": {
     "add": "Add",
@@ -649,9 +664,15 @@
     "progress": "Progress",
     "value": "Value",
     "action": "Action",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "projectPlan": "Project Plan",
+    "uploadPlan": "Upload plan",
     "inProgress": "In Progress",
     "pendingApproval": "Pending Approval",
-    "completed": "Completed"
+    "completed": "Completed",
+    "scheduled": "Scheduled",
+    "overdue": "Overdue"
   },
   "notifications": {
     "title": "Notifications",

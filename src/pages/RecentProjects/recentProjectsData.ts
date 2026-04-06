@@ -1,10 +1,18 @@
+export type ProjectStatus =
+  | 'Completed'
+  | 'In Progress'
+  | 'Scheduled'
+  | 'Overdue'
+
 export interface RecentProject {
   id: string
   customerName: string
   project: string
-  status: 'In Progress' | 'Pending Approval' | 'Completed'
+  status: ProjectStatus
   progress: number
   value: string
+  startDate: string
+  endDate: string
   // Extended fields for view details modal
   email?: string
   company?: string
@@ -20,6 +28,8 @@ export const recentProjectsData: RecentProject[] = [
     status: 'In Progress',
     progress: 92,
     value: '€12,560',
+    startDate: '12.08.26',
+    endDate: '24.10.26',
     email: 'emily@email.com',
     company: 'Garden Design & Installation',
     projectName: 'Residential Backyard Renovation',
@@ -30,9 +40,11 @@ export const recentProjectsData: RecentProject[] = [
     id: '#2',
     customerName: 'Michael Chen',
     project: 'Front Yard Landscaping',
-    status: 'Pending Approval',
+    status: 'Scheduled',
     progress: 0,
     value: '€12,560',
+    startDate: '01.09.26',
+    endDate: '15.11.26',
     email: 'michael@email.com',
     company: 'Front Yard Landscaping',
     projectName: 'Front Yard Landscaping',
@@ -43,9 +55,11 @@ export const recentProjectsData: RecentProject[] = [
     id: '#3',
     customerName: 'Sarah Johnson',
     project: 'Patio & Deck Construction',
-    status: 'In Progress',
+    status: 'Overdue',
     progress: 45,
     value: '€12,560',
+    startDate: '05.06.26',
+    endDate: '20.07.26',
     email: 'sarah@email.com',
     company: 'Patio & Deck Construction',
     projectName: 'Patio & Deck Construction',
@@ -59,6 +73,8 @@ export const recentProjectsData: RecentProject[] = [
     status: 'In Progress',
     progress: 87,
     value: '€12,560',
+    startDate: '03.07.26',
+    endDate: '30.09.26',
     email: 'lisa@email.com',
     company: 'Backyard Renovation Co',
     projectName: 'Backyard Renovation',
@@ -72,6 +88,8 @@ export const recentProjectsData: RecentProject[] = [
     status: 'In Progress',
     progress: 65,
     value: '€28,900',
+    startDate: '18.05.26',
+    endDate: '12.12.26',
     email: 'john@email.com',
     company: 'Aqua Landscapes',
     projectName: 'Pool & Spa Design',
@@ -85,6 +103,8 @@ export const recentProjectsData: RecentProject[] = [
     status: 'Completed',
     progress: 100,
     value: '€45,200',
+    startDate: '10.01.26',
+    endDate: '28.03.26',
     email: 'maria@email.com',
     company: 'Green Space Solutions',
     projectName: 'Office Park Landscaping',
