@@ -58,6 +58,7 @@ export function ViewVehicleDetailsModal({
           <h3 className="text-sm font-bold text-foreground mb-3">Basic Information</h3>
           <DetailRow label="Model" value={vehicle.model} />
           <DetailRow label="Year" value={vehicle.year} />
+          <DetailRow label="Category" value={vehicle.category} />
           <DetailRow label="Type" value={vehicle.type} />
           <DetailRow label="Purchase Date" value={vehicle.purchaseDate} />
           <DetailRow label="Purchase Cost" value={vehicle.purchaseCost} />

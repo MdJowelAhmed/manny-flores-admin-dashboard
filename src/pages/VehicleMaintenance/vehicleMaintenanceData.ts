@@ -19,6 +19,7 @@ export const mockVehiclesData: Vehicle[] = [
   {
     id: 'v-1',
     vehicleName: 'Ford F-150 #45',
+    category: 'Light Duty',
     type: 'Pickup Truck',
     assignedTo: 'Jhon Lura',
     usage: '120 km',
@@ -40,6 +41,7 @@ export const mockVehiclesData: Vehicle[] = [
   {
     id: 'v-2',
     vehicleName: 'Ford F-150 #46',
+    category: 'Light Duty',
     type: 'Pickup Truck',
     assignedTo: 'Sarah Smith',
     usage: '85 km',
@@ -61,6 +63,7 @@ export const mockVehiclesData: Vehicle[] = [
   {
     id: 'v-3',
     vehicleName: 'Chevy Silverado #12',
+    category: 'Heavy Duty',
     type: 'Truck',
     assignedTo: 'Michael Brown',
     usage: '200 km',

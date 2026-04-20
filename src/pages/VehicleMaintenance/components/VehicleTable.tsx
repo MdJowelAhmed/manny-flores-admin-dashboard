@@ -26,6 +26,7 @@ export function VehicleTable({
         <thead>
           <tr className="bg-secondary-foreground text-accent">
             <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.vehicle')}</th>
+            <th className="px-6 py-4 text-left text-sm font-bold">Category</th>
             <th className="px-6 py-4 text-left text-sm font-bold">{t('resourceRequests.type')}</th>
             <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.assignTo')}</th>
             <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.usage')}</th>
@@ -37,7 +38,7 @@ export function VehicleTable({
         <tbody className="divide-y divide-gray-100 bg-white">
           {vehicles.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+              <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                 {t('vehicleMaintenance.noVehiclesFound')}
               </td>
             </tr>
@@ -63,6 +64,9 @@ export function VehicleTable({
                         {vehicle.vehicleName}
                       </span>
                     </div>
+                  </td>
+                  <td className="px-6 py-3">
+                    <span className="text-sm text-slate-600">{vehicle.category}</span>
                   </td>
                   <td className="px-6 py-3">
                     <span className="text-sm text-slate-600">{vehicle.type}</span>

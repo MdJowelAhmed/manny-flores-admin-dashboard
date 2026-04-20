@@ -140,6 +140,14 @@ export interface MaterialCategory {
   updatedAt: string
 }
 
+/** Vehicle taxonomy (Vehicle Maintenance page) */
+export interface VehicleCategory {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
 // ==================== Car Types ====================
 export interface CarOwner {
   name: string
@@ -723,6 +731,7 @@ export interface VehicleAssignedEmployee {
 export interface Vehicle {
   id: string
   vehicleName: string
+  category: string
   type: string
   assignedTo: string
   usage: string
