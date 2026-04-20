@@ -1,11 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { ModalWrapper } from '@/components/common'
-import { FormInput, FormSelect, DatePicker } from '@/components/common/Form'
+import { FormInput, DatePicker } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
 import type { Equipment } from '@/types'
-import { equipmentCategoryOptions } from '../equipmentMaintenanceData'
 import { toast } from '@/utils/toast'
 import { parseFlexibleDate, formatDateDisplay } from '@/utils/formatters'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useAppSelector } from '@/redux/hooks'
 
 interface AddEditEquipmentModalProps {
   open: boolean
@@ -22,6 +30,8 @@ export function AddEditEquipmentModal({
 }: AddEditEquipmentModalProps) {
   const isEdit = !!equipment
 
+  const equipmentCategories = useAppSelector((s) => s.equipmentCategories.list)
+
   const [model, setModel] = useState('')
   const [category, setCategory] = useState('')
   const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(undefined)
@@ -34,11 +44,22 @@ export function AddEditEquipmentModal({
   const [lastService, setLastService] = useState<Date | undefined>(undefined)
   const [nextService, setNextService] = useState<Date | undefined>(undefined)
 
+  const categoryOptions = useMemo(() => {
+    const names = equipmentCategories.map((c) => c.name)
+    const set = new Set<string>(names)
+    if (equipment?.category) set.add(equipment.category)
+    return Array.from(set)
+  }, [equipment?.category, equipmentCategories])
+
   useEffect(() => {
     if (open) {
+      const names = equipmentCategories.map((c) => c.name)
+      const opts = Array.from(new Set([...names, ...(equipment?.category ? [equipment.category] : [])]))
+      const first = opts[0] ?? ''
+
       if (equipment) {
         setModel(equipment.model)
-        setCategory(equipment.category)
+        setCategory(equipment.category && opts.includes(equipment.category) ? equipment.category : first)
         setPurchaseDate(parseFlexibleDate(equipment.purchaseDate) ?? undefined)
         setPurchaseCost(equipment.purchaseCost)
         setWarrantyExpiry(parseFlexibleDate(equipment.warrantyExpiry) ?? undefined)
@@ -51,7 +72,7 @@ export function AddEditEquipmentModal({
         setNextService(parseFlexibleDate(equipment.nextService) ?? undefined)
       } else {
         setModel('')
-        setCategory('')
+        setCategory(first)
         setPurchaseDate(undefined)
         setPurchaseCost('')
         setWarrantyExpiry(undefined)
@@ -63,7 +84,7 @@ export function AddEditEquipmentModal({
         setNextService(undefined)
       }
     }
-  }, [equipment, open])
+  }, [equipment, open, equipmentCategories])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -124,14 +145,27 @@ export function AddEditEquipmentModal({
               required
               className="border-gray-200"
             />
-            <FormSelect
-              label="Category"
-              value={category}
-              options={equipmentCategoryOptions}
-              onChange={setCategory}
-              placeholder="Select category"
-              className="border-gray-200"
-            />
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select
+                value={category || undefined}
+                onValueChange={setCategory}
+                disabled={categoryOptions.length === 0}
+              >
+                <SelectTrigger className="h-11 rounded-md border-gray-200 bg-background">
+                  <SelectValue
+                    placeholder={categoryOptions.length === 0 ? 'No categories' : 'Select category'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryOptions.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <DatePicker
               label="Purchase Date"
               value={purchaseDate}

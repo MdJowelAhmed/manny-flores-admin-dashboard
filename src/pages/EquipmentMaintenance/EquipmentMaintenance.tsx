@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SearchInput } from '@/components/common/SearchInput'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
@@ -13,9 +14,17 @@ import { AddEditEquipmentModal } from './components/AddEditEquipmentModal'
 import { mockEquipmentData } from './equipmentMaintenanceData'
 import type { Equipment } from '@/types'
 import { toast } from '@/utils/toast'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
+import { deleteEquipmentCategory } from '@/redux/slices/equipmentCategorySlice'
+import type { EquipmentCategory } from '@/types'
+import { DEFAULT_PAGINATION } from '@/utils/constants'
+import { EquipmentCategoriesTable } from './components/EquipmentCategoriesTable'
+import { AddEditEquipmentCategoryModal } from './components/AddEditEquipmentCategoryModal'
 
 export default function EquipmentMaintenance() {
   const { t } = useTranslation()
+  const dispatch = useAppDispatch()
+  const equipmentCategories = useAppSelector((s) => s.equipmentCategories.list)
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get('search') ?? ''
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
@@ -47,11 +56,22 @@ export default function EquipmentMaintenance() {
   const [equipmentToDelete, setEquipmentToDelete] = useState<Equipment | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false)
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
+  const [categoryToDelete, setCategoryToDelete] = useState<EquipmentCategory | null>(null)
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false)
+  const [categoryPage, setCategoryPage] = useState(DEFAULT_PAGINATION.page)
+  const [categoryLimit, setCategoryLimit] = useState(DEFAULT_PAGINATION.limit)
+
+  const selectedCategory =
+    equipmentCategories.find((c) => c.id === editingCategoryId) ?? null
+
   const filteredEquipment = useMemo(() => {
     return equipment.filter((e) => {
       const matchesSearch =
         !searchQuery ||
         e.equipmentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
         e.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
         e.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
       return matchesSearch
@@ -68,6 +88,22 @@ export default function EquipmentMaintenance() {
     const start = (currentPage - 1) * itemsPerPage
     return filteredEquipment.slice(start, start + itemsPerPage)
   }, [filteredEquipment, currentPage, itemsPerPage])
+
+  const paginatedCategories = useMemo(() => {
+    const start = (categoryPage - 1) * categoryLimit
+    return equipmentCategories.slice(start, start + categoryLimit)
+  }, [equipmentCategories, categoryLimit, categoryPage])
+
+  const categoryTotalPages = Math.max(
+    1,
+    Math.ceil(equipmentCategories.length / categoryLimit)
+  )
+
+  const handleCategoryPageChange = (newPage: number) => setCategoryPage(newPage)
+  const handleCategoryLimitChange = (newLimit: number) => {
+    setCategoryLimit(newLimit)
+    setCategoryPage(1)
+  }
 
   const handleView = (item: Equipment) => {
     setSelectedEquipment(item)
@@ -91,6 +127,52 @@ export default function EquipmentMaintenance() {
   const handleAdd = () => {
     setSelectedEquipment(null)
     setIsAddEditModalOpen(true)
+  }
+
+  const handleAddCategory = () => {
+    setEditingCategoryId(null)
+    setCategoryModalOpen(true)
+    setCategoryPage(1)
+  }
+
+  const handleEditCategory = (c: EquipmentCategory) => {
+    setEditingCategoryId(c.id)
+    setCategoryModalOpen(true)
+  }
+
+  const handleDeleteCategory = (c: EquipmentCategory) => {
+    const inUse = equipment.some((e) => e.category === c.name)
+    if (inUse) {
+      toast({
+        title: t('common.error'),
+        description: `Category "${c.name}" is in use by existing equipment.`,
+        variant: 'destructive',
+      })
+      return
+    }
+    setCategoryToDelete(c)
+  }
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!categoryToDelete) return
+    setIsDeletingCategory(true)
+    try {
+      await new Promise((r) => setTimeout(r, 300))
+      dispatch(deleteEquipmentCategory(categoryToDelete.id))
+      toast({
+        variant: 'success',
+        title: 'Category deleted',
+        description: `Category "${categoryToDelete.name}" removed successfully.`,
+      })
+      setCategoryToDelete(null)
+      const nextTotalPages = Math.max(
+        1,
+        Math.ceil((equipmentCategories.length - 1) / categoryLimit)
+      )
+      if (categoryPage > nextTotalPages) setCategoryPage(nextTotalPages)
+    } finally {
+      setIsDeletingCategory(false)
+    }
   }
 
   const handleSave = (data: Partial<Equipment>) => {
@@ -170,10 +252,22 @@ export default function EquipmentMaintenance() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="border-0">
-        <div className="flex flex-row items-center justify-between pb-6">
-          <h2 className="text-xl font-bold text-accent">{t('equipmentMaintenance.trackEquipment')}</h2>
-          <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-xl font-bold text-accent">{t('equipmentMaintenance.trackEquipment')}</h2>
+      </div>
+
+      <Tabs defaultValue="equipments" className="w-full space-y-4">
+        <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/60 p-1 h-auto rounded-lg">
+          <TabsTrigger value="equipments" className="rounded-md py-2.5">
+            Equipments
+          </TabsTrigger>
+          <TabsTrigger value="categories" className="rounded-md py-2.5">
+            Equipment Categories
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="equipments" className="mt-0 space-y-4">
+          <div className="flex items-center justify-between gap-3">
             <SearchInput
               value={searchQuery}
               onChange={setSearch}
@@ -186,30 +280,58 @@ export default function EquipmentMaintenance() {
               {t('equipmentMaintenance.addEquipment')}
             </Button>
           </div>
-        </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <EquipmentTable
-            equipment={paginatedEquipment}
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <EquipmentTable
+              equipment={paginatedEquipment}
+              onView={handleView}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
 
-          {filteredEquipment.length > 0 && (
-            <div className="border-t border-gray-100 px-6 py-4">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={filteredEquipment.length}
-                itemsPerPage={itemsPerPage}
-                onPageChange={setPage}
-                onItemsPerPageChange={setLimit}
-              />
-            </div>
-          )}
-        </div>
-      </div>
+            {filteredEquipment.length > 0 && (
+              <div className="border-t border-gray-100 px-6 py-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredEquipment.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setPage}
+                  onItemsPerPageChange={setLimit}
+                />
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="categories" className="mt-0 space-y-4">
+          <div className="flex justify-end">
+            <Button
+              onClick={handleAddCategory}
+              className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Category
+            </Button>
+          </div>
+
+          <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+            <EquipmentCategoriesTable
+              categories={paginatedCategories}
+              onEdit={handleEditCategory}
+              onDelete={handleDeleteCategory}
+            />
+            <Pagination
+              currentPage={categoryPage}
+              totalPages={categoryTotalPages}
+              totalItems={equipmentCategories.length}
+              itemsPerPage={categoryLimit}
+              onPageChange={handleCategoryPageChange}
+              onItemsPerPageChange={handleCategoryLimitChange}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <ViewEquipmentDetailsModal
         open={isViewModalOpen}
@@ -232,6 +354,16 @@ export default function EquipmentMaintenance() {
         onSave={handleSave}
       />
 
+      <AddEditEquipmentCategoryModal
+        open={categoryModalOpen}
+        onClose={() => {
+          setCategoryModalOpen(false)
+          setEditingCategoryId(null)
+        }}
+        editingId={editingCategoryId}
+        category={selectedCategory}
+      />
+
       <ConfirmDialog
         open={isConfirmOpen}
         onClose={() => {
@@ -245,6 +377,18 @@ export default function EquipmentMaintenance() {
         cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeleting}
+      />
+
+      <ConfirmDialog
+        open={!!categoryToDelete}
+        onClose={() => !isDeletingCategory && setCategoryToDelete(null)}
+        onConfirm={handleConfirmDeleteCategory}
+        title="Delete Category"
+        description={`Are you sure you want to delete "${categoryToDelete?.name ?? ''}"?`}
+        confirmText="Delete"
+        cancelText={t('common.cancel')}
+        variant="danger"
+        isLoading={isDeletingCategory}
       />
     </motion.div>
   )

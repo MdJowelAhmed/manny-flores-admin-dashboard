@@ -148,6 +148,14 @@ export interface VehicleCategory {
   updatedAt: string
 }
 
+/** Equipment taxonomy (Equipment Maintenance page) */
+export interface EquipmentCategory {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
 // ==================== Car Types ====================
 export interface CarOwner {
   name: string
