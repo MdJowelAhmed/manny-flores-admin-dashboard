@@ -3,15 +3,24 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MaterialsTable } from './components/MaterialsTable'
 import { ViewMaterialDetailsModal } from './components/ViewMaterialDetailsModal'
 import { AddEditMaterialModal } from './components/AddEditMaterialModal'
+import { MaterialCategoriesTable } from './components/MaterialCategoriesTable'
+import { AddEditMaterialCategoryModal } from './components/AddEditMaterialCategoryModal'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { mockMaterialsData, type Material } from './manageMaterialsData'
 import { toast } from '@/utils/toast'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
+import { deleteMaterialCategory } from '@/redux/slices/materialCategorySlice'
+import type { MaterialCategory } from '@/types'
 
 export default function ManageMaterials() {
   const { t } = useTranslation()
+  const dispatch = useAppDispatch()
+  const materialCategories = useAppSelector((s) => s.materialCategories.list)
+
   const [materials, setMaterials] = useState<Material[]>(mockMaterialsData)
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
@@ -19,6 +28,14 @@ export default function ManageMaterials() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [materialToDelete, setMaterialToDelete] = useState<Material | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false)
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
+  const [categoryToDelete, setCategoryToDelete] = useState<MaterialCategory | null>(null)
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false)
+
+  const selectedCategory =
+    materialCategories.find((c) => c.id === editingCategoryId) ?? null
 
   const handleView = (m: Material) => {
     setSelectedMaterial(m)
@@ -103,6 +120,46 @@ export default function ManageMaterials() {
     }
   }
 
+  const handleAddCategory = () => {
+    setEditingCategoryId(null)
+    setCategoryModalOpen(true)
+  }
+
+  const handleEditCategory = (c: MaterialCategory) => {
+    setEditingCategoryId(c.id)
+    setCategoryModalOpen(true)
+  }
+
+  const handleDeleteCategory = (c: MaterialCategory) => {
+    const inUse = materials.some((m) => m.category === c.name)
+    if (inUse) {
+      toast({
+        title: t('common.error'),
+        description: t('manageMaterials.categoryInUse', { name: c.name }),
+        variant: 'destructive',
+      })
+      return
+    }
+    setCategoryToDelete(c)
+  }
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!categoryToDelete) return
+    setIsDeletingCategory(true)
+    try {
+      await new Promise((r) => setTimeout(r, 300))
+      dispatch(deleteMaterialCategory(categoryToDelete.id))
+      toast({
+        variant: 'success',
+        title: t('manageMaterials.categoryDeleted'),
+        description: t('manageMaterials.categoryRemoved', { name: categoryToDelete.name }),
+      })
+      setCategoryToDelete(null)
+    } finally {
+      setIsDeletingCategory(false)
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -114,23 +171,60 @@ export default function ManageMaterials() {
         <h1 className="text-xl font-bold text-slate-800">
           {t('manageMaterials.pageTitle')}
         </h1>
-        <Button
-          onClick={handleAdd}
-          className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {t('manageMaterials.addMaterial')}
-        </Button>
       </div>
 
-      <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-        <MaterialsTable
-          materials={materials}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      </div>
+      <Tabs defaultValue="materials" className="w-full space-y-4">
+        <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/60 p-1 h-auto rounded-lg">
+          <TabsTrigger value="materials" className="rounded-md py-2.5">
+            {t('manageMaterials.tabMaterials')}
+          </TabsTrigger>
+          <TabsTrigger value="categories" className="rounded-md py-2.5">
+            {t('manageMaterials.tabCategories')}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="materials" className="mt-0 space-y-4">
+          <div className="flex justify-end">
+            <Button
+              onClick={handleAdd}
+              className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('manageMaterials.addMaterial')}
+            </Button>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+            <MaterialsTable
+              materials={materials}
+              onView={handleView}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="categories" className="mt-0 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
+            {/* <p className="text-sm text-muted-foreground">
+              {t('manageMaterials.categoriesTabHint')}
+            </p> */}
+            <Button
+              onClick={handleAddCategory}
+              className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('manageMaterials.addCategory')}
+            </Button>
+          </div>
+          <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+            <MaterialCategoriesTable
+              categories={materialCategories}
+              onEdit={handleEditCategory}
+              onDelete={handleDeleteCategory}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <ViewMaterialDetailsModal
         open={isViewModalOpen}
@@ -151,6 +245,16 @@ export default function ManageMaterials() {
         onSave={handleSave}
       />
 
+      <AddEditMaterialCategoryModal
+        open={categoryModalOpen}
+        onClose={() => {
+          setCategoryModalOpen(false)
+          setEditingCategoryId(null)
+        }}
+        editingId={editingCategoryId}
+        category={selectedCategory}
+      />
+
       <ConfirmDialog
         open={isConfirmOpen}
         onClose={() => {
@@ -164,6 +268,20 @@ export default function ManageMaterials() {
         cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeleting}
+      />
+
+      <ConfirmDialog
+        open={!!categoryToDelete}
+        onClose={() => !isDeletingCategory && setCategoryToDelete(null)}
+        onConfirm={handleConfirmDeleteCategory}
+        title={t('manageMaterials.deleteCategory')}
+        description={t('manageMaterials.deleteCategoryConfirm', {
+          name: categoryToDelete?.name ?? '',
+        })}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        variant="danger"
+        isLoading={isDeletingCategory}
       />
     </motion.div>
   )

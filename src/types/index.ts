@@ -132,6 +132,14 @@ export interface CategoryFormData {
   image?: File | string
 }
 
+/** Inventory material taxonomy (Manage Materials page) */
+export interface MaterialCategory {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
 // ==================== Car Types ====================
 export interface CarOwner {
   name: string

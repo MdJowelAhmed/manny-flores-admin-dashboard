@@ -42,8 +42,6 @@ export function getStockStatus(
   return avail <= m.minimumStock ? 'low' : 'healthy'
 }
 
-export const MATERIAL_CATEGORIES = ['Soil', 'Raw Material', 'Building', 'Other'] as const
-
 export const mockMaterialsData: Material[] = [
   {
     id: 'mat-1',

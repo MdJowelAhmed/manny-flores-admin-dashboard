@@ -14,6 +14,7 @@ import faqReducer from './slices/faqSlice'
 import milkTypeReducer from './slices/milkTypeSlice'
 import syrupTypeReducer from './slices/syrupTypeSlice'
 import shopCategoryReducer from './slices/shopCategorySlice'
+import materialCategoryReducer from './slices/materialCategorySlice'
 import shopReducer from './slices/shopSlice'
 import shopProductReducer from './slices/shopProductSlice'
 import subscriberReducer from './slices/subscriberSlice'
@@ -38,6 +39,7 @@ export const store = configureStore({
     milkTypes: milkTypeReducer,
     syrupTypes: syrupTypeReducer,
     shopCategories: shopCategoryReducer,
+    materialCategories: materialCategoryReducer,
     shops: shopReducer,
     shopProducts: shopProductReducer,
     subscribers: subscriberReducer,

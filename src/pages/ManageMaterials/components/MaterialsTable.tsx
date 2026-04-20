@@ -26,32 +26,32 @@ export function MaterialsTable({
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[1024px] border-collapse">
         <thead>
-          <tr className="bg-emerald-50/90 text-slate-800">
-            <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+          <tr className="bg-secondary-foreground text-slate-800">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.materialName')}
             </th>
-            <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.category')}
             </th>
-            <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.unit')}
             </th>
-            <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.totalStock')}
             </th>
-            <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.allocated')}
             </th>
-            <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.available')}
             </th>
-            <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.perUnit')}
             </th>
-            <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
               {t('common.status')}
             </th>
-            <th className="px-5 py-3.5 text-right text-xs font-bold uppercase tracking-wide">
+            <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.action')}
             </th>
           </tr>

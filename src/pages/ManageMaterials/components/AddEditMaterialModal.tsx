@@ -11,8 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useAppSelector } from '@/redux/hooks'
 import type { Material } from '../manageMaterialsData'
-import { MATERIAL_CATEGORIES } from '../manageMaterialsData'
 import { toast } from '@/utils/toast'
 
 interface AddEditMaterialModalProps {
@@ -30,34 +30,42 @@ export function AddEditMaterialModal({
 }: AddEditMaterialModalProps) {
   const { t } = useTranslation()
   const isEdit = !!material?.id
+  const materialCategories = useAppSelector((s) => s.materialCategories.list)
 
   const [materialName, setMaterialName] = useState('')
-  const [category, setCategory] = useState<string>(MATERIAL_CATEGORIES[0])
+  const [category, setCategory] = useState<string>('')
   const [unitPrice, setUnitPrice] = useState('')
   const [totalStock, setTotalStock] = useState('')
   const [minimumStock, setMinimumStock] = useState('')
 
   const categoryOptions = useMemo(() => {
-    const set = new Set<string>([...MATERIAL_CATEGORIES])
+    const names = materialCategories.map((c) => c.name)
+    const set = new Set<string>(names)
     if (material?.category) set.add(material.category)
     return Array.from(set)
-  }, [material?.category, open])
+  }, [material?.category, materialCategories])
 
   useEffect(() => {
+    if (!open) return
+    const names = materialCategories.map((c) => c.name)
+    const opts = Array.from(new Set([...names, ...(material?.category ? [material.category] : [])]))
+    const first = opts[0] ?? ''
+
     if (material) {
       setMaterialName(material.materialName)
-      setCategory(material.category || MATERIAL_CATEGORIES[0])
+      const cat = material.category
+      setCategory(cat && opts.includes(cat) ? cat : first)
       setUnitPrice(String(material.unitPrice ?? material.costPrice ?? ''))
       setTotalStock(String(material.currentStock))
       setMinimumStock(String(material.minimumStock ?? 0))
     } else {
       setMaterialName('')
-      setCategory(MATERIAL_CATEGORIES[0])
+      setCategory(first)
       setUnitPrice('')
       setTotalStock('')
       setMinimumStock('')
     }
-  }, [material, open])
+  }, [material, open, materialCategories])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,6 +73,22 @@ export function AddEditMaterialModal({
       toast({
         title: t('common.error'),
         description: t('manageMaterials.nameRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!categoryOptions.length) {
+      toast({
+        title: t('common.error'),
+        description: t('manageMaterials.addCategoryFirst'),
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!category.trim()) {
+      toast({
+        title: t('common.error'),
+        description: t('manageMaterials.categoryRequired'),
         variant: 'destructive',
       })
       return
@@ -140,9 +164,19 @@ export function AddEditMaterialModal({
             />
             <div className="space-y-2">
               <Label>{t('manageMaterials.category')}</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select
+                value={category || undefined}
+                onValueChange={setCategory}
+                disabled={categoryOptions.length === 0}
+              >
                 <SelectTrigger className="h-11 rounded-md border-gray-200 bg-background">
-                  <SelectValue placeholder={t('manageMaterials.selectCategory')} />
+                  <SelectValue
+                    placeholder={
+                      categoryOptions.length === 0
+                        ? t('manageMaterials.noCategoriesAddInTab')
+                        : t('manageMaterials.selectCategory')
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {categoryOptions.map((c) => (
