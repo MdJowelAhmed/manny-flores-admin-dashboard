@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
@@ -10,11 +10,13 @@ import { AddEditMaterialModal } from './components/AddEditMaterialModal'
 import { MaterialCategoriesTable } from './components/MaterialCategoriesTable'
 import { AddEditMaterialCategoryModal } from './components/AddEditMaterialCategoryModal'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
+import { Pagination } from '@/components/common'
 import { mockMaterialsData, type Material } from './manageMaterialsData'
 import { toast } from '@/utils/toast'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { deleteMaterialCategory } from '@/redux/slices/materialCategorySlice'
 import type { MaterialCategory } from '@/types'
+import { DEFAULT_PAGINATION } from '@/utils/constants'
 
 export default function ManageMaterials() {
   const { t } = useTranslation()
@@ -28,14 +30,44 @@ export default function ManageMaterials() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [materialToDelete, setMaterialToDelete] = useState<Material | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [materialsPage, setMaterialsPage] = useState(DEFAULT_PAGINATION.page)
+  const [materialsLimit, setMaterialsLimit] = useState(DEFAULT_PAGINATION.limit)
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<MaterialCategory | null>(null)
   const [isDeletingCategory, setIsDeletingCategory] = useState(false)
+  const [categoryPage, setCategoryPage] = useState(DEFAULT_PAGINATION.page)
+  const [categoryLimit, setCategoryLimit] = useState(DEFAULT_PAGINATION.limit)
 
   const selectedCategory =
     materialCategories.find((c) => c.id === editingCategoryId) ?? null
+
+  const paginatedMaterials = useMemo(() => {
+    const start = (materialsPage - 1) * materialsLimit
+    return materials.slice(start, start + materialsLimit)
+  }, [materials, materialsLimit, materialsPage])
+
+  const materialsTotalPages = Math.max(1, Math.ceil(materials.length / materialsLimit))
+
+  const handleMaterialsPageChange = (newPage: number) => setMaterialsPage(newPage)
+  const handleMaterialsLimitChange = (newLimit: number) => {
+    setMaterialsLimit(newLimit)
+    setMaterialsPage(1)
+  }
+
+  const paginatedCategories = useMemo(() => {
+    const start = (categoryPage - 1) * categoryLimit
+    return materialCategories.slice(start, start + categoryLimit)
+  }, [materialCategories, categoryLimit, categoryPage])
+
+  const categoryTotalPages = Math.max(1, Math.ceil(materialCategories.length / categoryLimit))
+
+  const handleCategoryPageChange = (newPage: number) => setCategoryPage(newPage)
+  const handleCategoryLimitChange = (newLimit: number) => {
+    setCategoryLimit(newLimit)
+    setCategoryPage(1)
+  }
 
   const handleView = (m: Material) => {
     setSelectedMaterial(m)
@@ -52,6 +84,7 @@ export default function ManageMaterials() {
   const handleAdd = () => {
     setSelectedMaterial(null)
     setIsAddEditModalOpen(true)
+    setMaterialsPage(1)
   }
 
   const handleSave = (data: Partial<Material>) => {
@@ -89,6 +122,7 @@ export default function ManageMaterials() {
         jobAllocations: [],
       }
       setMaterials((prev) => [newMaterial, ...prev])
+      setMaterialsPage(1)
     }
   }
 
@@ -113,6 +147,8 @@ export default function ManageMaterials() {
       if (selectedMaterial?.id === materialToDelete.id) {
         setSelectedMaterial(null)
       }
+      const nextTotalPages = Math.max(1, Math.ceil((materials.length - 1) / materialsLimit))
+      if (materialsPage > nextTotalPages) setMaterialsPage(nextTotalPages)
     } catch {
       toast({ title: t('common.error'), description: t('manageMaterials.failedToDelete'), variant: 'destructive' })
     } finally {
@@ -123,6 +159,7 @@ export default function ManageMaterials() {
   const handleAddCategory = () => {
     setEditingCategoryId(null)
     setCategoryModalOpen(true)
+    setCategoryPage(1)
   }
 
   const handleEditCategory = (c: MaterialCategory) => {
@@ -155,6 +192,8 @@ export default function ManageMaterials() {
         description: t('manageMaterials.categoryRemoved', { name: categoryToDelete.name }),
       })
       setCategoryToDelete(null)
+      const nextTotalPages = Math.max(1, Math.ceil((materialCategories.length - 1) / categoryLimit))
+      if (categoryPage > nextTotalPages) setCategoryPage(nextTotalPages)
     } finally {
       setIsDeletingCategory(false)
     }
@@ -195,10 +234,18 @@ export default function ManageMaterials() {
           </div>
           <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
             <MaterialsTable
-              materials={materials}
+              materials={paginatedMaterials}
               onView={handleView}
               onEdit={handleEdit}
               onDelete={handleDelete}
+            />
+            <Pagination
+              currentPage={materialsPage}
+              totalPages={materialsTotalPages}
+              totalItems={materials.length}
+              itemsPerPage={materialsLimit}
+              onPageChange={handleMaterialsPageChange}
+              onItemsPerPageChange={handleMaterialsLimitChange}
             />
           </div>
         </TabsContent>
@@ -218,9 +265,17 @@ export default function ManageMaterials() {
           </div>
           <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
             <MaterialCategoriesTable
-              categories={materialCategories}
+              categories={paginatedCategories}
               onEdit={handleEditCategory}
               onDelete={handleDeleteCategory}
+            />
+            <Pagination
+              currentPage={categoryPage}
+              totalPages={categoryTotalPages}
+              totalItems={materialCategories.length}
+              itemsPerPage={categoryLimit}
+              onPageChange={handleCategoryPageChange}
+              onItemsPerPageChange={handleCategoryLimitChange}
             />
           </div>
         </TabsContent>
