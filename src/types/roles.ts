@@ -33,6 +33,7 @@ export const FEATURE_ACCESS: Record<string, UserRole[]> = {
   profile: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'company-projects': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'customer-management': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  estimate: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'employee-management': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'vehicle-maintenance': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'equipment-maintenance': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
@@ -48,6 +49,7 @@ export const FEATURE_ACCESS: Record<string, UserRole[]> = {
   'change-orders': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'daily-safety-reports': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'recent-projects': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  invoice: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
 }
 
 export type FeatureKey = keyof typeof FEATURE_ACCESS

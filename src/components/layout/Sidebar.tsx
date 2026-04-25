@@ -60,6 +60,21 @@ const navItems: NavItem[] = [
     icon: FolderKanban,
     feature: 'recent-projects',
   },
+
+  {
+    title: 'Customer Management',
+    titleKey: 'sidebar.customerManagement',
+    href: '/customer-management',
+    icon: UserCircle,
+    feature: 'customer-management',
+  },
+  {
+    title: 'Estimate',
+    titleKey: 'sidebar.estimate',
+    href: '/estimate',
+    icon: FileText,
+    feature: 'estimate',
+  },
   {
     title: 'Company & Projects',
     titleKey: 'sidebar.companyProjects',
@@ -68,11 +83,11 @@ const navItems: NavItem[] = [
     feature: 'company-projects',
   },
   {
-    title: 'Customer Management',
-    titleKey: 'sidebar.customerManagement',
-    href: '/customer-management',
-    icon: UserCircle,
-    feature: 'customer-management',
+    title: 'Invoice',
+    titleKey: 'sidebar.invoice',
+    href: '/invoice',
+    icon: FileText,
+    feature: 'invoice',
   },
   {
     title: 'Employee Management',

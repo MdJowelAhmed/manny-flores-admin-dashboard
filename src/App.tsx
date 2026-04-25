@@ -54,6 +54,8 @@ import DailySafetyReports from './pages/DailySafetyReports/DailySafetyReports'
 import AttendanceDetail from './pages/Attendance/AttendanceDetail'
 import RecentProjects from './pages/RecentProjects'
 import Notifications from './pages/Notifications/Notifications'
+import InvoicePage from './pages/Invoice'
+import EstimatePage from './pages/Estimate'
 
 function AppEntryRedirect() {
   const { user } = useAppSelector((state) => state.auth)
@@ -196,6 +198,24 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
                 <EmployeeManagement />
+              </RoleBasedRoute>
+            }
+          />
+          {/* Estimate - Super Admin, Admin */}
+          <Route
+            path="estimate"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <EstimatePage />
+              </RoleBasedRoute>
+            }
+          />
+          {/* Invoice - Super Admin, Admin */}
+          <Route
+            path="invoice"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <InvoicePage />
               </RoleBasedRoute>
             }
           />
