@@ -245,7 +245,7 @@ export function EstimateItemModal({ open, onClose, item }: EstimateItemModalProp
         {item && (
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{t('estimate.projectLabel')}</span>{' '}
-            {item.title} — {item.companyName}
+            {item.title} — {item.customerName}
           </p>
         )}
 

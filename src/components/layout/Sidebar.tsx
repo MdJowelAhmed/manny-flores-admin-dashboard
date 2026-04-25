@@ -75,19 +75,20 @@ const navItems: NavItem[] = [
     icon: FileText,
     feature: 'estimate',
   },
-  {
-    title: 'Company & Projects',
-    titleKey: 'sidebar.companyProjects',
-    href: '/company-projects',
-    icon: Building2,
-    feature: 'company-projects',
-  },
+
   {
     title: 'Invoice',
     titleKey: 'sidebar.invoice',
     href: '/invoice',
     icon: FileText,
     feature: 'invoice',
+  },
+  {
+    title: 'Company & Projects',
+    titleKey: 'sidebar.companyProjects',
+    href: '/company-projects',
+    icon: Building2,
+    feature: 'company-projects',
   },
   {
     title: 'Employee Management',

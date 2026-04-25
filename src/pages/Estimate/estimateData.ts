@@ -3,7 +3,7 @@ export type EstimateStatus = 'reviewed' | 'pending'
 export interface EstimateListItem {
   id: string
   title: string
-  companyName: string
+  customerName: string
   deadlineFrom: string
   deadlineTo: string
   location: string
@@ -16,7 +16,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateListItem[] = [
   {
     id: 'est-1',
     title: 'Tree Plantation',
-    companyName: 'Startech BD',
+    customerName: 'Startech BD',
     deadlineFrom: '01 Feb, 2026',
     deadlineTo: '12 Feb, 2026',
     location: '123 Riverside Drive',
@@ -28,7 +28,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateListItem[] = [
   {
     id: 'est-2',
     title: 'Plant 10 Plum Tree',
-    companyName: 'Startech BD',
+    customerName: 'Startech BD',
     deadlineFrom: '01 Feb, 2026',
     deadlineTo: '12 Feb, 2026',
     location: '123 Riverside Drive, Park Section A',
@@ -40,7 +40,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateListItem[] = [
   {
     id: 'est-3',
     title: 'Landscape Section B',
-    companyName: 'Green Valley LLC',
+    customerName: 'Green Valley LLC',
     deadlineFrom: '15 Feb, 2026',
     deadlineTo: '28 Feb, 2026',
     location: '88 Oak Street, North Wing',
@@ -52,7 +52,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateListItem[] = [
   {
     id: 'est-4',
     title: 'Irrigation System Check',
-    companyName: 'AquaFlow Inc.',
+    customerName: 'AquaFlow Inc.',
     deadlineFrom: '03 Mar, 2026',
     deadlineTo: '05 Mar, 2026',
     location: '200 Garden Plaza, Lot 4',
@@ -64,7 +64,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateListItem[] = [
   {
     id: 'est-5',
     title: 'Tree Pruning — Main Avenue',
-    companyName: 'Urban Parks Dept',
+    customerName: 'Urban Parks Dept',
     deadlineFrom: '10 Mar, 2026',
     deadlineTo: '20 Mar, 2026',
     location: 'Main Avenue, Blocks 12–14',
@@ -76,7 +76,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateListItem[] = [
   {
     id: 'est-6',
     title: 'Seasonal Mulching',
-    companyName: 'Oak Ridge HOA',
+    customerName: 'Oak Ridge HOA',
     deadlineFrom: '18 Mar, 2026',
     deadlineTo: '22 Mar, 2026',
     location: '450 Cedar Lane',

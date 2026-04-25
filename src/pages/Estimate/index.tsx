@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Info, Lock, Trash2 } from 'lucide-react'
+import { Info, Lock, Plus, Trash2 } from 'lucide-react'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
+import { useAppSelector } from '@/redux/hooks'
+import { UserRole } from '@/types/roles'
 import { EstimateItemModal } from './components/EstimateItemModal'
+import { AddEstimateModal } from './components/AddEstimateModal'
 import { MOCK_ESTIMATE_ITEMS, type EstimateListItem } from './estimateData'
 
 export default function EstimatePage() {
@@ -21,6 +24,11 @@ export default function EstimatePage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<EstimateListItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<EstimateListItem | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
+
+  const { user } = useAppSelector((s) => s.auth)
+  const userRole = (user?.role as UserRole) ?? UserRole.SUPER_ADMIN
+  const canCreate = userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN
 
   const setPage = (p: number) => {
     const next = new URLSearchParams(searchParams)
@@ -73,7 +81,19 @@ export default function EstimatePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold text-gray-900 tracking-tight">{t('estimate.pageTitle')}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-bold text-gray-900 tracking-tight">{t('estimate.pageTitle')}</h1>
+        {canCreate && (
+          <Button
+            type="button"
+            className="bg-[#00AB41] hover:bg-[#009638] text-white font-semibold"
+            onClick={() => setAddOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {t('estimate.addNew')}
+          </Button>
+        )}
+      </div>
 
       <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto scrollbar-thin">
@@ -191,6 +211,15 @@ export default function EstimatePage() {
       </div>
 
       <EstimateItemModal open={modalOpen} onClose={closeModal} item={selectedItem} />
+
+      <AddEstimateModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onCreate={(item) => {
+          setItems((prev) => [item, ...prev])
+          setPage(1)
+        }}
+      />
 
       <ConfirmDialog
         open={!!deleteTarget}
