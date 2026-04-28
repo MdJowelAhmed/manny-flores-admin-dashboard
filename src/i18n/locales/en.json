@@ -585,6 +585,7 @@
   "documentsApprovals": {
     "title": "Documents & Approvals",
     "pageTitle": "Project Status & Document Trail",
+    "titleCol": "Title",
     "documentName": "Document Name",
     "uploadedBy": "Uploaded by",
     "uploadDate": "Upload Date",
@@ -637,7 +638,21 @@
     "auditByDate": "By {{name}} • {{date}}",
     "auditTrail": "Audit trail",
     "fullReport": "Full Report",
-    "reportDownloaded": "Report file download started."
+    "reportDownloaded": "Report file download started.",
+    "newDocument": "New Document",
+    "sendDocumentRequest": "Send Document Request",
+    "uploadDocument": "Upload Document",
+    "userName": "User Name",
+    "newDocRequired": "Please enter a project name and upload date.",
+    "newDocCreated": "New document added to the list.",
+    "defaultDocType": "Project Documentation",
+    "auditUploaded": "Document Uploaded",
+    "uploadDocRequired": "Please enter a project name and choose a file to upload.",
+    "uploadedDocumentLabel": "Uploaded document: {{file}}",
+    "uploadDocumentCta": "Upload Document",
+    "fileHint": "png, pdf, document",
+    "requestRequired": "Please enter a user name and select a document.",
+    "requestSent": "Document request sent."
   },
   "payrollManagement": {
     "totalEmployeesPaid": "Total Employees Paid",
@@ -682,6 +697,7 @@
     "learnMore": "Learn more",
     "printChecks": "Print checks",
     "triggerPayments": "Trigger payments",
+    "paymentAction": "Payment",
     "qbConnected": "Connected",
     "qbNotConnected": "Not connected",
     "qbConnectedAs": "Connected as: {{company}}",

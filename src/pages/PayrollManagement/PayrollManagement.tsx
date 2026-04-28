@@ -2,15 +2,13 @@ import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { CreditCard } from 'lucide-react'
+import { SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { PayrollTable } from './components/PayrollTable'
 import { CreateEditPaymentModal } from './components/CreateEditPaymentModal'
 import { PaymentDetailsModal } from './components/PaymentDetailsModal'
-import { WeeklyPayrollRunCard } from './components/WeeklyPayrollRunCard'
-import { QuickBooksConnectionCard } from './components/QuickBooksConnectionCard'
 import {
   payrollStats,
   mockPayrollData,
@@ -18,6 +16,7 @@ import {
 } from './payrollData'
 import { toast } from '@/utils/toast'
 import { cn } from '@/utils/cn'
+import { SearchInput } from '@/components/common'
 
 export default function PayrollManagement() {
   const { t } = useTranslation()
@@ -26,15 +25,29 @@ export default function PayrollManagement() {
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
 
   const [records, setRecords] = useState<PayrollRecord[]>(mockPayrollData)
+  const [query, setQuery] = useState('')
   const [selectedRecord, setSelectedRecord] = useState<PayrollRecord | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [recordToDelete, setRecordToDelete] = useState<PayrollRecord | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [qbConnected, setQbConnected] = useState(false)
 
-  const totalPages = Math.max(1, Math.ceil(records.length / itemsPerPage))
+  const filteredRecords = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return records
+    return records.filter((r) => {
+      return (
+        r.payrollId.toLowerCase().includes(q) ||
+        r.name.toLowerCase().includes(q) ||
+        r.payType.toLowerCase().includes(q) ||
+        r.project.toLowerCase().includes(q) ||
+        r.status.toLowerCase().includes(q)
+      )
+    })
+  }, [records, query])
+
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / itemsPerPage))
 
   const setPage = (p: number) => {
     const next = new URLSearchParams(searchParams)
@@ -54,13 +67,8 @@ export default function PayrollManagement() {
 
   const paginatedRecords = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
-    return records.slice(start, start + itemsPerPage)
-  }, [records, currentPage, itemsPerPage])
-
-  const handleCreate = () => {
-    setSelectedRecord(null)
-    setIsModalOpen(true)
-  }
+    return filteredRecords.slice(start, start + itemsPerPage)
+  }, [filteredRecords, currentPage, itemsPerPage])
 
   const handleEdit = (r: PayrollRecord, e: React.MouseEvent) => {
     e?.stopPropagation?.()
@@ -147,24 +155,6 @@ export default function PayrollManagement() {
     }
   }
 
-  const markPaidByIds = (ids: string[]) => {
-    if (ids.length === 0) return
-    const idSet = new Set(ids)
-    setRecords((prev) =>
-      prev.map((r) => (idSet.has(r.id) ? { ...r, status: 'Paid' } : r))
-    )
-  }
-
-  const triggerQuickBooksPayments = async (ids: string[]) => {
-    // Demo only. Replace with API call that talks to your backend (OAuth + QBO payouts/checks).
-    await new Promise((r) => setTimeout(r, 350))
-    toast({
-      title: t('payrollManagement.qbActionQueued'),
-      description: t('payrollManagement.qbWeeklyExportQueued', { count: ids.length }),
-      variant: 'info',
-    })
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -198,29 +188,35 @@ export default function PayrollManagement() {
         })}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <WeeklyPayrollRunCard
-          records={records}
-          onMarkPaid={markPaidByIds}
-          canTriggerQuickBooks={qbConnected}
-          onTriggerQuickBooks={triggerQuickBooksPayments}
-        />
-        <QuickBooksConnectionCard onConnectionChange={(s) => setQbConnected(!!s.connected)} />
-      </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-base font-semibold text-slate-900">
+          {t('payrollManagement.employeePayrollDetails')}
+        </h2>
 
-      <div className="flex items-center justify-between ">
-          <h2 className="text-base font-semibold text-accent">{t('payrollManagement.employeePayrollDetails')}</h2>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <SearchInput
+            value={query}
+            onChange={(v) => {
+              setQuery(v)
+              setPage(1)
+            }}
+            placeholder={t('payrollManagement.searchPayroll')}
+            className="w-full sm:w-[360px]"
+          />
           <Button
-            size="sm"
-            onClick={handleCreate}
-            className="bg-primary hover:bg-primary/90 text-white px"
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 rounded-md border-gray-200"
+            onClick={() => {
+              // Placeholder for filter UI (future). Keep button for design parity.
+              toast({ title: t('common.filter'), description: 'Coming soon.', variant: 'info' })
+            }}
           >
-            <span className="flex items-center justify-center w-6 h-6 rounded mr-2">
-              <CreditCard className="h-3.5 w-3.5" />
-            </span>
-            {t('payrollManagement.createPayment')}
+            <SlidersHorizontal className="h-5 w-5 text-slate-600" />
           </Button>
         </div>
+      </div>
 
       {/* Table */}
       <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
@@ -231,12 +227,12 @@ export default function PayrollManagement() {
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
-        {records.length > 0 && (
+        {filteredRecords.length > 0 && (
           <div className="border-t border-gray-100 px-4 py-3">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              totalItems={records.length}
+              totalItems={filteredRecords.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setPage}
               onItemsPerPageChange={setLimit}
