@@ -28,6 +28,7 @@ import {
   ClipboardList,
   FolderKanban,
   Info,
+  BadgeDollarSign,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -117,6 +118,13 @@ const navItems: NavItem[] = [
     href: '/customer-finance',
     icon: Wallet,
     feature: 'customer-finance',
+  },
+  {
+    title: 'Payment',
+    titleKey: 'sidebar.payment',
+    href: '/payments',
+    icon: BadgeDollarSign,
+    feature: 'payments',
   },
   {
     title: 'Manage Materials',

@@ -10,6 +10,7 @@
     "attendance": "Asistencia",
     "communication": "Comunicación",
     "customerFinance": "Clientes y Finanzas",
+    "payment": "Pagos",
     "manageMaterials": "Gestión de Materiales",
     "projectScheduling": "Programación de Proyectos",
     "documentsApprovals": "Documentos y Aprobaciones",
@@ -63,6 +64,7 @@
       "attendance": "Asistencia",
       "communication": "Comunicación",
       "customerFinance": "Clientes y Finanzas",
+      "payments": "Pagos",
       "manageMaterials": "Gestión de Materiales",
       "projectScheduling": "Programación de Proyectos",
       "documentsApprovals": "Documentos y Aprobaciones",
@@ -979,6 +981,74 @@
     "unitHr": "h",
     "unitDay": "día",
     "unitEach": "ud."
+  },
+  "payments": {
+    "overviewTitle": "Resumen de pagos",
+    "searchPlaceholder": "Buscar pagos...",
+    "tableTitle": "Lista de pagos",
+    "noRecordsFound": "No se encontraron registros de pago",
+    "roleHint": "Rol: {{role}}",
+    "paymentStatusChart": "Estado del pago",
+    "currentDistribution": "Distribución actual",
+    "stats": {
+      "totalCollected": "Total recaudado",
+      "totalOutstanding": "Total pendiente",
+      "pendingApprovals": "Aprobaciones pendientes",
+      "totalProjects": "Proyectos"
+    },
+    "table": {
+      "paymentId": "ID de pago",
+      "project": "Proyecto",
+      "customer": "Cliente",
+      "method": "Método",
+      "total": "Total",
+      "paid": "Pagado",
+      "status": "Estado",
+      "receivedAt": "Recibido en"
+    },
+    "status": {
+      "paid": "Pagado",
+      "partiallyPaid": "Parcialmente pagado",
+      "pending": "Pendiente"
+    },
+    "actions": {
+      "uploadProof": "Subir comprobante",
+      "markPaid": "Marcar como pagado",
+      "recordReceived": "Registrar recibido"
+    },
+    "rules": {
+      "cashMannyOnly": "Los pagos en efectivo solo pueden marcarse como Pagado por Manny (Super Admin).",
+      "checkNeedsProof": "Los pagos con cheque requieren subir comprobante antes de marcarse como Pagado.",
+      "notAllowed": "No tienes permiso para realizar esta acción."
+    },
+    "approval": {
+      "title": "Jerarquía de aprobación",
+      "shortDesc": "Efectivo requiere aprobación final de Manny. Cheque requiere comprobante.",
+      "viewRules": "Reglas de aprobación"
+    },
+    "confirm": {
+      "markPaidTitle": "¿Marcar como pagado?",
+      "markPaidDesc": "Esto marcará el pago como Pagado. ¿Continuar?",
+      "recordReceivedTitle": "¿Registrar efectivo recibido?",
+      "recordReceivedDesc": "Esto registrará que el efectivo fue recibido por staff/admin. Manny aún debe confirmar antes de Pagado."
+    },
+    "proof": {
+      "title": "Comprobante de pago (Cheque)",
+      "current": "Comprobante actual",
+      "uploadLabel": "Subir imagen del cheque",
+      "hint": "Sube una foto clara del cheque para verificación.",
+      "preview": "Vista previa",
+      "save": "Guardar",
+      "selectImageError": "Seleccione un archivo de imagen para subir.",
+      "uploadedTitle": "Comprobante subido",
+      "uploadedDesc": "El comprobante del cheque se guardó correctamente."
+    },
+    "toast": {
+      "paidTitle": "Pago actualizado",
+      "paidDesc": "El pago se marcó como Pagado.",
+      "receivedTitle": "Efectivo recibido registrado",
+      "receivedDesc": "Se registró el efectivo recibido. Esperando aprobación de Manny."
+    }
   },
   "dailySafetyReports": {
     "title": "Informes Diarios de Seguridad",

@@ -10,6 +10,7 @@
     "attendance": "Attendance",
     "communication": "Communication",
     "customerFinance": "Customer & Finance",
+    "payment": "Payment",
     "manageMaterials": "Manage Materials",
     "projectScheduling": "Project Scheduling",
     "documentsApprovals": "Documents & Approvals",
@@ -63,6 +64,7 @@
       "attendance": "Attendance",
       "communication": "Communication",
       "customerFinance": "Customer & Finance",
+      "payments": "Payment",
       "manageMaterials": "Manage Materials",
       "projectScheduling": "Project Scheduling",
       "documentsApprovals": "Documents & Approvals",
@@ -979,6 +981,74 @@
     "unitHr": "hr",
     "unitDay": "day",
     "unitEach": "unit"
+  },
+  "payments": {
+    "overviewTitle": "Payments overview",
+    "searchPlaceholder": "Search payments...",
+    "tableTitle": "Payment List",
+    "noRecordsFound": "No payment records found",
+    "roleHint": "Role: {{role}}",
+    "paymentStatusChart": "Payment Status",
+    "currentDistribution": "Current distribution",
+    "stats": {
+      "totalCollected": "Total Collection",
+      "totalOutstanding": "Total Due",
+      "pendingApprovals": "Pending Approvals",
+      "totalProjects": "Projects"
+    },
+    "table": {
+      "paymentId": "Payment ID",
+      "project": "Project",
+      "customer": "Customer",
+      "method": "Method",
+      "total": "Total",
+      "paid": "Paid",
+      "status": "Status",
+      "receivedAt": "Received at"
+    },
+    "status": {
+      "paid": "Paid",
+      "partiallyPaid": "Partially Paid",
+      "pending": "Pending"
+    },
+    "actions": {
+      "uploadProof": "Upload proof",
+      "markPaid": "Mark Paid",
+      "recordReceived": "Record received"
+    },
+    "rules": {
+      "cashMannyOnly": "Cash payments can be marked Paid only by Manny (Super Admin).",
+      "checkNeedsProof": "Check payments require proof upload before marking Paid.",
+      "notAllowed": "You don't have permission to perform this action."
+    },
+    "approval": {
+      "title": "Approval hierarchy",
+      "shortDesc": "Cash requires Manny's final approval. Check requires proof upload.",
+      "viewRules": "Approval rules"
+    },
+    "confirm": {
+      "markPaidTitle": "Mark as Paid?",
+      "markPaidDesc": "This will mark the payment as Paid. Continue?",
+      "recordReceivedTitle": "Record cash received?",
+      "recordReceivedDesc": "This will record that cash was received by staff/admin. Manny still needs to confirm before Paid."
+    },
+    "proof": {
+      "title": "Payment proof (Check)",
+      "current": "Current proof",
+      "uploadLabel": "Upload check image",
+      "hint": "Upload a clear photo of the check for verification.",
+      "preview": "Preview",
+      "save": "Save",
+      "selectImageError": "Please select an image file to upload.",
+      "uploadedTitle": "Proof uploaded",
+      "uploadedDesc": "Check proof has been saved successfully."
+    },
+    "toast": {
+      "paidTitle": "Payment updated",
+      "paidDesc": "The payment has been marked as Paid.",
+      "receivedTitle": "Cash received recorded",
+      "receivedDesc": "Cash received has been recorded. Waiting for Manny approval."
+    }
   },
   "dailySafetyReports": {
     "title": "Daily Safety Reports",

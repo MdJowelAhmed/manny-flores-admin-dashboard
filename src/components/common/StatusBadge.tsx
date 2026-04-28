@@ -12,7 +12,7 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ status, type = 'status', className }: StatusBadgeProps) {
   const colors = type === 'role' ? ROLE_COLORS : STATUS_COLORS
-  const colorConfig = colors[status] || { bg: 'bg-muted', text: 'text-muted-foreground' }
+  const colorConfig = colors[status] || { bg: 'bg-secondary-foreground', text: 'text-primary' }
 
   return (
     <Badge

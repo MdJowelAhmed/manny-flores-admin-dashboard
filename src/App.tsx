@@ -56,6 +56,7 @@ import RecentProjects from './pages/RecentProjects'
 import Notifications from './pages/Notifications/Notifications'
 import InvoicePage from './pages/Invoice'
 import EstimatePage from './pages/Estimate'
+import Payments from './pages/Payments/Payments'
 
 function AppEntryRedirect() {
   const { user } = useAppSelector((state) => state.auth)
@@ -296,6 +297,16 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
                 <CustomerFinance />
+              </RoleBasedRoute>
+            }
+          />
+
+          {/* Payments - Super Admin, Admin */}
+          <Route
+            path="payments"
+            element={
+              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <Payments />
               </RoleBasedRoute>
             }
           />
