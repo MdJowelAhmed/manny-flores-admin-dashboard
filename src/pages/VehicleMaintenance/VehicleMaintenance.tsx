@@ -257,10 +257,10 @@ export default function VehicleMaintenance() {
 
       <Tabs defaultValue="vehicles" className="w-full space-y-4">
         <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/60 p-1 h-auto rounded-lg">
-          <TabsTrigger value="vehicles" className="rounded-md py-2.5">
+          <TabsTrigger value="vehicles" className="data-[state=active]:rounded-l-md data-[state=inactive]:rounded-l-md data-[state=inactive]:border">
             Vehicles
           </TabsTrigger>
-          <TabsTrigger value="categories" className="rounded-md py-2.5">
+          <TabsTrigger value="categories" className="data-[state=active]:rounded-r-md  data-[state=inactive]:rounded-r-md data-[state=inactive]:border">
             Vehicle Categories
           </TabsTrigger>
         </TabsList>
