@@ -6,13 +6,17 @@ import {
   CalendarClock,
   Plus,
   Send,
+  Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ViewScheduleDetailsModal } from './components/ViewScheduleDetailsModal'
 import { AddEditScheduleModal } from './components/AddEditScheduleModal'
+import { AddTeamModal, type TeamDraft } from './components/AddTeamModal'
 import { mockScheduledProjects, type ScheduledProject } from './projectSchedulingData'
+import { mockEmployeesData } from '@/pages/EmployeeManagement/employeeManagementData'
 import { cn } from '@/utils/cn'
+import type { SelectOption } from '@/types'
 
 function teamBadgeLabel(team: string) {
   const raw = team.trim()
@@ -28,6 +32,21 @@ export default function ProjectScheduling() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
   const [editSchedule, setEditSchedule] = useState<ScheduledProject | null>(null)
+  const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false)
+  const [teams, setTeams] = useState<TeamDraft[]>([])
+
+  const teamOptions = useMemo<SelectOption[]>(() => {
+    const names = new Set<string>()
+    schedules.forEach((s) => {
+      const n = (s.team ?? '').trim()
+      if (n) names.add(n)
+    })
+    teams.forEach((t) => {
+      const n = (t.name ?? '').trim()
+      if (n) names.add(n)
+    })
+    return Array.from(names).sort().map((n) => ({ value: n, label: n }))
+  }, [schedules, teams])
 
   const groupedByDate = useMemo(() => {
     const map = new Map<string, ScheduledProject[]>()
@@ -56,6 +75,14 @@ export default function ProjectScheduling() {
   const handleAddScheduled = () => {
     setEditSchedule(null)
     setIsAddEditModalOpen(true)
+  }
+
+  const handleOpenAddTeam = () => {
+    setIsAddTeamModalOpen(true)
+  }
+
+  const handleCreateTeam = (team: TeamDraft) => {
+    setTeams((prev) => [team, ...prev])
   }
 
   const handleSaveSchedule = (data: Partial<ScheduledProject>) => {
@@ -120,13 +147,23 @@ export default function ProjectScheduling() {
             {t('projectScheduling.subtitle')}
           </p>
         </div>
-        <Button
-          onClick={handleAddScheduled}
-          className="bg-primary hover:bg-primary/90 text-white shrink-0 rounded-lg h-11 px-5 shadow-sm"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {t('projectScheduling.addScheduled')}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            onClick={handleOpenAddTeam}
+            className="shrink-0 rounded-lg h-11 px-5 border-gray-200 text-foreground hover:bg-muted/50"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            {t('projectScheduling.addTeam')}
+          </Button>
+          <Button
+            onClick={handleAddScheduled}
+            className="bg-primary hover:bg-primary/90 text-white shrink-0 rounded-lg h-11 px-5 shadow-sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {t('projectScheduling.addScheduled')}
+          </Button>
+        </div>
       </div>
 
       {/* Date groups & project cards */}
@@ -310,6 +347,14 @@ export default function ProjectScheduling() {
         }}
         schedule={editSchedule}
         onSave={handleSaveSchedule}
+        teamOptions={teamOptions}
+      />
+
+      <AddTeamModal
+        open={isAddTeamModalOpen}
+        onClose={() => setIsAddTeamModalOpen(false)}
+        employees={mockEmployeesData}
+        onCreateTeam={handleCreateTeam}
       />
     </motion.div>
   )

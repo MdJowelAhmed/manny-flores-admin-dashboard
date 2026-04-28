@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
-import { FormInput, DatePicker } from '@/components/common/Form'
+import { FormInput, DatePicker, FormSelect } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
 import type { ScheduledProject } from '../projectSchedulingData'
 import { toast } from '@/utils/toast'
 import { parseFlexibleDate, formatDateDisplay } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
+import type { SelectOption } from '@/types'
 
 interface AddEditScheduleModalProps {
   open: boolean
   onClose: () => void
   schedule: ScheduledProject | null
   onSave: (data: Partial<ScheduledProject>) => void
+  teamOptions?: SelectOption[]
 }
 
 const inputClass =
@@ -23,6 +25,7 @@ export function AddEditScheduleModal({
   onClose,
   schedule,
   onSave,
+  teamOptions = [],
 }: AddEditScheduleModalProps) {
   const { t } = useTranslation()
   const isEdit = !!schedule?.id
@@ -123,12 +126,13 @@ export function AddEditScheduleModal({
               onChange={(e) => setCompany(e.target.value)}
               className={cn(inputClass)}
             />
-            <FormInput
+            <FormSelect
               label={t('projectScheduling.team')}
-              placeholder={t('projectScheduling.placeholderTeam')}
               value={team}
-              onChange={(e) => setTeam(e.target.value)}
-              className={cn(inputClass)}
+              options={teamOptions}
+              onChange={setTeam}
+              placeholder={t('projectScheduling.placeholderTeam')}
+              className="md:col-span-2"
             />
           </div>
         </div>
