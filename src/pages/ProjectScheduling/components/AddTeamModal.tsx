@@ -157,7 +157,7 @@ export function AddTeamModal({
                 type="button"
                 className={cn(
                   'flex h-11 w-full items-center justify-between rounded-lg border border-gray-200/80 bg-muted/50 px-3 text-sm',
-                  'hover:bg-muted/60 transition-colors'
+                  'hover:bg-secondary-foreground transition-colors'
                 )}
               >
                 <span className="truncate text-muted-foreground">

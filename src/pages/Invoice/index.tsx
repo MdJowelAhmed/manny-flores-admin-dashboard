@@ -7,15 +7,18 @@ import { cn } from '@/utils/cn'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import { MOCK_INVOICES, computeInvoiceTotals, type InvoiceRecord } from './invoiceData'
 import { InvoiceDetailsModal } from './InvoiceDetailsModal'
+import { CreateInvoiceModal } from './CreateInvoiceModal'
 
 export default function InvoicePage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [detailsInvoice, setDetailsInvoice] = useState<InvoiceRecord | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [invoices, setInvoices] = useState<InvoiceRecord[]>(() => MOCK_INVOICES)
 
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-  const totalItems = MOCK_INVOICES.length
+  const totalItems = invoices.length
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage))
 
   const setPage = (p: number) => {
@@ -30,8 +33,8 @@ export default function InvoicePage() {
 
   const pageInvoices = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
-    return MOCK_INVOICES.slice(start, start + itemsPerPage)
-  }, [currentPage, itemsPerPage])
+    return invoices.slice(start, start + itemsPerPage)
+  }, [currentPage, itemsPerPage, invoices])
 
   const handleItemsPerPageChange = (limit: number) => {
     setItemsPerPage(limit)
@@ -46,7 +49,16 @@ export default function InvoicePage() {
           'text-gray-900'
         )}
       >
-        {/* <h1 className="text-xl font-semibold text-gray-900 mb-8">{t('invoice.pageTitle')}</h1> */}
+        <div className="flex items-center justify-between gap-3 px-1 py-2">
+          <h1 className="text-xl font-semibold text-gray-900">{t('invoice.pageTitle')}</h1>
+          <Button
+            type="button"
+            className="bg-primary hover:bg-primary/90"
+            onClick={() => setCreateOpen(true)}
+          >
+            {t('invoice.create.addNew')}
+          </Button>
+        </div>
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 -mx-1">
           <table className="w-full min-w-[640px] text-sm">
@@ -129,6 +141,15 @@ export default function InvoicePage() {
         open={detailsInvoice !== null}
         onClose={() => setDetailsInvoice(null)}
         invoice={detailsInvoice}
+      />
+
+      <CreateInvoiceModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreate={(inv) => {
+          setInvoices((prev) => [inv, ...prev])
+          setPage(1)
+        }}
       />
     </div>
   )

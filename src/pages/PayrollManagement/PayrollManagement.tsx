@@ -2,13 +2,15 @@ import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { CreditCard,  } from 'lucide-react'
+import { CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { PayrollTable } from './components/PayrollTable'
 import { CreateEditPaymentModal } from './components/CreateEditPaymentModal'
 import { PaymentDetailsModal } from './components/PaymentDetailsModal'
+import { WeeklyPayrollRunCard } from './components/WeeklyPayrollRunCard'
+import { QuickBooksConnectionCard } from './components/QuickBooksConnectionCard'
 import {
   payrollStats,
   mockPayrollData,
@@ -30,6 +32,7 @@ export default function PayrollManagement() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [recordToDelete, setRecordToDelete] = useState<PayrollRecord | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [qbConnected, setQbConnected] = useState(false)
 
   const totalPages = Math.max(1, Math.ceil(records.length / itemsPerPage))
 
@@ -144,6 +147,24 @@ export default function PayrollManagement() {
     }
   }
 
+  const markPaidByIds = (ids: string[]) => {
+    if (ids.length === 0) return
+    const idSet = new Set(ids)
+    setRecords((prev) =>
+      prev.map((r) => (idSet.has(r.id) ? { ...r, status: 'Paid' } : r))
+    )
+  }
+
+  const triggerQuickBooksPayments = async (ids: string[]) => {
+    // Demo only. Replace with API call that talks to your backend (OAuth + QBO payouts/checks).
+    await new Promise((r) => setTimeout(r, 350))
+    toast({
+      title: t('payrollManagement.qbActionQueued'),
+      description: t('payrollManagement.qbWeeklyExportQueued', { count: ids.length }),
+      variant: 'info',
+    })
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -175,6 +196,16 @@ export default function PayrollManagement() {
             </motion.div>
           )
         })}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <WeeklyPayrollRunCard
+          records={records}
+          onMarkPaid={markPaidByIds}
+          canTriggerQuickBooks={qbConnected}
+          onTriggerQuickBooks={triggerQuickBooksPayments}
+        />
+        <QuickBooksConnectionCard onConnectionChange={(s) => setQbConnected(!!s.connected)} />
       </div>
 
       <div className="flex items-center justify-between ">
