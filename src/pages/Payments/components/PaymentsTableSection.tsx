@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { CheckCircle2, Upload, BadgeDollarSign } from 'lucide-react'
+import { CheckCircle2, Upload } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Pagination } from '@/components/common/Pagination'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -37,7 +36,6 @@ interface PaymentsTableSectionProps {
   onUploadProof: (record: PaymentRecord) => void
   onMarkPaid: (recordId: string) => void
   onRecordCashReceived: (recordId: string) => void
-  onShowApprovalRules: () => void
 }
 
 export function PaymentsTableSection({
@@ -52,7 +50,6 @@ export function PaymentsTableSection({
   onUploadProof,
   onMarkPaid,
   onRecordCashReceived,
-  onShowApprovalRules,
 }: PaymentsTableSectionProps) {
   const { t } = useTranslation()
 

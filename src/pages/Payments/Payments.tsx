@@ -4,11 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ModalWrapper } from '@/components/common/ModalWrapper'
-import { SearchInput } from '@/components/common/SearchInput'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
@@ -37,7 +35,7 @@ export default function Payments() {
   const isSuperAdmin = userRole === UserRole.SUPER_ADMIN
 
   const [records, setRecords] = useState<PaymentRecord[]>(mockPayments)
-  const [query, setQuery] = useState('')
+  const [query] = useState('')
 
   const [selectedRecord, setSelectedRecord] = useState<PaymentRecord | null>(null)
   const [proofModalOpen, setProofModalOpen] = useState(false)
@@ -219,13 +217,6 @@ export default function Payments() {
         onUploadProof={openProofModal}
         onRecordCashReceived={(recordId) => requestConfirm('recordCashReceived', recordId)}
         onMarkPaid={(recordId) => requestConfirm('markPaid', recordId)}
-        onShowApprovalRules={() => {
-          toast({
-            variant: 'info',
-            title: t('payments.approval.title'),
-            description: t('payments.approval.shortDesc'),
-          })
-        }}
       />
 
       {/* Proof modal */}
