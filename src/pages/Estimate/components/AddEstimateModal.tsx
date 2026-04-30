@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common/ModalWrapper'
 import { Button } from '@/components/ui/button'
@@ -11,202 +12,543 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
-import type { EstimateListItem, EstimateStatus } from '../estimateData'
+import type { EstimateListItem } from '../estimateData'
+import {
+  ESTIMATE_EQUIPMENT_OPTIONS,
+  ESTIMATE_MATERIAL_OPTIONS,
+  ESTIMATE_VEHICLE_OPTIONS,
+} from '../estimateData'
 
 interface AddEstimateModalProps {
   open: boolean
   onClose: () => void
   onCreate: (item: EstimateListItem) => void
+  item?: EstimateListItem | null
 }
 
-const PAYMENT_OPTIONS = ['Paypal', 'Google pay', 'Bank transfer', 'Card'] as const
-
-function newEstimateId() {
-  return `est-${Date.now()}`
+type MaterialRow = {
+  id: string
+  name: string
+  quantity: string
+  unitPrice: string
+  total: string
 }
 
-export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalProps) {
+type EquipmentRow = MaterialRow
+
+type VehicleRow = {
+  id: string
+  name: string
+  unitPrice: string
+  total: string
+}
+
+type PriceExtraRow = { id: string; label: string; amount: string }
+
+function newId() {
+  return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+function parseNum(v: string) {
+  const n = parseFloat(String(v).replace(/[^0-9.-]/g, ''))
+  return Number.isFinite(n) ? n : 0
+}
+
+function formatMoney(n: number) {
+  return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
+}
+
+export function AddEstimateModal({
+  open,
+  onClose,
+  onCreate,
+  item = null,
+}: AddEstimateModalProps) {
   const { t } = useTranslation()
 
-  const [projectName, setProjectName] = useState('')
-  const [customerName, setCustomerName] = useState('')
-  const [location, setLocation] = useState('')
-  const [deadlineFrom, setDeadlineFrom] = useState('')
-  const [deadlineTo, setDeadlineTo] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState<(typeof PAYMENT_OPTIONS)[number] | ''>('')
-  const [status, setStatus] = useState<EstimateStatus>('pending')
-  const [description, setDescription] = useState('')
+  const [people, setPeople] = useState('')
+  const [laborPrice, setLaborPrice] = useState('')
 
-  const canSubmit = useMemo(() => {
-    return (
-      projectName.trim().length > 0 &&
-      customerName.trim().length > 0 &&
-      location.trim().length > 0 &&
-      deadlineFrom.trim().length > 0 &&
-      deadlineTo.trim().length > 0 &&
-      paymentMethod.trim().length > 0
+  const [materials, setMaterials] = useState<MaterialRow[]>(() =>
+    [0, 1, 2].map(() => ({
+      id: newId(),
+      name: '',
+      quantity: '',
+      unitPrice: '',
+      total: '',
+    }))
+  )
+
+  const [equipment, setEquipment] = useState<EquipmentRow[]>(() =>
+    [0, 1, 2].map(() => ({
+      id: newId(),
+      name: '',
+      quantity: '',
+      unitPrice: '',
+      total: '',
+    }))
+  )
+
+  const [vehicles, setVehicles] = useState<VehicleRow[]>(() =>
+    [0, 1, 2].map(() => ({
+      id: newId(),
+      name: '',
+      unitPrice: '',
+      total: '',
+    }))
+  )
+
+  const [taxPercent, setTaxPercent] = useState('10')
+  const [priceExtras, setPriceExtras] = useState<PriceExtraRow[]>([])
+
+  const laborSubtotal = useMemo(() => {
+    const p = parseNum(people)
+    const r = parseNum(laborPrice)
+    return p * r
+  }, [people, laborPrice])
+
+  const materialSum = useMemo(
+    () => materials.reduce((s, row) => s + parseNum(row.total), 0),
+    [materials]
+  )
+
+  const equipmentSum = useMemo(
+    () => equipment.reduce((s, row) => s + parseNum(row.total), 0),
+    [equipment]
+  )
+
+  const vehicleSum = useMemo(
+    () => vehicles.reduce((s, row) => s + parseNum(row.total), 0),
+    [vehicles]
+  )
+
+  const extrasSum = useMemo(
+    () => priceExtras.reduce((s, row) => s + parseNum(row.amount), 0),
+    [priceExtras]
+  )
+
+  const subtotalBeforeTax = useMemo(
+    () => laborSubtotal + materialSum + equipmentSum + vehicleSum + extrasSum,
+    [laborSubtotal, materialSum, equipmentSum, vehicleSum, extrasSum]
+  )
+
+  const taxAmount = useMemo(() => {
+    const pct = parseNum(taxPercent)
+    return subtotalBeforeTax * (pct / 100)
+  }, [subtotalBeforeTax, taxPercent])
+
+  const grandTotal = subtotalBeforeTax + taxAmount
+
+  const updateMaterial = (id: string, patch: Partial<MaterialRow>) => {
+    setMaterials((rows) =>
+      rows.map((row) => {
+        if (row.id !== id) return row
+        const next = { ...row, ...patch }
+        if ('quantity' in patch || 'unitPrice' in patch) {
+          const q = parseNum(next.quantity)
+          const u = parseNum(next.unitPrice)
+          next.total = (q * u).toFixed(2)
+        }
+        return next
+      })
     )
-  }, [projectName, customerName, location, deadlineFrom, deadlineTo, paymentMethod])
+  }
 
-  useEffect(() => {
-    if (!open) return
-    setProjectName('')
-    setCustomerName('')
-    setLocation('')
-    setDeadlineFrom('')
-    setDeadlineTo('')
-    setPaymentMethod('')
-    setStatus('pending')
-    setDescription('')
-  }, [open])
+  const updateEquipment = (id: string, patch: Partial<EquipmentRow>) => {
+    setEquipment((rows) =>
+      rows.map((row) => {
+        if (row.id !== id) return row
+        const next = { ...row, ...patch }
+        if ('quantity' in patch || 'unitPrice' in patch) {
+          const q = parseNum(next.quantity)
+          const u = parseNum(next.unitPrice)
+          next.total = (q * u).toFixed(2)
+        }
+        return next
+      })
+    )
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!canSubmit) return
+  const updateVehicle = (id: string, patch: Partial<VehicleRow>) => {
+    setVehicles((rows) =>
+      rows.map((row) => {
+        if (row.id !== id) return row
+        const next = { ...row, ...patch }
+        if ('unitPrice' in patch) {
+          const u = parseNum(next.unitPrice)
+          next.total = u.toFixed(2)
+        }
+        return next
+      })
+    )
+  }
 
-    const item: EstimateListItem = {
-      id: newEstimateId(),
-      title: projectName.trim(),
-      customerName: customerName.trim(),
-      location: location.trim(),
-      deadlineFrom: deadlineFrom.trim(),
-      deadlineTo: deadlineTo.trim(),
-      paymentMethod: paymentMethod.trim(),
-      description: description.trim(),
-      status,
-    }
+  const addMaterialRow = () => {
+    setMaterials((r) => [
+      ...r,
+      { id: newId(), name: '', quantity: '', unitPrice: '', total: '' },
+    ])
+  }
 
-    onCreate(item)
-    toast({ title: t('estimate.createdSuccess'), variant: 'success' })
+  const addEquipmentRow = () => {
+    setEquipment((r) => [
+      ...r,
+      { id: newId(), name: '', quantity: '', unitPrice: '', total: '' },
+    ])
+  }
+
+  const addVehicleRow = () => {
+    setVehicles((r) => [...r, { id: newId(), name: '', unitPrice: '', total: '' }])
+  }
+
+  const addPriceExtra = () => {
+    setPriceExtras((r) => [...r, { id: newId(), label: '', amount: '' }])
+  }
+
+  const handleSubmit = () => {
+    toast({
+      title: t('estimate.toastSaved', { total: formatMoney(grandTotal) }),
+      variant: 'success',
+    })
+    onCreate({
+      id: `est-${Date.now()}`,
+      title: t('estimate.addModalTitle'),
+      customerName: '—',
+      location: '—',
+      deadlineFrom: '—',
+      deadlineTo: '—',
+      paymentMethod: '—',
+      description: t('estimate.grandTotalHint', { amount: formatMoney(grandTotal) }),
+      status: 'pending',
+    })
     onClose()
   }
+
+  const sectionAddButton = (onClick: () => void, ariaLabel: string) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className={cn(
+        'inline-flex h-9 w-9 items-center justify-center rounded-md',
+        'bg-primary text-white shadow-sm',
+        'hover:opacity-90 transition-opacity'
+      )}
+    >
+      <Plus className="h-5 w-5" />
+    </button>
+  )
 
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={t('estimate.addModalTitle')}
-      description={t('estimate.addModalDescription')}
-      size="lg"
-      className="bg-white"
+      title={t('estimate.modalTitle')}
+      size="full"
+      className="max-w-5xl bg-white"
       footer={
-        <div className="flex gap-2 justify-end">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t('estimate.addCancel')}
-          </Button>
-          <Button
-            type="submit"
-            form="add-estimate-form"
-            className="bg-[#00AB41] hover:bg-[#009638] text-white font-semibold"
-            disabled={!canSubmit}
-          >
-            {t('estimate.addSubmit')}
-          </Button>
-        </div>
+        <Button
+          type="button"
+          className="w-full h-12 rounded-xl bg-primary text-white hover:bg-primary/90"
+          onClick={handleSubmit}
+        >
+          {t('estimate.submitEstimate')}
+        </Button>
       }
     >
-      <form id="add-estimate-form" onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="est-project">{t('estimate.form.projectName')}</Label>
-            <Input
-              id="est-project"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              placeholder={t('estimate.form.projectNamePlaceholder')}
-              className="rounded-lg"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="est-customer">{t('estimate.form.customerName')}</Label>
-            <Input
-              id="est-customer"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              placeholder={t('estimate.form.customerNamePlaceholder')}
-              className="rounded-lg"
-              required
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="est-location">{t('estimate.form.location')}</Label>
-            <Input
-              id="est-location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder={t('estimate.form.locationPlaceholder')}
-              className="rounded-lg"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="est-from">{t('estimate.form.startDate')}</Label>
-            <Input
-              id="est-from"
-              value={deadlineFrom}
-              onChange={(e) => setDeadlineFrom(e.target.value)}
-              placeholder={t('estimate.form.startDatePlaceholder')}
-              className="rounded-lg"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="est-to">{t('estimate.form.endDate')}</Label>
-            <Input
-              id="est-to"
-              value={deadlineTo}
-              onChange={(e) => setDeadlineTo(e.target.value)}
-              placeholder={t('estimate.form.endDatePlaceholder')}
-              className="rounded-lg"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{t('estimate.form.paymentMethod')}</Label>
-            <Select
-              value={paymentMethod || undefined}
-              onValueChange={(v) => setPaymentMethod(v as (typeof PAYMENT_OPTIONS)[number])}
-            >
-              <SelectTrigger className="rounded-lg">
-                <SelectValue placeholder={t('estimate.form.paymentMethodPlaceholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_OPTIONS.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>{t('estimate.form.status')}</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as EstimateStatus)}>
-              <SelectTrigger className="rounded-lg">
-                <SelectValue placeholder={t('estimate.form.statusPlaceholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">{t('estimate.status.pending')}</SelectItem>
-                <SelectItem value="reviewed">{t('estimate.status.reviewed')}</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="space-y-8">
+        {item && (
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{t('estimate.projectLabel')}</span>{' '}
+            {item.title} — {item.customerName}
+          </p>
+        )}
+
+        {/* Labor */}
+        <div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="add-est-people">{t('estimate.people')}</Label>
+              <Input
+                id="add-est-people"
+                inputMode="decimal"
+                placeholder={t('estimate.peoplePlaceholder')}
+                value={people}
+                onChange={(e) => setPeople(e.target.value)}
+                className="rounded-lg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-est-labor-price">{t('estimate.laborPrice')}</Label>
+              <Input
+                id="add-est-labor-price"
+                inputMode="decimal"
+                placeholder={t('estimate.enterPrice')}
+                value={laborPrice}
+                onChange={(e) => setLaborPrice(e.target.value)}
+                className="rounded-lg"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="est-desc">{t('estimate.form.description')}</Label>
-          <Input
-            id="est-desc"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t('estimate.form.descriptionPlaceholder')}
-            className="rounded-lg"
-          />
+        {/* Material */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold text-foreground">{t('estimate.material')}</h4>
+            {sectionAddButton(addMaterialRow, t('estimate.addMaterialRow'))}
+          </div>
+          <div className="hidden md:grid md:grid-cols-[1.2fr_0.9fr_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground px-1">
+            <span>{t('estimate.name')}</span>
+            <span>{t('estimate.quantity')}</span>
+            <span>{t('estimate.unitPriceSqft')}</span>
+            <span>{t('estimate.totalPrice')}</span>
+          </div>
+          <div className="space-y-3">
+            {materials.map((row) => (
+              <div
+                key={row.id}
+                className="grid gap-3 md:grid-cols-[1.2fr_0.9fr_1fr_1fr] md:items-end"
+              >
+                <div className="space-y-1.5 md:space-y-0">
+                  <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
+                  <Select
+                    value={row.name || undefined}
+                    onValueChange={(v) => updateMaterial(row.id, { name: v })}
+                  >
+                    <SelectTrigger className="rounded-lg">
+                      <SelectValue placeholder={t('estimate.selectName')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTIMATE_MATERIAL_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {t(opt.labelKey)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="md:hidden text-xs">{t('estimate.quantity')}</Label>
+                  <Input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={row.quantity}
+                    onChange={(e) => updateMaterial(row.id, { quantity: e.target.value })}
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="md:hidden text-xs">{t('estimate.unitPriceSqft')}</Label>
+                  <Input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={row.unitPrice}
+                    onChange={(e) => updateMaterial(row.id, { unitPrice: e.target.value })}
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="md:hidden text-xs">{t('estimate.totalPrice')}</Label>
+                  <Input
+                    readOnly
+                    value={row.total}
+                    className="rounded-lg bg-muted/40"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </form>
+
+        {/* Equipment */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold text-foreground">{t('estimate.equipment')}</h4>
+            {sectionAddButton(addEquipmentRow, t('estimate.addEquipmentRow'))}
+          </div>
+          <div className="hidden md:grid md:grid-cols-[1.2fr_0.9fr_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground px-1">
+            <span>{t('estimate.name')}</span>
+            <span>{t('estimate.quantity')}</span>
+            <span>{t('estimate.unitPriceDay')}</span>
+            <span>{t('estimate.totalPrice')}</span>
+          </div>
+          <div className="space-y-3">
+            {equipment.map((row) => (
+              <div
+                key={row.id}
+                className="grid gap-3 md:grid-cols-[1.2fr_0.9fr_1fr_1fr] md:items-end"
+              >
+                <div className="space-y-1.5 md:space-y-0">
+                  <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
+                  <Select
+                    value={row.name || undefined}
+                    onValueChange={(v) => updateEquipment(row.id, { name: v })}
+                  >
+                    <SelectTrigger className="rounded-lg">
+                      <SelectValue placeholder={t('estimate.selectName')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTIMATE_EQUIPMENT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {t(opt.labelKey)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="md:hidden text-xs">{t('estimate.quantity')}</Label>
+                  <Input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={row.quantity}
+                    onChange={(e) => updateEquipment(row.id, { quantity: e.target.value })}
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="md:hidden text-xs">{t('estimate.unitPriceDay')}</Label>
+                  <Input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={row.unitPrice}
+                    onChange={(e) => updateEquipment(row.id, { unitPrice: e.target.value })}
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="md:hidden text-xs">{t('estimate.totalPrice')}</Label>
+                  <Input
+                    readOnly
+                    value={row.total}
+                    className="rounded-lg bg-muted/40"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Vehicle */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold text-foreground">{t('estimate.vehicle')}</h4>
+            {sectionAddButton(addVehicleRow, t('estimate.addVehicleRow'))}
+          </div>
+          <div className="hidden md:grid md:grid-cols-[1.2fr_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground px-1">
+            <span>{t('estimate.name')}</span>
+            <span>{t('estimate.unitPriceDay')}</span>
+            <span>{t('estimate.totalPrice')}</span>
+          </div>
+          <div className="space-y-3">
+            {vehicles.map((row) => (
+              <div key={row.id} className="grid gap-3 md:grid-cols-[1.2fr_1fr_1fr] md:items-end">
+                <div className="space-y-1.5 md:space-y-0">
+                  <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
+                  <Select
+                    value={row.name || undefined}
+                    onValueChange={(v) => updateVehicle(row.id, { name: v })}
+                  >
+                    <SelectTrigger className="rounded-lg">
+                      <SelectValue placeholder={t('estimate.selectName')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTIMATE_VEHICLE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {t(opt.labelKey)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="md:hidden text-xs">{t('estimate.unitPriceDay')}</Label>
+                  <Input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={row.unitPrice}
+                    onChange={(e) => updateVehicle(row.id, { unitPrice: e.target.value })}
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="md:hidden text-xs">{t('estimate.totalPrice')}</Label>
+                  <Input
+                    readOnly
+                    value={row.total}
+                    className="rounded-lg bg-muted/40"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Price summary */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold text-foreground">{t('estimate.price')}</h4>
+            {sectionAddButton(addPriceExtra, t('estimate.addPriceLine'))}
+          </div>
+          {priceExtras.length > 0 && (
+            <div className="space-y-2">
+              {priceExtras.map((ex) => (
+                <div key={ex.id} className="grid gap-2 sm:grid-cols-2">
+                  <Input
+                    placeholder={t('estimate.extraLabelPlaceholder')}
+                    value={ex.label}
+                    onChange={(e) =>
+                      setPriceExtras((rows) =>
+                        rows.map((x) => (x.id === ex.id ? { ...x, label: e.target.value } : x))
+                      )
+                    }
+                    className="rounded-lg"
+                  />
+                  <Input
+                    inputMode="decimal"
+                    placeholder={t('estimate.extraAmountPlaceholder')}
+                    value={ex.amount}
+                    onChange={(e) =>
+                      setPriceExtras((rows) =>
+                        rows.map((x) => (x.id === ex.id ? { ...x, amount: e.target.value } : x))
+                      )
+                    }
+                    className="rounded-lg"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>{t('estimate.totalPriceSummary')}</Label>
+              <Input
+                readOnly
+                value={formatMoney(subtotalBeforeTax)}
+                className="rounded-lg bg-muted/40 font-medium"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('estimate.taxOptional')}</Label>
+              <Input
+                inputMode="decimal"
+                placeholder="10%"
+                value={taxPercent}
+                onChange={(e) => setTaxPercent(e.target.value)}
+                className="rounded-lg"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t('estimate.grandTotalHint', { amount: formatMoney(grandTotal) })}
+            {parseNum(taxPercent) > 0 &&
+              ` ${t('estimate.taxHint', { amount: formatMoney(taxAmount), pct: taxPercent })}`}
+          </p>
+        </div>
+      </div>
     </ModalWrapper>
   )
 }
-
