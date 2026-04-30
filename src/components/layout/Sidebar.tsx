@@ -54,13 +54,13 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
     feature: 'dashboard',
   },
-  {
-    title: 'Recent Projects',
-    titleKey: 'sidebar.recentProjects',
-    href: '/recent-projects',
-    icon: FolderKanban,
-    feature: 'recent-projects',
-  },
+  // {
+  //   title: 'Recent Projects',
+  //   titleKey: 'sidebar.recentProjects',
+  //   href: '/recent-projects',
+  //   icon: FolderKanban,
+  //   feature: 'recent-projects',
+  // },
 
   {
     title: 'Customer Management',
