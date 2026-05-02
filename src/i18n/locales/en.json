@@ -516,7 +516,21 @@
     "categoryInUse": "Cannot delete \"{{name}}\" while materials are assigned to it. Reassign those materials first.",
     "addCategoryFirst": "Add at least one category in the Categories tab before creating a material.",
     "categoryRequired": "Please select a category.",
-    "noCategoriesAddInTab": "No categories — add one in the Categories tab"
+    "noCategoriesAddInTab": "No categories — add one in the Categories tab",
+    "materialsOrderButton": "Materials order",
+    "materialsOrderTitle": "Materials order",
+    "materialsOrderDescription": "Choose materials, quantities, and assign a driver for each line.",
+    "selectMaterial": "Select material",
+    "assignDriver": "Assign driver",
+    "selectDriver": "Select driver",
+    "addOrderLine": "Add line",
+    "removeLine": "Remove line",
+    "placeOrder": "Place order",
+    "orderCreated": "Materials order placed successfully.",
+    "orderLineInvalid": "Complete each line with a material, quantity (min. 1), and driver.",
+    "noMaterialsForOrder": "Add materials to inventory before creating an order.",
+    "noDrivers": "No drivers available to assign.",
+    "quantityExceedsStock": "Quantity for \"{{name}}\" exceeds available stock."
   },
   "projectScheduling": {
     "title": "Project Scheduling",

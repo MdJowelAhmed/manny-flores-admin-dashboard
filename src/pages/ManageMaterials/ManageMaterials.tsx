@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { Plus } from 'lucide-react'
+import { ClipboardList, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MaterialsTable } from './components/MaterialsTable'
@@ -11,7 +11,13 @@ import { MaterialCategoriesTable } from './components/MaterialCategoriesTable'
 import { AddEditMaterialCategoryModal } from './components/AddEditMaterialCategoryModal'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Pagination } from '@/components/common'
-import { mockMaterialsData, type Material } from './manageMaterialsData'
+import {
+  mockDrivers,
+  mockMaterialsData,
+  type Material,
+  type MaterialOrderLineInput,
+} from './manageMaterialsData'
+import { MaterialOrderModal } from './components/MaterialOrderModal'
 import { toast } from '@/utils/toast'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { deleteMaterialCategory } from '@/redux/slices/materialCategorySlice'
@@ -27,6 +33,7 @@ export default function ManageMaterials() {
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
+  const [isMaterialOrderModalOpen, setIsMaterialOrderModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [materialToDelete, setMaterialToDelete] = useState<Material | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -85,6 +92,10 @@ export default function ManageMaterials() {
     setSelectedMaterial(null)
     setIsAddEditModalOpen(true)
     setMaterialsPage(1)
+  }
+
+  const handleMaterialOrderSubmit = (_lines: MaterialOrderLineInput[]) => {
+    /* Future: POST material orders to API */
   }
 
   const handleSave = (data: Partial<Material>) => {
@@ -229,7 +240,16 @@ export default function ManageMaterials() {
         </TabsList>
 
         <TabsContent value="materials" className="mt-0 space-y-4">
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsMaterialOrderModalOpen(true)}
+              className="shrink-0 font-semibold border-[#00AB41] text-[#00AB41] hover:bg-[#00AB41]/10"
+            >
+              <ClipboardList className="h-4 w-4 mr-2" />
+              {t('manageMaterials.materialsOrderButton')}
+            </Button>
             <Button
               onClick={handleAdd}
               className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
@@ -304,6 +324,14 @@ export default function ManageMaterials() {
         }}
         material={selectedMaterial}
         onSave={handleSave}
+      />
+
+      <MaterialOrderModal
+        open={isMaterialOrderModalOpen}
+        onClose={() => setIsMaterialOrderModalOpen(false)}
+        materials={materials}
+        drivers={mockDrivers}
+        onSubmit={handleMaterialOrderSubmit}
       />
 
       <AddEditMaterialCategoryModal

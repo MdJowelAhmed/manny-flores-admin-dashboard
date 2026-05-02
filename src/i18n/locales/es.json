@@ -516,7 +516,21 @@
     "categoryInUse": "No se puede eliminar \"{{name}}\" mientras haya materiales asignados. Reasigne esos materiales primero.",
     "addCategoryFirst": "Agregue al menos una categoría en la pestaña Categorías antes de crear un material.",
     "categoryRequired": "Seleccione una categoría.",
-    "noCategoriesAddInTab": "Sin categorías — agregue una en la pestaña Categorías"
+    "noCategoriesAddInTab": "Sin categorías — agregue una en la pestaña Categorías",
+    "materialsOrderButton": "Pedido de materiales",
+    "materialsOrderTitle": "Pedido de materiales",
+    "materialsOrderDescription": "Elija materiales, cantidades y asigne un conductor en cada línea.",
+    "selectMaterial": "Seleccionar material",
+    "assignDriver": "Asignar conductor",
+    "selectDriver": "Seleccionar conductor",
+    "addOrderLine": "Agregar línea",
+    "removeLine": "Quitar línea",
+    "placeOrder": "Realizar pedido",
+    "orderCreated": "Pedido de materiales registrado correctamente.",
+    "orderLineInvalid": "Complete cada línea con material, cantidad (mín. 1) y conductor.",
+    "noMaterialsForOrder": "Agregue materiales al inventario antes de crear un pedido.",
+    "noDrivers": "No hay conductores disponibles para asignar.",
+    "quantityExceedsStock": "La cantidad de \"{{name}}\" supera el stock disponible."
   },
   "projectScheduling": {
     "title": "Programación de Proyectos",

@@ -1,3 +1,16 @@
+export interface DriverOption {
+  id: string
+  name: string
+  phone?: string
+}
+
+/** One line when placing a materials delivery order */
+export interface MaterialOrderLineInput {
+  materialId: string
+  quantity: number
+  driverId: string
+}
+
 export interface JobAllocationRow {
   id: string
   projectName: string
@@ -41,6 +54,13 @@ export function getStockStatus(
   const avail = getAvailableStock(m)
   return avail <= m.minimumStock ? 'low' : 'healthy'
 }
+
+export const mockDrivers: DriverOption[] = [
+  { id: 'drv-1', name: 'Marcus Reed', phone: '+1 555-0101' },
+  { id: 'drv-2', name: 'Elena Vasquez', phone: '+1 555-0102' },
+  { id: 'drv-3', name: 'James Porter', phone: '+1 555-0103' },
+  { id: 'drv-4', name: 'Sarah Kim', phone: '+1 555-0104' },
+]
 
 export const mockMaterialsData: Material[] = [
   {
