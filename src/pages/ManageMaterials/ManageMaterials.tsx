@@ -15,7 +15,7 @@ import {
   mockDrivers,
   mockMaterialsData,
   type Material,
-  type MaterialOrderLineInput,
+  type MaterialOrderSubmitPayload,
 } from './manageMaterialsData'
 import { MaterialOrderModal } from './components/MaterialOrderModal'
 import { toast } from '@/utils/toast'
@@ -94,7 +94,7 @@ export default function ManageMaterials() {
     setMaterialsPage(1)
   }
 
-  const handleMaterialOrderSubmit = (_lines: MaterialOrderLineInput[]) => {
+  const handleMaterialOrderSubmit = (_payload: MaterialOrderSubmitPayload) => {
     /* Future: POST material orders to API */
   }
 

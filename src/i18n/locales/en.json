@@ -519,7 +519,7 @@
     "noCategoriesAddInTab": "No categories — add one in the Categories tab",
     "materialsOrderButton": "Materials order",
     "materialsOrderTitle": "Materials order",
-    "materialsOrderDescription": "Choose materials, quantities, and assign a driver for each line.",
+    "materialsOrderDescription": "Assign one driver for this order, then add one or more materials and quantities.",
     "selectMaterial": "Select material",
     "assignDriver": "Assign driver",
     "selectDriver": "Select driver",
@@ -527,7 +527,8 @@
     "removeLine": "Remove line",
     "placeOrder": "Place order",
     "orderCreated": "Materials order placed successfully.",
-    "orderLineInvalid": "Complete each line with a material, quantity (min. 1), and driver.",
+    "orderLineInvalid": "Complete each line with a material and quantity (min. 1).",
+    "driverRequired": "Please select a driver for this order.",
     "noMaterialsForOrder": "Add materials to inventory before creating an order.",
     "noDrivers": "No drivers available to assign.",
     "quantityExceedsStock": "Quantity for \"{{name}}\" exceeds available stock."

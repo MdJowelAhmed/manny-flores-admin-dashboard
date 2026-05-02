@@ -519,7 +519,7 @@
     "noCategoriesAddInTab": "Sin categorías — agregue una en la pestaña Categorías",
     "materialsOrderButton": "Pedido de materiales",
     "materialsOrderTitle": "Pedido de materiales",
-    "materialsOrderDescription": "Elija materiales, cantidades y asigne un conductor en cada línea.",
+    "materialsOrderDescription": "Asigne un conductor para este pedido y luego agregue uno o más materiales y cantidades.",
     "selectMaterial": "Seleccionar material",
     "assignDriver": "Asignar conductor",
     "selectDriver": "Seleccionar conductor",
@@ -527,7 +527,8 @@
     "removeLine": "Quitar línea",
     "placeOrder": "Realizar pedido",
     "orderCreated": "Pedido de materiales registrado correctamente.",
-    "orderLineInvalid": "Complete cada línea con material, cantidad (mín. 1) y conductor.",
+    "orderLineInvalid": "Complete cada línea con material y cantidad (mín. 1).",
+    "driverRequired": "Seleccione un conductor para este pedido.",
     "noMaterialsForOrder": "Agregue materiales al inventario antes de crear un pedido.",
     "noDrivers": "No hay conductores disponibles para asignar.",
     "quantityExceedsStock": "La cantidad de \"{{name}}\" supera el stock disponible."

@@ -4,11 +4,15 @@ export interface DriverOption {
   phone?: string
 }
 
-/** One line when placing a materials delivery order */
+/** One material line (same order shares one driver via MaterialOrderSubmitPayload) */
 export interface MaterialOrderLineInput {
   materialId: string
   quantity: number
+}
+
+export interface MaterialOrderSubmitPayload {
   driverId: string
+  lines: MaterialOrderLineInput[]
 }
 
 export interface JobAllocationRow {

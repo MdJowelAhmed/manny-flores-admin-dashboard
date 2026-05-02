@@ -12,7 +12,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import type { DriverOption, Material, MaterialOrderLineInput } from '../manageMaterialsData'
+import type {
+  DriverOption,
+  Material,
+  MaterialOrderLineInput,
+  MaterialOrderSubmitPayload,
+} from '../manageMaterialsData'
 import { getAvailableStock } from '../manageMaterialsData'
 import { toast } from '@/utils/toast'
 
@@ -21,14 +26,13 @@ export interface MaterialOrderModalProps {
   onClose: () => void
   materials: Material[]
   drivers: DriverOption[]
-  onSubmit: (lines: MaterialOrderLineInput[]) => void
+  onSubmit: (payload: MaterialOrderSubmitPayload) => void
 }
 
 type LineRow = {
   key: string
   materialId: string
   quantity: string
-  driverId: string
 }
 
 function createEmptyRow(): LineRow {
@@ -36,7 +40,6 @@ function createEmptyRow(): LineRow {
     key: `line-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     materialId: '',
     quantity: '',
-    driverId: '',
   }
 }
 
@@ -49,10 +52,12 @@ export function MaterialOrderModal({
 }: MaterialOrderModalProps) {
   const { t } = useTranslation()
   const [rows, setRows] = useState<LineRow[]>([createEmptyRow()])
+  const [driverId, setDriverId] = useState('')
 
   useEffect(() => {
     if (!open) return
     setRows([createEmptyRow()])
+    setDriverId('')
   }, [open])
 
   const materialById = useMemo(() => {
@@ -89,11 +94,19 @@ export function MaterialOrderModal({
       })
       return
     }
+    if (!driverId) {
+      toast({
+        title: t('common.error'),
+        description: t('manageMaterials.driverRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
 
     const lines: MaterialOrderLineInput[] = []
     for (const row of rows) {
       const qty = parseInt(row.quantity, 10)
-      if (!row.materialId || !row.driverId || !Number.isFinite(qty) || qty < 1) {
+      if (!row.materialId || !Number.isFinite(qty) || qty < 1) {
         toast({
           title: t('common.error'),
           description: t('manageMaterials.orderLineInvalid'),
@@ -115,11 +128,10 @@ export function MaterialOrderModal({
       lines.push({
         materialId: row.materialId,
         quantity: qty,
-        driverId: row.driverId,
       })
     }
 
-    onSubmit(lines)
+    onSubmit({ driverId, lines })
     toast({
       variant: 'success',
       title: t('common.success'),
@@ -133,11 +145,11 @@ export function MaterialOrderModal({
       open={open}
       onClose={onClose}
       title={t('manageMaterials.materialsOrderTitle')}
-      description={t('manageMaterials.materialsOrderDescription')}
+      // description={t('manageMaterials.materialsOrderDescription')}
       size="xl"
       className="max-w-3xl bg-white"
       footer={
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap justify-between gap-2">
           
           <Button
             type="submit"
@@ -150,18 +162,19 @@ export function MaterialOrderModal({
       }
     >
       <form id="material-order-form" onSubmit={handleSubmit} className="space-y-4">
+       
+
         <div className="rounded-lg border border-gray-100 overflow-hidden">
-          <div className="grid grid-cols-[1fr_minmax(88px,100px)_minmax(140px,1fr)_44px] gap-2 items-end bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground border-b">
+          <div className="grid grid-cols-[1fr_minmax(88px,100px)_44px] gap-2 items-end bg-muted/40 px-3 py-2 text-xs font-semibold text-muted-foreground border-b">
             <span>{t('manageMaterials.selectMaterial')}</span>
             <span>{t('manageMaterials.quantity')}</span>
-            <span>{t('manageMaterials.assignDriver')}</span>
             <span className="sr-only">{t('manageMaterials.removeLine')}</span>
           </div>
           <div className="divide-y divide-gray-100">
             {rows.map((row) => (
               <div
                 key={row.key}
-                className="grid grid-cols-1 sm:grid-cols-[1fr_minmax(88px,100px)_minmax(140px,1fr)_44px] gap-3 p-3 items-end"
+                className="grid grid-cols-1 sm:grid-cols-[1fr_minmax(88px,100px)_44px] gap-3 p-3 items-end"
               >
                 <div className="space-y-1.5">
                   <Label className="sm:hidden text-xs">{t('manageMaterials.selectMaterial')}</Label>
@@ -193,25 +206,6 @@ export function MaterialOrderModal({
                     className="h-11 rounded-md border-gray-200"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="sm:hidden text-xs">{t('manageMaterials.assignDriver')}</Label>
-                  <Select
-                    value={row.driverId || undefined}
-                    onValueChange={(v) => updateRow(row.key, { driverId: v })}
-                    disabled={!drivers.length}
-                  >
-                    <SelectTrigger className="h-11 rounded-md border-gray-200 bg-background">
-                      <SelectValue placeholder={t('manageMaterials.selectDriver')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {drivers.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>
-                          {d.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="flex justify-end pb-0.5">
                   <Button
                     type="button"
@@ -227,6 +221,26 @@ export function MaterialOrderModal({
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>{t('manageMaterials.assignDriver')}</Label>
+          <Select
+            value={driverId || undefined}
+            onValueChange={setDriverId}
+            disabled={!drivers.length}
+          >
+            <SelectTrigger className="h-11 rounded-md border-gray-200 bg-background w-full max-w-md">
+              <SelectValue placeholder={t('manageMaterials.selectDriver')} />
+            </SelectTrigger>
+            <SelectContent>
+              {drivers.map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Button
           type="button"
