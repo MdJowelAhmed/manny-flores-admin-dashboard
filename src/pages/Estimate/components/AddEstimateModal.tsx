@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Minus, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common/ModalWrapper'
 import { Button } from '@/components/ui/button'
@@ -51,6 +51,18 @@ function newId() {
   return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+function createMaterialRow(): MaterialRow {
+  return { id: newId(), name: '', quantity: '', unitPrice: '', total: '' }
+}
+
+function createEquipmentRow(): EquipmentRow {
+  return { id: newId(), name: '', quantity: '', unitPrice: '', total: '' }
+}
+
+function createVehicleRow(): VehicleRow {
+  return { id: newId(), name: '', unitPrice: '', total: '' }
+}
+
 function parseNum(v: string) {
   const n = parseFloat(String(v).replace(/[^0-9.-]/g, ''))
   return Number.isFinite(n) ? n : 0
@@ -71,34 +83,22 @@ export function AddEstimateModal({
   const [people, setPeople] = useState('')
   const [laborPrice, setLaborPrice] = useState('')
 
-  const [materials, setMaterials] = useState<MaterialRow[]>(() =>
-    [0, 1, 2].map(() => ({
-      id: newId(),
-      name: '',
-      quantity: '',
-      unitPrice: '',
-      total: '',
-    }))
-  )
+  const [materials, setMaterials] = useState<MaterialRow[]>(() => [createMaterialRow()])
 
-  const [equipment, setEquipment] = useState<EquipmentRow[]>(() =>
-    [0, 1, 2].map(() => ({
-      id: newId(),
-      name: '',
-      quantity: '',
-      unitPrice: '',
-      total: '',
-    }))
-  )
+  const [equipment, setEquipment] = useState<EquipmentRow[]>(() => [createEquipmentRow()])
 
-  const [vehicles, setVehicles] = useState<VehicleRow[]>(() =>
-    [0, 1, 2].map(() => ({
-      id: newId(),
-      name: '',
-      unitPrice: '',
-      total: '',
-    }))
-  )
+  const [vehicles, setVehicles] = useState<VehicleRow[]>(() => [createVehicleRow()])
+
+  useEffect(() => {
+    if (!open) return
+    setPeople('')
+    setLaborPrice('')
+    setMaterials([createMaterialRow()])
+    setEquipment([createEquipmentRow()])
+    setVehicles([createVehicleRow()])
+    setTaxPercent('10')
+    setPriceExtras([])
+  }, [open])
 
   const [taxPercent, setTaxPercent] = useState('10')
   const [priceExtras, setPriceExtras] = useState<PriceExtraRow[]>([])
@@ -186,21 +186,27 @@ export function AddEstimateModal({
   }
 
   const addMaterialRow = () => {
-    setMaterials((r) => [
-      ...r,
-      { id: newId(), name: '', quantity: '', unitPrice: '', total: '' },
-    ])
+    setMaterials((r) => [...r, createMaterialRow()])
+  }
+
+  const removeMaterialRow = (id: string) => {
+    setMaterials((r) => (r.length <= 1 ? r : r.filter((row) => row.id !== id)))
   }
 
   const addEquipmentRow = () => {
-    setEquipment((r) => [
-      ...r,
-      { id: newId(), name: '', quantity: '', unitPrice: '', total: '' },
-    ])
+    setEquipment((r) => [...r, createEquipmentRow()])
+  }
+
+  const removeEquipmentRow = (id: string) => {
+    setEquipment((r) => (r.length <= 1 ? r : r.filter((row) => row.id !== id)))
   }
 
   const addVehicleRow = () => {
-    setVehicles((r) => [...r, { id: newId(), name: '', unitPrice: '', total: '' }])
+    setVehicles((r) => [...r, createVehicleRow()])
+  }
+
+  const removeVehicleRow = (id: string) => {
+    setVehicles((r) => (r.length <= 1 ? r : r.filter((row) => row.id !== id)))
   }
 
   const addPriceExtra = () => {
@@ -239,6 +245,19 @@ export function AddEstimateModal({
     >
       <Plus className="h-5 w-5" />
     </button>
+  )
+
+  const rowRemoveButton = (onClick: () => void) => (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+      onClick={onClick}
+      aria-label={t('estimate.removeRow')}
+    >
+      <Minus className="h-4 w-4" />
+    </Button>
   )
 
   return (
@@ -300,17 +319,32 @@ export function AddEstimateModal({
             <h4 className="text-sm font-semibold text-foreground">{t('estimate.material')}</h4>
             {sectionAddButton(addMaterialRow, t('estimate.addMaterialRow'))}
           </div>
-          <div className="hidden md:grid md:grid-cols-[1.2fr_0.9fr_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground px-1">
+          <div
+            className={cn(
+              'hidden md:grid gap-2 text-xs font-medium text-muted-foreground px-1',
+              materials.length > 1
+                ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+                : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
+            )}
+          >
             <span>{t('estimate.name')}</span>
             <span>{t('estimate.quantity')}</span>
             <span>{t('estimate.unitPriceSqft')}</span>
             <span>{t('estimate.totalPrice')}</span>
+            {materials.length > 1 && (
+              <span className="sr-only">{t('estimate.removeRow')}</span>
+            )}
           </div>
           <div className="space-y-3">
             {materials.map((row) => (
               <div
                 key={row.id}
-                className="grid gap-3 md:grid-cols-[1.2fr_0.9fr_1fr_1fr] md:items-end"
+                className={cn(
+                  'grid gap-3 md:items-end',
+                  materials.length > 1
+                    ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+                    : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
+                )}
               >
                 <div className="space-y-1.5 md:space-y-0">
                   <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
@@ -358,6 +392,11 @@ export function AddEstimateModal({
                     className="rounded-lg bg-muted/40"
                   />
                 </div>
+                {materials.length > 1 && (
+                  <div className="flex justify-end pb-0.5">
+                    {rowRemoveButton(() => removeMaterialRow(row.id))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -369,17 +408,32 @@ export function AddEstimateModal({
             <h4 className="text-sm font-semibold text-foreground">{t('estimate.equipment')}</h4>
             {sectionAddButton(addEquipmentRow, t('estimate.addEquipmentRow'))}
           </div>
-          <div className="hidden md:grid md:grid-cols-[1.2fr_0.9fr_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground px-1">
+          <div
+            className={cn(
+              'hidden md:grid gap-2 text-xs font-medium text-muted-foreground px-1',
+              equipment.length > 1
+                ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+                : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
+            )}
+          >
             <span>{t('estimate.name')}</span>
             <span>{t('estimate.quantity')}</span>
             <span>{t('estimate.unitPriceDay')}</span>
             <span>{t('estimate.totalPrice')}</span>
+            {equipment.length > 1 && (
+              <span className="sr-only">{t('estimate.removeRow')}</span>
+            )}
           </div>
           <div className="space-y-3">
             {equipment.map((row) => (
               <div
                 key={row.id}
-                className="grid gap-3 md:grid-cols-[1.2fr_0.9fr_1fr_1fr] md:items-end"
+                className={cn(
+                  'grid gap-3 md:items-end',
+                  equipment.length > 1
+                    ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+                    : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
+                )}
               >
                 <div className="space-y-1.5 md:space-y-0">
                   <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
@@ -427,6 +481,11 @@ export function AddEstimateModal({
                     className="rounded-lg bg-muted/40"
                   />
                 </div>
+                {equipment.length > 1 && (
+                  <div className="flex justify-end pb-0.5">
+                    {rowRemoveButton(() => removeEquipmentRow(row.id))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -438,14 +497,32 @@ export function AddEstimateModal({
             <h4 className="text-sm font-semibold text-foreground">{t('estimate.vehicle')}</h4>
             {sectionAddButton(addVehicleRow, t('estimate.addVehicleRow'))}
           </div>
-          <div className="hidden md:grid md:grid-cols-[1.2fr_1fr_1fr] gap-2 text-xs font-medium text-muted-foreground px-1">
+          <div
+            className={cn(
+              'hidden md:grid gap-2 text-xs font-medium text-muted-foreground px-1',
+              vehicles.length > 1
+                ? 'md:grid-cols-[1.2fr_1fr_1fr_44px]'
+                : 'md:grid-cols-[1.2fr_1fr_1fr]'
+            )}
+          >
             <span>{t('estimate.name')}</span>
             <span>{t('estimate.unitPriceDay')}</span>
             <span>{t('estimate.totalPrice')}</span>
+            {vehicles.length > 1 && (
+              <span className="sr-only">{t('estimate.removeRow')}</span>
+            )}
           </div>
           <div className="space-y-3">
             {vehicles.map((row) => (
-              <div key={row.id} className="grid gap-3 md:grid-cols-[1.2fr_1fr_1fr] md:items-end">
+              <div
+                key={row.id}
+                className={cn(
+                  'grid gap-3 md:items-end',
+                  vehicles.length > 1
+                    ? 'md:grid-cols-[1.2fr_1fr_1fr_44px]'
+                    : 'md:grid-cols-[1.2fr_1fr_1fr]'
+                )}
+              >
                 <div className="space-y-1.5 md:space-y-0">
                   <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
                   <Select
@@ -482,6 +559,11 @@ export function AddEstimateModal({
                     className="rounded-lg bg-muted/40"
                   />
                 </div>
+                {vehicles.length > 1 && (
+                  <div className="flex justify-end pb-0.5">
+                    {rowRemoveButton(() => removeVehicleRow(row.id))}
+                  </div>
+                )}
               </div>
             ))}
           </div>

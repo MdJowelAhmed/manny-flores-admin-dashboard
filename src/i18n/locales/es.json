@@ -994,6 +994,7 @@
     "taxOptional": "Impuesto (opcional)",
     "selectName": "Seleccionar",
     "submitEstimate": "Estimar",
+    "removeRow": "Quitar fila",
     "addMaterialRow": "Añadir fila de material",
     "addEquipmentRow": "Añadir fila de equipo",
     "addVehicleRow": "Añadir fila de vehículo",

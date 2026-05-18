@@ -1010,6 +1010,7 @@
     "taxOptional": "Tax (optional)",
     "selectName": "Select",
     "submitEstimate": "Estimate",
+    "removeRow": "Remove row",
     "addMaterialRow": "Add material row",
     "addEquipmentRow": "Add equipment row",
     "addVehicleRow": "Add vehicle row",
