@@ -957,7 +957,11 @@
       "status": "Status",
       "statusPlaceholder": "Select status",
       "description": "Description (optional)",
-      "descriptionPlaceholder": "Short note..."
+      "descriptionPlaceholder": "Short note...",
+      "customerEmail": "Customer email",
+      "customerEmailPlaceholder": "name@example.com",
+      "customerAddress": "Customer address",
+      "customerAddressPlaceholder": "Street, city, state, zip"
     },
     "table": {
       "projectName": "Project Name",
@@ -970,7 +974,8 @@
     },
     "status": {
       "reviewed": "Reviewed",
-      "pending": "Pending"
+      "pending": "Pending",
+      "signed": "Signed"
     },
     "actions": {
       "details": "View estimate",
@@ -1020,6 +1025,64 @@
     "grandTotalHint": "Amount due (incl. tax): {{amount}}.",
     "taxHint": "Tax ({{pct}}%): {{amount}}.",
     "toastSaved": "Estimate saved. Total: {{total}}",
+    "validation": {
+      "projectName": "Project name is required.",
+      "customerName": "Customer name is required.",
+      "lineItems": "Add at least one item with quantity and unit price.",
+      "lineItemFields": "Each item needs a positive quantity and unit price.",
+      "startDate": "Start date is required.",
+      "endDate": "End date is required.",
+      "endAfterStart": "End date must be on or after the start date."
+    },
+    "items": {
+      "title": "Line items",
+      "hint": "Choose Material, Equipment, or Vehicle from admin catalog—or Custom for manual entry. Quantity × unit price calculates automatically.",
+      "addItem": "Add Item",
+      "lineType": "Type",
+      "catalog": "Select",
+      "material": "Material",
+      "selectMaterial": "Select material",
+      "selectEquipment": "Select equipment",
+      "selectVehicle": "Select vehicle",
+      "catalogNA": "N/A (custom item)",
+      "typeMaterial": "Material",
+      "typeEquipment": "Equipment",
+      "typeVehicle": "Vehicle",
+      "typeCustom": "Custom / service",
+      "itemName": "Item / service",
+      "itemPlaceholder": "e.g. Artificial turf installation",
+      "unitPrice": "Unit price"
+    },
+    "discount": {
+      "enable": "Apply discount",
+      "label": "Discount label",
+      "labelPlaceholder": "e.g. First Responder Discount",
+      "percent": "Discount (%)",
+      "defaultLabel": "Discount"
+    },
+    "preview": {
+      "title": "Estimate preview",
+      "open": "Preview",
+      "estimateFor": "Prepared for",
+      "item": "Item",
+      "unitPrice": "Unit price",
+      "subtotal": "Subtotal",
+      "tax": "Tax",
+      "balanceDue": "Balance due",
+      "customerSignature": "Customer signature",
+      "signedOn": "Signed {{date}}",
+      "signAndAccept": "Sign & accept",
+      "invoiceCreated": "Invoice {{ref}} was created automatically."
+    },
+    "signature": {
+      "instructions": "Sign in the box below to accept this estimate.",
+      "clear": "Clear",
+      "confirm": "Confirm signature"
+    },
+    "signed": {
+      "successTitle": "Estimate signed",
+      "successDescription": "Invoice {{ref}} created and job added to the schedule."
+    },
     "options": {
       "topsoil": "Topsoil",
       "mulch": "Mulch",

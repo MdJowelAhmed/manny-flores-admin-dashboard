@@ -13,7 +13,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn('rdp-reset p-3', className)}
+      className={cn('rdp-compact p-1.5 text-sm', className)}
       {...props}
     />
   )

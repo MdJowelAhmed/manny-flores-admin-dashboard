@@ -125,6 +125,35 @@ input[type="number"] {
   --rdp-accent-color: var(--primary);
   --rdp-accent-background-color: rgba(57, 177, 91, 0.15);
 }
+
+/* Compact calendar (DatePicker popover) */
+.rdp-root.rdp-compact {
+  --rdp-day-height: 30px;
+  --rdp-day-width: 30px;
+  --rdp-day_button-height: 28px;
+  --rdp-day_button-width: 28px;
+  --rdp-day_button-border: 1px solid transparent;
+  --rdp-selected-border: 1px solid var(--rdp-accent-color);
+  --rdp-nav_button-height: 1.5rem;
+  --rdp-nav_button-width: 1.5rem;
+  --rdp-nav-height: 1.75rem;
+  --rdp-dropdown-gap: 0.25rem;
+  --rdp-weekday-padding: 0.2rem 0;
+}
+
+.rdp-root.rdp-compact .rdp-month_caption {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.rdp-root.rdp-compact .rdp-selected {
+  font-size: inherit;
+}
+
+.rdp-root.rdp-compact .rdp-chevron {
+  width: 0.875rem;
+  height: 0.875rem;
+}
 .rdp [data-selected] {
   background-color: var(--primary) !important;
   color: white !important;

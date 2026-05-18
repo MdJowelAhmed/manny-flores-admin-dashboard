@@ -941,7 +941,11 @@
       "status": "Estado",
       "statusPlaceholder": "Seleccionar estado",
       "description": "Descripción (opcional)",
-      "descriptionPlaceholder": "Nota corta..."
+      "descriptionPlaceholder": "Nota corta...",
+      "customerEmail": "Correo del cliente",
+      "customerEmailPlaceholder": "nombre@ejemplo.com",
+      "customerAddress": "Dirección del cliente",
+      "customerAddressPlaceholder": "Calle, ciudad, estado, CP"
     },
     "table": {
       "projectName": "Nombre del proyecto",
@@ -954,7 +958,8 @@
     },
     "status": {
       "reviewed": "Revisado",
-      "pending": "Pendiente"
+      "pending": "Pendiente",
+      "signed": "Firmado"
     },
     "actions": {
       "details": "Ver estimación",
@@ -1004,6 +1009,64 @@
     "grandTotalHint": "Importe a pagar (imp. incl.): {{amount}}.",
     "taxHint": "Impuesto ({{pct}}%): {{amount}}.",
     "toastSaved": "Estimación guardada. Total: {{total}}",
+    "validation": {
+      "projectName": "El nombre del proyecto es obligatorio.",
+      "customerName": "El nombre del cliente es obligatorio.",
+      "lineItems": "Agrega al menos un ítem con cantidad y precio unitario.",
+      "lineItemFields": "Cada ítem necesita cantidad positiva y precio unitario.",
+      "startDate": "La fecha de inicio es obligatoria.",
+      "endDate": "La fecha de fin es obligatoria.",
+      "endAfterStart": "La fecha de fin debe ser igual o posterior a la de inicio."
+    },
+    "items": {
+      "title": "Partidas",
+      "hint": "Elige Material, Equipo o Vehículo del catálogo admin, o Personalizado. Cantidad × precio se calcula solo.",
+      "addItem": "Agregar ítem",
+      "lineType": "Tipo",
+      "catalog": "Seleccionar",
+      "material": "Material",
+      "selectMaterial": "Seleccionar material",
+      "selectEquipment": "Seleccionar equipo",
+      "selectVehicle": "Seleccionar vehículo",
+      "catalogNA": "N/A (ítem personalizado)",
+      "typeMaterial": "Material",
+      "typeEquipment": "Equipo",
+      "typeVehicle": "Vehículo",
+      "typeCustom": "Personalizado / servicio",
+      "itemName": "Ítem / servicio",
+      "itemPlaceholder": "p. ej. Instalación de césped artificial",
+      "unitPrice": "Precio unitario"
+    },
+    "discount": {
+      "enable": "Aplicar descuento",
+      "label": "Etiqueta del descuento",
+      "labelPlaceholder": "p. ej. Descuento primer respondedor",
+      "percent": "Descuento (%)",
+      "defaultLabel": "Descuento"
+    },
+    "preview": {
+      "title": "Vista previa de estimación",
+      "open": "Vista previa",
+      "estimateFor": "Preparado para",
+      "item": "Ítem",
+      "unitPrice": "Precio unitario",
+      "subtotal": "Subtotal",
+      "tax": "Impuesto",
+      "balanceDue": "Saldo adeudado",
+      "customerSignature": "Firma del cliente",
+      "signedOn": "Firmado {{date}}",
+      "signAndAccept": "Firmar y aceptar",
+      "invoiceCreated": "Factura {{ref}} creada automáticamente."
+    },
+    "signature": {
+      "instructions": "Firma en el recuadro para aceptar esta estimación.",
+      "clear": "Borrar",
+      "confirm": "Confirmar firma"
+    },
+    "signed": {
+      "successTitle": "Estimación firmada",
+      "successDescription": "Factura {{ref}} creada y trabajo agregado al calendario."
+    },
     "options": {
       "topsoil": "Tierra vegetal",
       "mulch": "Mantillo",

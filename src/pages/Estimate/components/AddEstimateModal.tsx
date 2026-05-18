@@ -5,6 +5,7 @@ import { ModalWrapper } from '@/components/common/ModalWrapper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -12,224 +13,216 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DatePicker } from '@/components/common/Form'
 import { cn } from '@/utils/cn'
+import { formatCurrency, formatDateDayMonth } from '@/utils/formatters'
 import { toast } from '@/utils/toast'
-import type { EstimateListItem } from '../estimateData'
+import type { EstimateCatalogOption, EstimateLineItem, EstimateRecord } from '../estimateData'
 import {
-  ESTIMATE_EQUIPMENT_OPTIONS,
-  ESTIMATE_MATERIAL_OPTIONS,
-  ESTIMATE_VEHICLE_OPTIONS,
+  computeEstimateTotals,
+  getEstimateEquipmentCatalog,
+  getEstimateMaterialCatalog,
+  getEstimateVehicleCatalog,
 } from '../estimateData'
+import { EstimatePreviewModal } from './EstimatePreviewModal'
 
 interface AddEstimateModalProps {
   open: boolean
   onClose: () => void
-  onCreate: (item: EstimateListItem) => void
-  item?: EstimateListItem | null
+  onCreate: (item: EstimateRecord) => void
 }
 
 type MaterialRow = {
   id: string
+  catalogId: string
   name: string
   quantity: string
   unitPrice: string
-  total: string
 }
 
 type EquipmentRow = MaterialRow
 
 type VehicleRow = {
   id: string
+  catalogId: string
   name: string
   unitPrice: string
-  total: string
 }
 
-type PriceExtraRow = { id: string; label: string; amount: string }
-
-function newId() {
-  return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+function makeId(prefix: string) {
+  const cryptoAny = crypto as unknown as { randomUUID?: () => string }
+  return cryptoAny?.randomUUID
+    ? `${prefix}-${cryptoAny.randomUUID()}`
+    : `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
-function createMaterialRow(): MaterialRow {
-  return { id: newId(), name: '', quantity: '', unitPrice: '', total: '' }
-}
-
-function createEquipmentRow(): EquipmentRow {
-  return { id: newId(), name: '', quantity: '', unitPrice: '', total: '' }
-}
-
-function createVehicleRow(): VehicleRow {
-  return { id: newId(), name: '', unitPrice: '', total: '' }
-}
-
-function parseNum(v: string) {
-  const n = parseFloat(String(v).replace(/[^0-9.-]/g, ''))
+function toNum(v: string) {
+  const n = Number(v)
   return Number.isFinite(n) ? n : 0
 }
 
-function formatMoney(n: number) {
-  return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 })
+function emptyMaterialRow(): MaterialRow {
+  return { id: makeId('mat'), catalogId: '', name: '', quantity: '', unitPrice: '' }
 }
 
-export function AddEstimateModal({
-  open,
-  onClose,
-  onCreate,
-  item = null,
-}: AddEstimateModalProps) {
+function emptyEquipmentRow(): EquipmentRow {
+  return { id: makeId('eq'), catalogId: '', name: '', quantity: '', unitPrice: '' }
+}
+
+function emptyVehicleRow(): VehicleRow {
+  return { id: makeId('veh'), catalogId: '', name: '', unitPrice: '' }
+}
+
+function pickCatalog(catalogId: string, catalog: EstimateCatalogOption[]) {
+  const item = catalog.find((c) => c.id === catalogId)
+  if (!item) return { catalogId: '', name: '', unitPrice: '' }
+  return { catalogId, name: item.name, unitPrice: String(item.unitPrice || '') }
+}
+
+export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalProps) {
   const { t } = useTranslation()
+  const materialCatalog = useMemo(() => getEstimateMaterialCatalog(), [])
+  const equipmentCatalog = useMemo(() => getEstimateEquipmentCatalog(), [])
+  const vehicleCatalog = useMemo(() => getEstimateVehicleCatalog(), [])
 
-  const [people, setPeople] = useState('')
-  const [laborPrice, setLaborPrice] = useState('')
+  const [title, setTitle] = useState('')
+  const [customerName, setCustomerName] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerAddress, setCustomerAddress] = useState('')
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+  const [description, setDescription] = useState('')
+  const [taxPercent, setTaxPercent] = useState('8.25')
+  const [discountEnabled, setDiscountEnabled] = useState(false)
+  const [discountLabel, setDiscountLabel] = useState('First Responder Discount')
+  const [discountPercent, setDiscountPercent] = useState('5')
 
-  const [materials, setMaterials] = useState<MaterialRow[]>(() => [createMaterialRow()])
+  const [materials, setMaterials] = useState<MaterialRow[]>(() => [emptyMaterialRow()])
+  const [equipment, setEquipment] = useState<EquipmentRow[]>(() => [emptyEquipmentRow()])
+  const [vehicles, setVehicles] = useState<VehicleRow[]>(() => [emptyVehicleRow()])
 
-  const [equipment, setEquipment] = useState<EquipmentRow[]>(() => [createEquipmentRow()])
+  const [previewDraft, setPreviewDraft] = useState<EstimateRecord | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
-  const [vehicles, setVehicles] = useState<VehicleRow[]>(() => [createVehicleRow()])
+  const reset = () => {
+    setTitle('')
+    setCustomerName('')
+    setCustomerEmail('')
+    setCustomerAddress('')
+    setStartDate(undefined)
+    setEndDate(undefined)
+    setDescription('')
+    setTaxPercent('8.25')
+    setDiscountEnabled(false)
+    setDiscountLabel('First Responder Discount')
+    setDiscountPercent('5')
+    setMaterials([emptyMaterialRow()])
+    setEquipment([emptyEquipmentRow()])
+    setVehicles([emptyVehicleRow()])
+    setPreviewDraft(null)
+    setPreviewOpen(false)
+  }
 
   useEffect(() => {
     if (!open) return
-    setPeople('')
-    setLaborPrice('')
-    setMaterials([createMaterialRow()])
-    setEquipment([createEquipmentRow()])
-    setVehicles([createVehicleRow()])
-    setTaxPercent('10')
-    setPriceExtras([])
+    reset()
   }, [open])
 
-  const [taxPercent, setTaxPercent] = useState('10')
-  const [priceExtras, setPriceExtras] = useState<PriceExtraRow[]>([])
+  const lineItemsForCalc = useMemo((): EstimateLineItem[] => {
+    const items: EstimateLineItem[] = []
 
-  const laborSubtotal = useMemo(() => {
-    const p = parseNum(people)
-    const r = parseNum(laborPrice)
-    return p * r
-  }, [people, laborPrice])
-
-  const materialSum = useMemo(
-    () => materials.reduce((s, row) => s + parseNum(row.total), 0),
-    [materials]
-  )
-
-  const equipmentSum = useMemo(
-    () => equipment.reduce((s, row) => s + parseNum(row.total), 0),
-    [equipment]
-  )
-
-  const vehicleSum = useMemo(
-    () => vehicles.reduce((s, row) => s + parseNum(row.total), 0),
-    [vehicles]
-  )
-
-  const extrasSum = useMemo(
-    () => priceExtras.reduce((s, row) => s + parseNum(row.amount), 0),
-    [priceExtras]
-  )
-
-  const subtotalBeforeTax = useMemo(
-    () => laborSubtotal + materialSum + equipmentSum + vehicleSum + extrasSum,
-    [laborSubtotal, materialSum, equipmentSum, vehicleSum, extrasSum]
-  )
-
-  const taxAmount = useMemo(() => {
-    const pct = parseNum(taxPercent)
-    return subtotalBeforeTax * (pct / 100)
-  }, [subtotalBeforeTax, taxPercent])
-
-  const grandTotal = subtotalBeforeTax + taxAmount
-
-  const updateMaterial = (id: string, patch: Partial<MaterialRow>) => {
-    setMaterials((rows) =>
-      rows.map((row) => {
-        if (row.id !== id) return row
-        const next = { ...row, ...patch }
-        if ('quantity' in patch || 'unitPrice' in patch) {
-          const q = parseNum(next.quantity)
-          const u = parseNum(next.unitPrice)
-          next.total = (q * u).toFixed(2)
-        }
-        return next
+    for (const row of materials) {
+      if (!row.name.trim()) continue
+      const quantity = toNum(row.quantity)
+      const unitPrice = toNum(row.unitPrice)
+      if (quantity <= 0 || unitPrice < 0) continue
+      items.push({
+        id: row.id,
+        name: row.name.trim(),
+        lineType: 'material',
+        materialId: row.catalogId || undefined,
+        quantity,
+        unitPrice,
       })
-    )
-  }
+    }
 
-  const updateEquipment = (id: string, patch: Partial<EquipmentRow>) => {
-    setEquipment((rows) =>
-      rows.map((row) => {
-        if (row.id !== id) return row
-        const next = { ...row, ...patch }
-        if ('quantity' in patch || 'unitPrice' in patch) {
-          const q = parseNum(next.quantity)
-          const u = parseNum(next.unitPrice)
-          next.total = (q * u).toFixed(2)
-        }
-        return next
+    for (const row of equipment) {
+      if (!row.name.trim()) continue
+      const quantity = toNum(row.quantity)
+      const unitPrice = toNum(row.unitPrice)
+      if (quantity <= 0 || unitPrice < 0) continue
+      items.push({
+        id: row.id,
+        name: row.name.trim(),
+        lineType: 'equipment',
+        equipmentId: row.catalogId || undefined,
+        quantity,
+        unitPrice,
       })
-    )
-  }
+    }
 
-  const updateVehicle = (id: string, patch: Partial<VehicleRow>) => {
-    setVehicles((rows) =>
-      rows.map((row) => {
-        if (row.id !== id) return row
-        const next = { ...row, ...patch }
-        if ('unitPrice' in patch) {
-          const u = parseNum(next.unitPrice)
-          next.total = u.toFixed(2)
-        }
-        return next
+    for (const row of vehicles) {
+      if (!row.name.trim()) continue
+      const unitPrice = toNum(row.unitPrice)
+      if (unitPrice <= 0) continue
+      items.push({
+        id: row.id,
+        name: row.name.trim(),
+        lineType: 'vehicle',
+        vehicleId: row.catalogId || undefined,
+        quantity: 1,
+        unitPrice,
       })
-    )
-  }
+    }
 
-  const addMaterialRow = () => {
-    setMaterials((r) => [...r, createMaterialRow()])
-  }
+    return items
+  }, [materials, equipment, vehicles])
 
-  const removeMaterialRow = (id: string) => {
-    setMaterials((r) => (r.length <= 1 ? r : r.filter((row) => row.id !== id)))
-  }
+  const discount = useMemo(() => {
+    if (!discountEnabled) return null
+    const pct = toNum(discountPercent)
+    if (pct <= 0) return null
+    return { label: discountLabel.trim() || t('estimate.discount.defaultLabel'), percent: pct }
+  }, [discountEnabled, discountLabel, discountPercent, t])
 
-  const addEquipmentRow = () => {
-    setEquipment((r) => [...r, createEquipmentRow()])
-  }
+  const totals = useMemo(
+    () =>
+      computeEstimateTotals({
+        lineItems: lineItemsForCalc,
+        taxPercent: toNum(taxPercent),
+        discount,
+      }),
+    [lineItemsForCalc, taxPercent, discount]
+  )
 
-  const removeEquipmentRow = (id: string) => {
-    setEquipment((r) => (r.length <= 1 ? r : r.filter((row) => row.id !== id)))
-  }
-
-  const addVehicleRow = () => {
-    setVehicles((r) => [...r, createVehicleRow()])
-  }
-
-  const removeVehicleRow = (id: string) => {
-    setVehicles((r) => (r.length <= 1 ? r : r.filter((row) => row.id !== id)))
-  }
-
-  const addPriceExtra = () => {
-    setPriceExtras((r) => [...r, { id: newId(), label: '', amount: '' }])
-  }
-
-  const handleSubmit = () => {
-    toast({
-      title: t('estimate.toastSaved', { total: formatMoney(grandTotal) }),
-      variant: 'success',
-    })
-    onCreate({
-      id: `est-${Date.now()}`,
-      title: t('estimate.addModalTitle'),
-      customerName: '—',
-      location: '—',
-      deadlineFrom: '—',
-      deadlineTo: '—',
+  const buildRecord = (): EstimateRecord | null => {
+    if (!title.trim() || !customerName.trim() || lineItemsForCalc.length === 0) return null
+    return {
+      id: makeId('est'),
+      title: title.trim(),
+      customerName: customerName.trim(),
+      customerEmail: customerEmail.trim(),
+      customerAddress: customerAddress.trim(),
+      deadlineFrom: startDate ? formatDateDayMonth(startDate) : '—',
+      deadlineTo: endDate ? formatDateDayMonth(endDate) : '—',
+      location: customerAddress.trim() || '—',
       paymentMethod: '—',
-      description: t('estimate.grandTotalHint', { amount: formatMoney(grandTotal) }),
+      description: description.trim(),
       status: 'pending',
-    })
-    onClose()
+      lineItems: lineItemsForCalc,
+      taxPercent: toNum(taxPercent),
+      discount,
+    }
+  }
+
+  const validate = (): string | null => {
+    if (!title.trim()) return t('estimate.validation.projectName')
+    if (!customerName.trim()) return t('estimate.validation.customerName')
+    if (lineItemsForCalc.length === 0) return t('estimate.validation.lineItems')
+    if (!startDate) return t('estimate.validation.startDate')
+    if (!endDate) return t('estimate.validation.endDate')
+    if (startDate && endDate && startDate > endDate) return t('estimate.validation.endAfterStart')
+    return null
   }
 
   const sectionAddButton = (onClick: () => void, ariaLabel: string) => (
@@ -238,399 +231,554 @@ export function AddEstimateModal({
       onClick={onClick}
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex h-9 w-9 items-center justify-center rounded-md',
-        'bg-primary text-white shadow-sm',
-        'hover:opacity-90 transition-opacity'
+        'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
+        'bg-[#00AB41] text-white shadow-sm hover:bg-[#009638] transition-opacity'
       )}
     >
       <Plus className="h-5 w-5" />
     </button>
   )
 
-  const rowRemoveButton = (onClick: () => void) => (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-      onClick={onClick}
-      aria-label={t('estimate.removeRow')}
-    >
-      <Minus className="h-4 w-4" />
-    </Button>
-  )
+  const openPreview = () => {
+    const err = validate()
+    if (err) {
+      toast({ title: t('common.error'), description: err, variant: 'destructive' })
+      return
+    }
+    const draft = buildRecord()
+    if (!draft) return
+    setPreviewDraft(draft)
+    setPreviewOpen(true)
+  }
+
+  const handleSave = () => {
+    const err = validate()
+    if (err) {
+      toast({ title: t('common.error'), description: err, variant: 'destructive' })
+      return
+    }
+    const record = buildRecord()
+    if (!record) return
+    onCreate(record)
+    toast({
+      title: t('estimate.createdSuccess'),
+      description: t('estimate.grandTotalHint', { amount: formatCurrency(totals.balanceDue) }),
+      variant: 'success',
+    })
+    reset()
+    onClose()
+  }
 
   return (
-    <ModalWrapper
-      open={open}
-      onClose={onClose}
-      title={t('estimate.modalTitle')}
-      size="full"
-      className="max-w-5xl bg-white"
-      footer={
-        <Button
-          type="button"
-          className="w-full h-12 rounded-xl bg-primary text-white hover:bg-primary/90"
-          onClick={handleSubmit}
-        >
-          {t('estimate.submitEstimate')}
-        </Button>
-      }
-    >
-      <div className="space-y-8">
-        {item && (
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{t('estimate.projectLabel')}</span>{' '}
-            {item.title} — {item.customerName}
-          </p>
-        )}
-
-        {/* Labor */}
-        <div>
+    <>
+      <ModalWrapper
+        open={open}
+        onClose={() => {
+          reset()
+          onClose()
+        }}
+        title={t('estimate.addModalTitle')}
+        description={t('estimate.addModalDescription')}
+        size="full"
+        className="max-w-4xl bg-white"
+        footer={
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {t('estimate.preview.balanceDue')}:{' '}
+              <span className="font-semibold text-primary tabular-nums">
+                {formatCurrency(totals.balanceDue)}
+              </span>
+            </p>
+            <div className="flex flex-wrap gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={onClose}>
+                {t('estimate.addCancel')}
+              </Button>
+              <Button type="button" variant="outline" onClick={openPreview}>
+                {t('estimate.preview.open')}
+              </Button>
+              <Button
+                type="button"
+                className="bg-primary text-white hover:bg-primary/90"
+                onClick={handleSave}
+              >
+                {t('estimate.addSubmit')}
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <div className="space-y-8">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="add-est-people">{t('estimate.people')}</Label>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="est-title">{t('estimate.form.projectName')}</Label>
               <Input
-                id="add-est-people"
-                inputMode="decimal"
-                placeholder={t('estimate.peoplePlaceholder')}
-                value={people}
-                onChange={(e) => setPeople(e.target.value)}
+                id="est-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={t('estimate.form.projectNamePlaceholder')}
                 className="rounded-lg"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="add-est-labor-price">{t('estimate.laborPrice')}</Label>
+              <Label htmlFor="est-customer">{t('estimate.form.customerName')}</Label>
               <Input
-                id="add-est-labor-price"
-                inputMode="decimal"
-                placeholder={t('estimate.enterPrice')}
-                value={laborPrice}
-                onChange={(e) => setLaborPrice(e.target.value)}
+                id="est-customer"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder={t('estimate.form.customerNamePlaceholder')}
                 className="rounded-lg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="est-email">{t('estimate.form.customerEmail')}</Label>
+              <Input
+                id="est-email"
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder={t('estimate.form.customerEmailPlaceholder')}
+                className="rounded-lg"
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="est-address">{t('estimate.form.customerAddress')}</Label>
+              <Input
+                id="est-address"
+                value={customerAddress}
+                onChange={(e) => setCustomerAddress(e.target.value)}
+                placeholder={t('estimate.form.customerAddressPlaceholder')}
+                className="rounded-lg"
+              />
+            </div>
+            <DatePicker
+              id="est-start"
+              label={t('estimate.form.startDate')}
+              value={startDate}
+              onChange={setStartDate}
+              placeholder={t('estimate.form.startDatePlaceholder')}
+              className="w-full"
+            />
+            <DatePicker
+              id="est-end"
+              label={t('estimate.form.endDate')}
+              value={endDate}
+              onChange={setEndDate}
+              placeholder={t('estimate.form.endDatePlaceholder')}
+              className="w-full"
+            />
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="est-desc">{t('estimate.form.description')}</Label>
+              <Textarea
+                id="est-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t('estimate.form.descriptionPlaceholder')}
+                rows={2}
+                className="rounded-lg resize-none"
               />
             </div>
           </div>
-        </div>
 
-        {/* Material */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-sm font-semibold text-foreground">{t('estimate.material')}</h4>
-            {sectionAddButton(addMaterialRow, t('estimate.addMaterialRow'))}
-          </div>
-          <div
-            className={cn(
-              'hidden md:grid gap-2 text-xs font-medium text-muted-foreground px-1',
+          {/* Material */}
+          <CatalogSection
+            title={t('estimate.material')}
+            addLabel={t('estimate.addMaterialRow')}
+            onAdd={() => setMaterials((r) => [...r, emptyMaterialRow()])}
+            headerCols={
               materials.length > 1
                 ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
                 : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
-            )}
-          >
-            <span>{t('estimate.name')}</span>
-            <span>{t('estimate.quantity')}</span>
-            <span>{t('estimate.unitPriceSqft')}</span>
-            <span>{t('estimate.totalPrice')}</span>
-            {materials.length > 1 && (
-              <span className="sr-only">{t('estimate.removeRow')}</span>
-            )}
-          </div>
-          <div className="space-y-3">
-            {materials.map((row) => (
-              <div
-                key={row.id}
-                className={cn(
-                  'grid gap-3 md:items-end',
-                  materials.length > 1
-                    ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
-                    : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
-                )}
-              >
-                <div className="space-y-1.5 md:space-y-0">
-                  <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
-                  <Select
-                    value={row.name || undefined}
-                    onValueChange={(v) => updateMaterial(row.id, { name: v })}
-                  >
-                    <SelectTrigger className="rounded-lg">
-                      <SelectValue placeholder={t('estimate.selectName')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ESTIMATE_MATERIAL_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {t(opt.labelKey)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="md:hidden text-xs">{t('estimate.quantity')}</Label>
-                  <Input
-                    inputMode="decimal"
-                    placeholder="0"
-                    value={row.quantity}
-                    onChange={(e) => updateMaterial(row.id, { quantity: e.target.value })}
-                    className="rounded-lg"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="md:hidden text-xs">{t('estimate.unitPriceSqft')}</Label>
-                  <Input
-                    inputMode="decimal"
-                    placeholder="0"
-                    value={row.unitPrice}
-                    onChange={(e) => updateMaterial(row.id, { unitPrice: e.target.value })}
-                    className="rounded-lg"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="md:hidden text-xs">{t('estimate.totalPrice')}</Label>
-                  <Input
-                    readOnly
-                    value={row.total}
-                    className="rounded-lg bg-muted/40"
-                  />
-                </div>
-                {materials.length > 1 && (
-                  <div className="flex justify-end pb-0.5">
-                    {rowRemoveButton(() => removeMaterialRow(row.id))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+            }
+            rowCols={
+              materials.length > 1
+                ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+                : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
+            }
+            headers={
+              <>
+                <span>{t('estimate.name')}</span>
+                <span>{t('estimate.quantity')}</span>
+                <span>{t('estimate.unitPriceSqft')}</span>
+                <span>{t('estimate.totalPrice')}</span>
+              </>
+            }
+            rows={materials}
+            catalog={materialCatalog}
+            showQuantity
+            unitPriceLabel={t('estimate.unitPriceSqft')}
+            onRemove={(id) => setMaterials((r) => (r.length <= 1 ? r : r.filter((x) => x.id !== id)))}
+            onCatalogChange={(id, catalogId) =>
+              setMaterials((rows) =>
+                rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, materialCatalog) } : r))
+              )
+            }
+            onQuantityChange={(id, quantity) =>
+              setMaterials((rows) => rows.map((r) => (r.id === id ? { ...r, quantity } : r)))
+            }
+            onUnitPriceChange={(id, unitPrice) =>
+              setMaterials((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
+            }
+            sectionAddButton={sectionAddButton}
+            t={t}
+          />
 
-        {/* Equipment */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-sm font-semibold text-foreground">{t('estimate.equipment')}</h4>
-            {sectionAddButton(addEquipmentRow, t('estimate.addEquipmentRow'))}
-          </div>
-          <div
-            className={cn(
-              'hidden md:grid gap-2 text-xs font-medium text-muted-foreground px-1',
+          {/* Equipment */}
+          <CatalogSection
+            title={t('estimate.equipment')}
+            addLabel={t('estimate.addEquipmentRow')}
+            onAdd={() => setEquipment((r) => [...r, emptyEquipmentRow()])}
+            headerCols={
               equipment.length > 1
                 ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
                 : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
-            )}
-          >
-            <span>{t('estimate.name')}</span>
-            <span>{t('estimate.quantity')}</span>
-            <span>{t('estimate.unitPriceDay')}</span>
-            <span>{t('estimate.totalPrice')}</span>
-            {equipment.length > 1 && (
-              <span className="sr-only">{t('estimate.removeRow')}</span>
-            )}
-          </div>
-          <div className="space-y-3">
-            {equipment.map((row) => (
-              <div
-                key={row.id}
-                className={cn(
-                  'grid gap-3 md:items-end',
-                  equipment.length > 1
-                    ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
-                    : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
-                )}
-              >
-                <div className="space-y-1.5 md:space-y-0">
-                  <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
-                  <Select
-                    value={row.name || undefined}
-                    onValueChange={(v) => updateEquipment(row.id, { name: v })}
-                  >
-                    <SelectTrigger className="rounded-lg">
-                      <SelectValue placeholder={t('estimate.selectName')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ESTIMATE_EQUIPMENT_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {t(opt.labelKey)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            }
+            rowCols={
+              equipment.length > 1
+                ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+                : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
+            }
+            headers={
+              <>
+                <span>{t('estimate.name')}</span>
+                <span>{t('estimate.quantity')}</span>
+                <span>{t('estimate.unitPriceDay')}</span>
+                <span>{t('estimate.totalPrice')}</span>
+              </>
+            }
+            rows={equipment}
+            catalog={equipmentCatalog}
+            showQuantity
+            unitPriceLabel={t('estimate.unitPriceDay')}
+            onRemove={(id) => setEquipment((r) => (r.length <= 1 ? r : r.filter((x) => x.id !== id)))}
+            onCatalogChange={(id, catalogId) =>
+              setEquipment((rows) =>
+                rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, equipmentCatalog) } : r))
+              )
+            }
+            onQuantityChange={(id, quantity) =>
+              setEquipment((rows) => rows.map((r) => (r.id === id ? { ...r, quantity } : r)))
+            }
+            onUnitPriceChange={(id, unitPrice) =>
+              setEquipment((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
+            }
+            sectionAddButton={sectionAddButton}
+            t={t}
+          />
+
+          {/* Vehicle */}
+          <VehicleSection
+            title={t('estimate.vehicle')}
+            addLabel={t('estimate.addVehicleRow')}
+            onAdd={() => setVehicles((r) => [...r, emptyVehicleRow()])}
+            rows={vehicles}
+            catalog={vehicleCatalog}
+            onRemove={(id) => setVehicles((r) => (r.length <= 1 ? r : r.filter((x) => x.id !== id)))}
+            onCatalogChange={(id, catalogId) =>
+              setVehicles((rows) =>
+                rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, vehicleCatalog) } : r))
+              )
+            }
+            onUnitPriceChange={(id, unitPrice) =>
+              setVehicles((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
+            }
+            sectionAddButton={sectionAddButton}
+            t={t}
+          />
+
+          <div className="grid gap-4 sm:grid-cols-2 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+            <div className="space-y-3 sm:col-span-2">
+              <div className="flex items-center gap-2">
+                <input
+                  id="est-discount-toggle"
+                  type="checkbox"
+                  checked={discountEnabled}
+                  onChange={(e) => setDiscountEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary"
+                />
+                <Label htmlFor="est-discount-toggle" className="font-medium cursor-pointer">
+                  {t('estimate.discount.enable')}
+                </Label>
+              </div>
+              {discountEnabled && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>{t('estimate.discount.label')}</Label>
+                    <Input
+                      value={discountLabel}
+                      onChange={(e) => setDiscountLabel(e.target.value)}
+                      placeholder={t('estimate.discount.labelPlaceholder')}
+                      className="rounded-lg bg-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('estimate.discount.percent')}</Label>
+                    <Input
+                      inputMode="decimal"
+                      value={discountPercent}
+                      onChange={(e) => setDiscountPercent(e.target.value)}
+                      placeholder="5"
+                      className="rounded-lg bg-white"
+                    />
+                  </div>
                 </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="est-tax">{t('estimate.taxOptional')}</Label>
+              <Input
+                id="est-tax"
+                inputMode="decimal"
+                value={taxPercent}
+                onChange={(e) => setTaxPercent(e.target.value)}
+                placeholder="8.25"
+                className="rounded-lg bg-white"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('estimate.preview.subtotal')}</Label>
+              <Input
+                readOnly
+                value={formatCurrency(totals.subtotal)}
+                className="rounded-lg bg-white font-medium"
+              />
+            </div>
+          </div>
+        </div>
+      </ModalWrapper>
+
+      <EstimatePreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        estimate={previewDraft}
+        readOnly
+      />
+    </>
+  )
+}
+
+/* --- Section subcomponents (inline to keep one file) --- */
+
+type SectionAddButton = (onClick: () => void, ariaLabel: string) => React.ReactNode
+
+function CatalogSection({
+  title,
+  addLabel,
+  onAdd,
+  headerCols,
+  rowCols,
+  headers,
+  rows,
+  catalog,
+  showQuantity,
+  unitPriceLabel,
+  onRemove,
+  onCatalogChange,
+  onQuantityChange,
+  onUnitPriceChange,
+  sectionAddButton,
+  t,
+}: {
+  title: string
+  addLabel: string
+  onAdd: () => void
+  headerCols: string
+  rowCols: string
+  headers: React.ReactNode
+  rows: MaterialRow[]
+  catalog: EstimateCatalogOption[]
+  showQuantity: boolean
+  unitPriceLabel: string
+  onRemove: (id: string) => void
+  onCatalogChange: (id: string, catalogId: string) => void
+  onQuantityChange: (id: string, quantity: string) => void
+  onUnitPriceChange: (id: string, unitPrice: string) => void
+  sectionAddButton: SectionAddButton
+  t: (key: string) => string
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+        {sectionAddButton(onAdd, addLabel)}
+      </div>
+      <div className={cn('hidden md:grid gap-2 text-xs font-medium text-muted-foreground px-1', headerCols)}>
+        {headers}
+        {rows.length > 1 && <span className="sr-only">{t('estimate.removeRow')}</span>}
+      </div>
+      <div className="space-y-3">
+        {rows.map((row) => {
+          const lineTotal = toNum(row.quantity) * toNum(row.unitPrice)
+          return (
+            <div key={row.id} className={cn('grid gap-3 md:items-end', rowCols)}>
+              <div className="space-y-1.5 md:space-y-0">
+                <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
+                <Select
+                  value={row.catalogId || undefined}
+                  onValueChange={(v) => onCatalogChange(row.id, v)}
+                >
+                  <SelectTrigger className="rounded-lg">
+                    <SelectValue placeholder={t('estimate.selectName')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalog.map((opt) => (
+                      <SelectItem key={opt.id} value={opt.id}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {showQuantity && (
                 <div className="space-y-1.5">
                   <Label className="md:hidden text-xs">{t('estimate.quantity')}</Label>
                   <Input
                     inputMode="decimal"
                     placeholder="0"
                     value={row.quantity}
-                    onChange={(e) => updateEquipment(row.id, { quantity: e.target.value })}
+                    onChange={(e) => onQuantityChange(row.id, e.target.value)}
                     className="rounded-lg"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="md:hidden text-xs">{t('estimate.unitPriceDay')}</Label>
-                  <Input
-                    inputMode="decimal"
-                    placeholder="0"
-                    value={row.unitPrice}
-                    onChange={(e) => updateEquipment(row.id, { unitPrice: e.target.value })}
-                    className="rounded-lg"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="md:hidden text-xs">{t('estimate.totalPrice')}</Label>
-                  <Input
-                    readOnly
-                    value={row.total}
-                    className="rounded-lg bg-muted/40"
-                  />
-                </div>
-                {equipment.length > 1 && (
-                  <div className="flex justify-end pb-0.5">
-                    {rowRemoveButton(() => removeEquipmentRow(row.id))}
-                  </div>
-                )}
+              )}
+              <div className="space-y-1.5">
+                <Label className="md:hidden text-xs">{unitPriceLabel}</Label>
+                <Input
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={row.unitPrice}
+                  onChange={(e) => onUnitPriceChange(row.id, e.target.value)}
+                  className="rounded-lg"
+                />
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Vehicle */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-sm font-semibold text-foreground">{t('estimate.vehicle')}</h4>
-            {sectionAddButton(addVehicleRow, t('estimate.addVehicleRow'))}
-          </div>
-          <div
-            className={cn(
-              'hidden md:grid gap-2 text-xs font-medium text-muted-foreground px-1',
-              vehicles.length > 1
-                ? 'md:grid-cols-[1.2fr_1fr_1fr_44px]'
-                : 'md:grid-cols-[1.2fr_1fr_1fr]'
-            )}
-          >
-            <span>{t('estimate.name')}</span>
-            <span>{t('estimate.unitPriceDay')}</span>
-            <span>{t('estimate.totalPrice')}</span>
-            {vehicles.length > 1 && (
-              <span className="sr-only">{t('estimate.removeRow')}</span>
-            )}
-          </div>
-          <div className="space-y-3">
-            {vehicles.map((row) => (
-              <div
-                key={row.id}
-                className={cn(
-                  'grid gap-3 md:items-end',
-                  vehicles.length > 1
-                    ? 'md:grid-cols-[1.2fr_1fr_1fr_44px]'
-                    : 'md:grid-cols-[1.2fr_1fr_1fr]'
-                )}
-              >
-                <div className="space-y-1.5 md:space-y-0">
-                  <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
-                  <Select
-                    value={row.name || undefined}
-                    onValueChange={(v) => updateVehicle(row.id, { name: v })}
+              <div className="space-y-1.5">
+                <Label className="md:hidden text-xs">{t('estimate.totalPrice')}</Label>
+                <Input
+                  readOnly
+                  value={lineTotal > 0 ? lineTotal.toFixed(2) : ''}
+                  className="rounded-lg bg-muted/40 tabular-nums"
+                />
+              </div>
+              {rows.length > 1 && (
+                <div className="flex justify-end pb-0.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => onRemove(row.id)}
+                    aria-label={t('estimate.removeRow')}
                   >
-                    <SelectTrigger className="rounded-lg">
-                      <SelectValue placeholder={t('estimate.selectName')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ESTIMATE_VEHICLE_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {t(opt.labelKey)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <Minus className="h-4 w-4" />
+                  </Button>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="md:hidden text-xs">{t('estimate.unitPriceDay')}</Label>
-                  <Input
-                    inputMode="decimal"
-                    placeholder="0"
-                    value={row.unitPrice}
-                    onChange={(e) => updateVehicle(row.id, { unitPrice: e.target.value })}
-                    className="rounded-lg"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="md:hidden text-xs">{t('estimate.totalPrice')}</Label>
-                  <Input
-                    readOnly
-                    value={row.total}
-                    className="rounded-lg bg-muted/40"
-                  />
-                </div>
-                {vehicles.length > 1 && (
-                  <div className="flex justify-end pb-0.5">
-                    {rowRemoveButton(() => removeVehicleRow(row.id))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Price summary */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h4 className="text-sm font-semibold text-foreground">{t('estimate.price')}</h4>
-            {sectionAddButton(addPriceExtra, t('estimate.addPriceLine'))}
-          </div>
-          {priceExtras.length > 0 && (
-            <div className="space-y-2">
-              {priceExtras.map((ex) => (
-                <div key={ex.id} className="grid gap-2 sm:grid-cols-2">
-                  <Input
-                    placeholder={t('estimate.extraLabelPlaceholder')}
-                    value={ex.label}
-                    onChange={(e) =>
-                      setPriceExtras((rows) =>
-                        rows.map((x) => (x.id === ex.id ? { ...x, label: e.target.value } : x))
-                      )
-                    }
-                    className="rounded-lg"
-                  />
-                  <Input
-                    inputMode="decimal"
-                    placeholder={t('estimate.extraAmountPlaceholder')}
-                    value={ex.amount}
-                    onChange={(e) =>
-                      setPriceExtras((rows) =>
-                        rows.map((x) => (x.id === ex.id ? { ...x, amount: e.target.value } : x))
-                      )
-                    }
-                    className="rounded-lg"
-                  />
-                </div>
-              ))}
+              )}
             </div>
-          )}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>{t('estimate.totalPriceSummary')}</Label>
-              <Input
-                readOnly
-                value={formatMoney(subtotalBeforeTax)}
-                className="rounded-lg bg-muted/40 font-medium"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('estimate.taxOptional')}</Label>
-              <Input
-                inputMode="decimal"
-                placeholder="10%"
-                value={taxPercent}
-                onChange={(e) => setTaxPercent(e.target.value)}
-                className="rounded-lg"
-              />
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {t('estimate.grandTotalHint', { amount: formatMoney(grandTotal) })}
-            {parseNum(taxPercent) > 0 &&
-              ` ${t('estimate.taxHint', { amount: formatMoney(taxAmount), pct: taxPercent })}`}
-          </p>
-        </div>
+          )
+        })}
       </div>
-    </ModalWrapper>
+    </div>
+  )
+}
+
+function VehicleSection({
+  title,
+  addLabel,
+  onAdd,
+  rows,
+  catalog,
+  onRemove,
+  onCatalogChange,
+  onUnitPriceChange,
+  sectionAddButton,
+  t,
+}: {
+  title: string
+  addLabel: string
+  onAdd: () => void
+  rows: VehicleRow[]
+  catalog: EstimateCatalogOption[]
+  onRemove: (id: string) => void
+  onCatalogChange: (id: string, catalogId: string) => void
+  onUnitPriceChange: (id: string, unitPrice: string) => void
+  sectionAddButton: SectionAddButton
+  t: (key: string) => string
+}) {
+  const headerCols =
+    rows.length > 1 ? 'md:grid-cols-[1.2fr_1fr_1fr_44px]' : 'md:grid-cols-[1.2fr_1fr_1fr]'
+  const rowCols =
+    rows.length > 1 ? 'md:grid-cols-[1.2fr_1fr_1fr_44px]' : 'md:grid-cols-[1.2fr_1fr_1fr]'
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+        {sectionAddButton(onAdd, addLabel)}
+      </div>
+      <div className={cn('hidden md:grid gap-2 text-xs font-medium text-muted-foreground px-1', headerCols)}>
+        <span>{t('estimate.name')}</span>
+        <span>{t('estimate.unitPriceDay')}</span>
+        <span>{t('estimate.totalPrice')}</span>
+        {rows.length > 1 && <span className="sr-only">{t('estimate.removeRow')}</span>}
+      </div>
+      <div className="space-y-3">
+        {rows.map((row) => {
+          const lineTotal = toNum(row.unitPrice)
+          return (
+            <div key={row.id} className={cn('grid gap-3 md:items-end', rowCols)}>
+              <div className="space-y-1.5 md:space-y-0">
+                <Label className="md:hidden text-xs">{t('estimate.name')}</Label>
+                <Select
+                  value={row.catalogId || undefined}
+                  onValueChange={(v) => onCatalogChange(row.id, v)}
+                >
+                  <SelectTrigger className="rounded-lg">
+                    <SelectValue placeholder={t('estimate.selectName')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalog.map((opt) => (
+                      <SelectItem key={opt.id} value={opt.id}>
+                        {opt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="md:hidden text-xs">{t('estimate.unitPriceDay')}</Label>
+                <Input
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={row.unitPrice}
+                  onChange={(e) => onUnitPriceChange(row.id, e.target.value)}
+                  className="rounded-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="md:hidden text-xs">{t('estimate.totalPrice')}</Label>
+                <Input
+                  readOnly
+                  value={lineTotal > 0 ? lineTotal.toFixed(2) : ''}
+                  className="rounded-lg bg-muted/40 tabular-nums"
+                />
+              </div>
+              {rows.length > 1 && (
+                <div className="flex justify-end pb-0.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => onRemove(row.id)}
+                    aria-label={t('estimate.removeRow')}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }

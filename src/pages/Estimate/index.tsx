@@ -12,7 +12,8 @@ import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
 import { EstimateItemModal } from './components/EstimateItemModal'
 import { AddEstimateModal } from './components/AddEstimateModal'
-import { MOCK_ESTIMATE_ITEMS, type EstimateListItem } from './estimateData'
+import { MOCK_ESTIMATE_ITEMS, type EstimateRecord } from './estimateData'
+import { runEstimateSignedWorkflow } from './estimateWorkflow'
 
 export default function EstimatePage() {
   const { t } = useTranslation()
@@ -20,10 +21,10 @@ export default function EstimatePage() {
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = parseInt(searchParams.get('limit') || '10', 10) || 10
 
-  const [items, setItems] = useState<EstimateListItem[]>(MOCK_ESTIMATE_ITEMS)
+  const [items, setItems] = useState<EstimateRecord[]>(MOCK_ESTIMATE_ITEMS)
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<EstimateListItem | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<EstimateListItem | null>(null)
+  const [selectedItem, setSelectedItem] = useState<EstimateRecord | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<EstimateRecord | null>(null)
   const [addOpen, setAddOpen] = useState(false)
 
   const { user } = useAppSelector((s) => s.auth)
@@ -55,7 +56,7 @@ export default function EstimatePage() {
     return items.slice(start, start + itemsPerPage)
   }, [items, currentPage, itemsPerPage])
 
-  const openModal = (item: EstimateListItem) => {
+  const openModal = (item: EstimateRecord) => {
     setSelectedItem(item)
     setModalOpen(true)
   }
@@ -77,6 +78,29 @@ export default function EstimatePage() {
     setItems((prev) => prev.filter((row) => row.id !== deleteTarget.id))
     setDeleteTarget(null)
     toast({ title: t('estimate.deletedSuccess'), variant: 'success' })
+  }
+
+  const handleSignEstimate = (estimate: EstimateRecord, signatureDataUrl: string) => {
+    const { invoice } = runEstimateSignedWorkflow(estimate)
+    setItems((prev) =>
+      prev.map((row) =>
+        row.id === estimate.id
+          ? {
+              ...row,
+              status: 'signed',
+              signedAt: new Date().toISOString(),
+              signatureDataUrl,
+              invoiceRef: invoice.invoiceRef,
+            }
+          : row
+      )
+    )
+    toast({
+      title: t('estimate.signed.successTitle'),
+      description: t('estimate.signed.successDescription', { ref: invoice.invoiceRef }),
+      variant: 'success',
+    })
+    closeModal()
   }
 
   return (
@@ -132,18 +156,28 @@ export default function EstimatePage() {
                     <span
                       className={cn(
                         'inline-flex items-center gap-2 font-medium',
-                        row.status === 'reviewed' ? 'text-emerald-600' : 'text-orange-500'
+                        row.status === 'signed'
+                          ? 'text-blue-600'
+                          : row.status === 'reviewed'
+                            ? 'text-emerald-600'
+                            : 'text-orange-500'
                       )}
                     >
                       <span
                         className={cn(
                           'h-2 w-2 shrink-0 rounded-full',
-                          row.status === 'reviewed' ? 'bg-emerald-500' : 'bg-orange-500'
+                          row.status === 'signed'
+                            ? 'bg-blue-500'
+                            : row.status === 'reviewed'
+                              ? 'bg-emerald-500'
+                              : 'bg-orange-500'
                         )}
                       />
-                      {row.status === 'reviewed'
-                        ? t('estimate.status.reviewed')
-                        : t('estimate.status.pending')}
+                      {row.status === 'signed'
+                        ? t('estimate.status.signed')
+                        : row.status === 'reviewed'
+                          ? t('estimate.status.reviewed')
+                          : t('estimate.status.pending')}
                     </span>
                   </td>
                   <td className="px-5 py-4 align-middle">
@@ -210,7 +244,12 @@ export default function EstimatePage() {
         />
       </div>
 
-      <EstimateItemModal open={modalOpen} onClose={closeModal} item={selectedItem} />
+      <EstimateItemModal
+        open={modalOpen}
+        onClose={closeModal}
+        item={selectedItem}
+        onSign={handleSignEstimate}
+      />
 
       <AddEstimateModal
         open={addOpen}

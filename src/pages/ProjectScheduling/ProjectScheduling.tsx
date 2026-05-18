@@ -14,6 +14,7 @@ import { ViewScheduleDetailsModal } from './components/ViewScheduleDetailsModal'
 import { AddEditScheduleModal } from './components/AddEditScheduleModal'
 import { AddTeamModal, type TeamDraft } from './components/AddTeamModal'
 import { mockScheduledProjects, type ScheduledProject } from './projectSchedulingData'
+import { consumePendingSchedules } from '@/pages/Estimate/estimateBridge'
 import { mockEmployeesData } from '@/pages/EmployeeManagement/employeeManagementData'
 import { cn } from '@/utils/cn'
 import type { SelectOption } from '@/types'
@@ -27,7 +28,10 @@ function teamBadgeLabel(team: string) {
 
 export default function ProjectScheduling() {
   const { t } = useTranslation()
-  const [schedules, setSchedules] = useState<ScheduledProject[]>(mockScheduledProjects)
+  const [schedules, setSchedules] = useState<ScheduledProject[]>(() => {
+    const fromEstimates = consumePendingSchedules()
+    return [...fromEstimates, ...mockScheduledProjects]
+  })
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduledProject | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)

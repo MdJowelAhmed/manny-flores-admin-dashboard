@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import { MOCK_INVOICES, computeInvoiceTotals, type InvoiceRecord } from './invoiceData'
+import { consumePendingInvoices } from '@/pages/Estimate/estimateBridge'
 import { InvoiceDetailsModal } from './InvoiceDetailsModal'
 import { CreateInvoiceModal } from './CreateInvoiceModal'
 
@@ -15,7 +16,10 @@ export default function InvoicePage() {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [detailsInvoice, setDetailsInvoice] = useState<InvoiceRecord | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>(() => MOCK_INVOICES)
+  const [invoices, setInvoices] = useState<InvoiceRecord[]>(() => {
+    const fromEstimates = consumePendingInvoices()
+    return [...fromEstimates, ...MOCK_INVOICES]
+  })
 
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const totalItems = invoices.length
