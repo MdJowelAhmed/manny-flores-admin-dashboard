@@ -1,18 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { UserRole } from '@/types/roles'
+import { userFromToken } from '@/utils/jwt'
+import type { AuthUserFromToken } from '@/utils/jwt'
+import type { UserRoleType } from '@/types/roles'
 
-export type UserRoleValue = (typeof UserRole)[keyof typeof UserRole]
-
-interface User {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  avatar?: string
-  role: UserRoleValue
-  businessId?: string
-  businessName?: string
-}
+export type User = AuthUserFromToken
+export type UserRoleValue = UserRoleType
 
 interface AuthState {
   user: User | null
@@ -24,24 +16,30 @@ interface AuthState {
   verificationEmail: string | null
 }
 
-function getInitialAuthState(): AuthState {
-  const token = localStorage.getItem('token')
-  const userStr = localStorage.getItem('user')
-  let user: User | null = null
-  if (token && userStr) {
-    try {
-      const parsed = JSON.parse(userStr) as User
-      if (Object.values(UserRole).includes(parsed.role)) {
-        user = parsed
-      }
-    } catch {
-      // Invalid user data in storage
-    }
+function readAuthFromTokenStorage(): Pick<AuthState, 'user' | 'token' | 'isAuthenticated'> {
+  if (typeof localStorage === 'undefined') {
+    return { user: null, token: null, isAuthenticated: false }
   }
+
+  const token = localStorage.getItem('token')
+  if (!token) {
+    return { user: null, token: null, isAuthenticated: false }
+  }
+
+  const user = userFromToken(token)
+  if (!user) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
+    return { user: null, token: null, isAuthenticated: false }
+  }
+
+  return { user, token, isAuthenticated: true }
+}
+
+function getInitialAuthState(): AuthState {
+  const session = readAuthFromTokenStorage()
   return {
-    user,
-    token,
-    isAuthenticated: !!(token && user),
+    ...session,
     isLoading: false,
     error: null,
     passwordResetEmail: null,
@@ -59,14 +57,25 @@ const authSlice = createSlice({
       state.isLoading = true
       state.error = null
     },
-    loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
+    loginSuccess: (state, action: PayloadAction<{ token: string; email?: string }>) => {
+      const { token, email } = action.payload
+      const user = userFromToken(token, email ?? '')
+
+      if (!user) {
+        state.isLoading = false
+        state.isAuthenticated = false
+        state.user = null
+        state.token = null
+        state.error = 'Invalid session token'
+        return
+      }
+
       state.isLoading = false
       state.isAuthenticated = true
-      state.user = action.payload.user
-      state.token = action.payload.token
+      state.user = user
+      state.token = token
       state.error = null
-      localStorage.setItem('token', action.payload.token)
-      localStorage.setItem('user', JSON.stringify(action.payload.user))
+      localStorage.setItem('token', token)
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.isLoading = false
@@ -78,6 +87,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false
       state.error = null
       localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
     },
     setPasswordResetEmail: (state, action: PayloadAction<string>) => {
@@ -93,20 +103,17 @@ const authSlice = createSlice({
       state.isLoading = action.payload
     },
     loadUserFromStorage: (state) => {
-      const token = localStorage.getItem('token')
-      const userStr = localStorage.getItem('user')
-      if (token && userStr) {
-        try {
-          const parsed = JSON.parse(userStr) as User
-          if (Object.values(UserRole).includes(parsed.role)) {
-            state.user = parsed
-            state.token = token
-            state.isAuthenticated = true
-          }
-        } catch {
-          // Invalid user data in storage
-        }
-      }
+      const session = readAuthFromTokenStorage()
+      state.user = session.user
+      state.token = session.token
+      state.isAuthenticated = session.isAuthenticated
+    },
+    setUserProfile: (
+      state,
+      action: PayloadAction<Partial<Pick<User, 'email' | 'firstName' | 'lastName' | 'avatar'>>>
+    ) => {
+      if (!state.user) return
+      state.user = { ...state.user, ...action.payload }
     },
   },
 })
@@ -121,18 +128,7 @@ export const {
   clearError,
   setLoading,
   loadUserFromStorage,
+  setUserProfile,
 } = authSlice.actions
 
 export default authSlice.reducer
-
-
-
-
-
-
-
-
-
-
-
-

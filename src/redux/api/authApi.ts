@@ -1,10 +1,14 @@
 import { baseApi } from "../baseApi";
+import { loginSuccess } from "../slices/authSlice";
 
 interface LoginResponse {
     success: boolean;
+    statusCode?: number;
     message: string;
     data?: {
-        accessToken?: string;
+        accessToken: string;
+        refreshToken?: string;
+        role?: string;
     };
 }
 
@@ -86,6 +90,29 @@ const authApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body: credentials,
             }),
+            async onQueryStarted(credentials, { queryFulfilled, dispatch }) {
+                try {
+                    const { data } = await queryFulfilled;
+                    const accessToken = data?.data?.accessToken;
+                    if (!data?.success || !accessToken) return;
+
+                    if (typeof localStorage !== "undefined") {
+                        localStorage.setItem("token", accessToken);
+                        if (data.data?.refreshToken) {
+                            localStorage.setItem("refreshToken", data.data.refreshToken);
+                        }
+                    }
+
+                    dispatch(
+                        loginSuccess({
+                            token: accessToken,
+                            email: credentials.email,
+                        })
+                    );
+                } catch {
+                    // RTK Query handles mutation errors
+                }
+            },
             invalidatesTags: ['Auth'],
         }),
         register: builder.mutation({
@@ -101,6 +128,18 @@ const authApi = baseApi.injectEndpoints({
                 url: '/auth/logout',
                 method: 'POST',
             }),
+            async onQueryStarted(_arg, { queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                } catch {
+                    // still clear local session on logout failure
+                } finally {
+                    if (typeof localStorage !== "undefined") {
+                        localStorage.removeItem("token");
+                        localStorage.removeItem("refreshToken");
+                    }
+                }
+            },
             invalidatesTags: ['Auth'],
         }),
         getCurrentUser: builder.query({

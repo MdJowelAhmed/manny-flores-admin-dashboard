@@ -9,12 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import {
-  loginStart,
-  loginSuccess,
-  loginFailure,
-} from "@/redux/slices/authSlice";
-import type { UserRoleValue } from "@/redux/slices/authSlice";
+import { loginStart, loginFailure } from "@/redux/slices/authSlice";
+import { useLoginMutation } from "@/redux/api/authApi";
 import { cn } from "@/utils/cn";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -27,11 +23,26 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+function getErrorMessage(err: unknown, fallback: string): string {
+  if (
+    err &&
+    typeof err === "object" &&
+    "data" in err &&
+    err.data &&
+    typeof err.data === "object" &&
+    "message" in err.data &&
+    typeof err.data.message === "string"
+  ) {
+    return err.data.message;
+  }
+  return fallback;
+}
 
 export default function Login() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  const { error } = useAppSelector((state) => state.auth);
+  const [login, { isLoading }] = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
   const { t } = useTranslation();
 
@@ -47,83 +58,41 @@ export default function Login() {
       remember: false,
     },
   });
-  const demoUsers = [
-    {
-      id: "1",
-      email: "superadmin@example.com",
-      password: "password",
-      role: "super-admin" as const,
-      firstName: "Super",
-      lastName: "Admin",
-    },
-    {
-      id: "2",
-      email: "admin@example.com",
-      password: "password",
-      role: "admin" as const,
-      firstName: "Admin",
-      lastName: "User",
-    },
-    {
-      id: "3",
-      email: "marketing@example.com",
-      password: "password",
-      role: "marketing" as const,
-      firstName: "Marketing",
-      lastName: "User",
-    },
-  ];
 
   const onSubmit = async (data: LoginFormData) => {
     dispatch(loginStart());
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const result = await login({
+        email: data.email,
+        password: data.password,
+      }).unwrap();
 
-      const matchedUser = demoUsers.find(
-        (u) => u.email === data.email && u.password === data.password
-      );
-
-      if (!matchedUser) {
-        dispatch(loginFailure(t('auth.login.invalidCredentials')));
+      if (!result.success || !result.data?.accessToken) {
+        dispatch(
+          loginFailure(result.message || t("auth.login.invalidCredentials"))
+        );
         return;
       }
 
-      dispatch(
-        loginSuccess({
-          user: {
-            id: matchedUser.id,
-            email: matchedUser.email,
-            firstName: matchedUser.firstName,
-            lastName: matchedUser.lastName,
-            role: matchedUser.role as UserRoleValue,
-          },
-          token: "mock-jwt-token-" + Date.now(),
-        })
-      );
-
       navigate("/dashboard", { replace: true });
-    } catch {
-      dispatch(loginFailure(t('auth.login.errorOccurred')));
+    } catch (err: unknown) {
+      dispatch(loginFailure(getErrorMessage(err, t("auth.login.errorOccurred"))));
     }
   };
 
-
   return (
     <div className="space-y-6">
-      {/* Mobile Logo */}
-      <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+      <motion.div className="lg:hidden flex items-center justify-center gap-3 mb-8">
         <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
           <span className="text-primary-foreground font-bold text-xl">D</span>
         </div>
-        <span className="font-display font-bold text-2xl">{t('auth.dashboard')}</span>
-      </div>
+        <span className="font-display font-bold text-2xl">{t("auth.dashboard")}</span>
+      </motion.div>
 
       <div className="space-y-2 text-center lg:text-left">
-        <h1 className="text-2xl font-bold tracking-tight">{t('auth.login.welcomeBack')}</h1>
-        <p className="text-muted-foreground">
-          {t('auth.login.enterCredentials')}
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("auth.login.welcomeBack")}</h1>
+        <p className="text-muted-foreground">{t("auth.login.enterCredentials")}</p>
       </div>
 
       {error && (
@@ -138,13 +107,13 @@ export default function Login() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">{t('auth.login.email')}</Label>
+          <Label htmlFor="email">{t("auth.login.email")}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="email"
               type="email"
-              placeholder={t('auth.login.emailPlaceholder')}
+              placeholder={t("auth.login.emailPlaceholder")}
               className={cn("pl-10", errors.email && "border-destructive")}
               {...register("email")}
             />
@@ -154,20 +123,17 @@ export default function Login() {
           )}
         </div>
 
-        <div className="space-y-2">
+        <motion.div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">{t('auth.login.password')}</Label>
+            <Label htmlFor="password">{t("auth.login.password")}</Label>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder={t('auth.login.passwordPlaceholder')}
-              className={cn(
-                "pl-10 pr-10",
-                errors.password && "border-destructive"
-              )}
+              placeholder={t("auth.login.passwordPlaceholder")}
+              className={cn("pl-10 pr-10", errors.password && "border-destructive")}
               {...register("password")}
             />
             <button
@@ -175,19 +141,13 @@ export default function Login() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {errors.password && (
-            <p className="text-xs text-destructive">
-              {errors.password.message}
-            </p>
+            <p className="text-xs text-destructive">{errors.password.message}</p>
           )}
-        </div>
+        </motion.div>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -197,30 +157,19 @@ export default function Login() {
               className="h-4 w-4 rounded border-input"
               {...register("remember")}
             />
-            <Label
-              htmlFor="remember"
-              className="text-sm font-normal cursor-pointer"
-            >
-              {t('auth.login.rememberMe')}
+            <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
+              {t("auth.login.rememberMe")}
             </Label>
           </div>
-          <Link
-            to="/auth/forgot-password"
-            className="text-sm text-primary hover:underline"
-          >
-            {t('auth.login.forgotPassword')}
+          <Link to="/auth/forgot-password" className="text-sm text-primary hover:underline">
+            {t("auth.login.forgotPassword")}
           </Link>
         </div>
 
-        <Button
-          type="submit"
-          className="w-full"
-          size="lg"
-          isLoading={isLoading}
-        >
+        <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
           {!isLoading && (
             <>
-              {t('auth.login.signIn')}
+              {t("auth.login.signIn")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </>
           )}
@@ -230,17 +179,17 @@ export default function Login() {
       <div className="relative">
         <Separator />
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-          {t('auth.login.demoCredentials')}
+          {t("auth.login.demoCredentials")}
         </span>
       </div>
 
       <div className="p-4 rounded-lg bg-muted/50 border text-sm space-y-3">
-        <p className="font-semibold text-foreground">{t('auth.login.demoCredentials')}:</p>
+        <p className="font-semibold text-foreground">{t("auth.login.demoCredentials")}:</p>
         <div className="space-y-2">
           <div>
-            <p className="font-medium">{t('auth.login.superAdmin')}:</p>
-            <p className="text-muted-foreground">{t('auth.login.email')}: superadmin@example.com</p>
-            <p className="text-muted-foreground">{t('auth.login.password')}: password</p>
+            <p className="font-medium">{t("auth.login.superAdmin")}:</p>
+            <p className="text-muted-foreground">{t("auth.login.email")}: admin@gmail.com</p>
+            <p className="text-muted-foreground">{t("auth.login.password")}: 12345678</p>
           </div>
         </div>
       </div>

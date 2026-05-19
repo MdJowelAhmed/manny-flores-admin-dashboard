@@ -16,22 +16,14 @@ import { Login, ForgotPassword, VerifyEmail, ResetPassword } from '@/pages/Auth'
 // Dashboard Pages
 import Dashboard from '@/pages/Dashboard'
 import UserList from '@/pages/Users/UserList'
-import ProductList from '@/pages/Products/ProductList'
-import CategoryList from '@/pages/Categories/CategoryList'
 import ProfileSettings from '@/pages/Settings/Profile/ProfileSettings'
 import ChangePassword from '@/pages/Settings/ChangePassword/ChangePassword'
 import TermsSettings from '@/pages/Settings/Terms/TermsSettings'
 import PrivacySettings from '@/pages/Settings/Privacy/PrivacySettings'
 import AboutUsSettings from '@/pages/Settings/AboutUs/AboutUsSettings'
 import OrderList from './pages/Orders/OrderList'
-// import AddCar from './pages/carlist/AddCar'
-import ClientManagement from './pages/ClientManagement/ClientManagement'
 import TransactionsHistory from './pages/transictions-history/TransactionsHistory'
 import NotFound from './pages/NotFound/NotFound'
-import Customise from './pages/ShopManagement/Customise/Customise'
-import ShopCategory from './pages/ShopManagement/Category/ShopCategory'
-import ShopList from './pages/ShopManagement/Shop/ShopList'
-import ShopProducts from './pages/ShopManagement/Products/ShopProducts'
 import SubscriberList from './pages/Subscribers/SubscriberList'
 import PushNotificationList from './pages/PushNotification/PushNotificationList'
 import ControllerList from './pages/Controllers/ControllerList'
@@ -391,48 +383,7 @@ function App() {
             }
           />
 
-          {/* Super Admin only */}
-     
-          <Route path="clients" element={<ClientManagement />} />
-          <Route path="products" element={<ProductList />} />
-          <Route path="categories" element={<CategoryList />} />
 
-          {/* Shop Management - Super Admin, Admin (Shop page is super-admin only, handled in Sidebar) */}
-          <Route path="shop-management">
-            <Route index element={<Navigate to="/shop-management/customise" replace />} />
-            <Route
-              path="customise"
-              element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <Customise />
-                </RoleBasedRoute>
-              }
-            />
-            <Route
-              path="category"
-              element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <ShopCategory />
-                </RoleBasedRoute>
-              }
-            />
-            <Route
-              path="shop"
-              element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
-                  <ShopList />
-                </RoleBasedRoute>
-              }
-            />
-            <Route
-              path="products"
-              element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <ShopProducts />
-                </RoleBasedRoute>
-              }
-            />
-          </Route>
 
           {/* Settings - Super Admin, Admin (Profile) */}
           <Route path="settings">
