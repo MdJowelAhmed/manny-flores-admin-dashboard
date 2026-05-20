@@ -1,4 +1,4 @@
-import { Users, UserCheck, UserX, Clock } from 'lucide-react'
+
 
 export type AttendanceStatus = 'Present' | 'Late' | 'Absent'
 
@@ -12,38 +12,11 @@ export interface AttendanceRecord {
   totalHours: string
   status: AttendanceStatus
   isActive?: boolean
+  userId?: string 
+  profile?: string
 }
 
-export const attendanceStats = [
-  {
-    titleKey: 'attendance.totalEmployee' as const,
-    value: 250,
-    icon: Users,
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-  },
-  {
-    titleKey: 'attendance.presentToday' as const,
-    value: 167,
-    icon: UserCheck,
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
-  },
-  {
-    titleKey: 'attendance.absentToday' as const,
-    value: 42,
-    icon: UserX,
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
-  },
-  {
-    titleKey: 'attendance.lateArrivals' as const,
-    value: 15,
-    icon: Clock,
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-  },
-]
+
 
 export const STATUS_STYLES: Record<AttendanceStatus, { bg: string; text: string }> = {
   Present: { bg: 'bg-secondary-foreground', text: 'text-accent' },

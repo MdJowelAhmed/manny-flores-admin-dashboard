@@ -354,7 +354,7 @@ function App() {
               }
             />
             <Route
-              path="employee/:employeeSlug"
+              path="employee/:userId"
               element={
                 <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
                   <AttendanceDetail />
