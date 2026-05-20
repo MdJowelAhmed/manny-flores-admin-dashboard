@@ -34,7 +34,7 @@ import VehicleMaintenance from './pages/VehicleMaintenance/VehicleMaintenance'
 import EquipmentMaintenance from './pages/EquipmentMaintenance/EquipmentMaintenance'
 import ReviewList from './pages/Reviews/ReviewList'
 import Communication from './pages/Communication/Communication'
-import DocumentsApprovals from './pages/DocumentsApprovals/DocumentsApprovals'
+import DocumentsApprovals from './pages/DocumentsApprovals'
 import ProjectScheduling from './pages/ProjectScheduling/ProjectScheduling'
 import ManageMaterials from './pages/ManageMaterials/ManageMaterials'
 import CustomerFinance from './pages/CustomerFinance/CustomerFinance'
@@ -121,7 +121,7 @@ function App() {
             }
           />
 
-   
+
 
           {/* Push Notification - Super Admin, Admin, Marketing */}
           <Route
@@ -143,7 +143,7 @@ function App() {
             }
           />
 
- 
+
 
           {/* Recent Projects - Super Admin, Admin */}
           <Route

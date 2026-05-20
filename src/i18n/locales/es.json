@@ -326,7 +326,8 @@
     "projectDescriptionPlaceholder": "Ingrese descripción del proyecto...",
     "saveProject": "Guardar Proyecto",
     "projectUpdated": "Proyecto actualizado exitosamente.",
-    "projectCreated": "Proyecto creado exitosamente."
+    "projectCreated": "Proyecto creado exitosamente.",
+    "resourcesSection": "Materiales, equipos y vehículos"
   },
   "customerManagement": {
     "recentProjects": "Proyectos recientes",

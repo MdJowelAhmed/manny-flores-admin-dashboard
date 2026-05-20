@@ -202,7 +202,7 @@
     "customerName": "Customer Name",
     "email": "Email",
     "company": "Company",
-    "projectName": "Project Name",
+    "projectName": "Document Name",
     "totalBudget": "Total Budget",
     "startDate": "Start Date",
     "endDate": "End Date",
@@ -326,7 +326,8 @@
     "projectDescriptionPlaceholder": "Enter project description...",
     "saveProject": "Save Project",
     "projectUpdated": "Project updated successfully.",
-    "projectCreated": "Project created successfully."
+    "projectCreated": "Project created successfully.",
+    "resourcesSection": "Materials, Equipment & Vehicles"
   },
   "customerManagement": {
     "recentProjects": "Recent Projects",

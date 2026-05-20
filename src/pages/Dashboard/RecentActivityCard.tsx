@@ -31,6 +31,7 @@ export function RecentActivityCard() {
     const { data: recentProjectsApi, isLoading: recentProjectsLoading } = useOverviewRecentProjectsQuery({ limit: 10, page: 1 })
 
     const apiData = recentProjectsApi?.data || []
+    console.log(apiData)
     const mappedProjects = apiData.map((item: any) => {
         const mapStatus = (status: string): ProjectStatus => {
             switch (status) {
@@ -74,11 +75,6 @@ export function RecentActivityCard() {
     const handleDeleteClick = (project: RecentProject) => {
         setSelectedProject(project)
         setShowDeleteModal(true)
-    }
-
-    const handleUploadPlan = (project: RecentProject) => {
-        setSelectedProject(project)
-        setShowPlanModal(true)
     }
 
     const handleConfirmDelete = () => {
@@ -133,9 +129,6 @@ export function RecentActivityCard() {
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.startDate')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.endDate')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.status')}</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.progress')}</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.value')}</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.projectPlan')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.action')}</th>
                                 </tr>
                             </thead>
@@ -173,31 +166,7 @@ export function RecentActivityCard() {
                                                 {t(getProjectStatusTranslationKey(project.status))}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-2 w-24 min-w-[6rem] rounded-full bg-gray-100 overflow-hidden">
-                                                    <div
-                                                        className="h-full rounded-full bg-emerald-500"
-                                                        style={{ width: `${project.progress}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-sm font-medium text-gray-600">{project.progress}%</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5 text-sm font-medium">
-                                            {project.value}
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleUploadPlan(project)}
-                                                className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
-                                            >
-                                                {(project.planFiles?.length ?? 0) > 0
-                                                    ? t('dashboard.planUploaded')
-                                                    : t('dashboard.uploadPlan')}
-                                            </button>
-                                        </td>
+
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
                                                 <button
