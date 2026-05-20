@@ -28,7 +28,9 @@ export interface Material {
   id: string
   materialName: string
   category: string
+  categoryId: string
   unit: string
+  quantity: number
   /** Total stock on hand */
   currentStock: number
   /** Amount reserved for active jobs */
@@ -71,7 +73,9 @@ export const mockMaterialsData: Material[] = [
     id: 'mat-1',
     materialName: 'Topsoil',
     category: 'Soil',
+    categoryId: 'mc-soil',
     unit: 'bag',
+    quantity: 2,
     currentStock: 120,
     allocated: 30,
     supplier: 'Agro Co.',
@@ -110,7 +114,9 @@ export const mockMaterialsData: Material[] = [
     id: 'mat-2',
     materialName: 'Mulch',
     category: 'Soil',
+    categoryId: 'mc-soil',
     unit: 'bag',
+    quantity: 5,
     currentStock: 85,
     allocated: 40,
     supplier: 'Landscape Supply',
@@ -138,7 +144,9 @@ export const mockMaterialsData: Material[] = [
     id: 'mat-3',
     materialName: 'Concrete Mix',
     category: 'Raw Material',
+    categoryId: 'mc-raw',
     unit: 'kg',
+    quantity: 100,
     currentStock: 500,
     allocated: 200,
     supplier: 'BuildCo',
@@ -166,7 +174,9 @@ export const mockMaterialsData: Material[] = [
     id: 'mat-4',
     materialName: 'Pea Gravel',
     category: 'Raw Material',
+    categoryId: 'mc-raw',
     unit: 'bag',
+    quantity: 8,
     currentStock: 18,
     allocated: 12,
     supplier: 'Stone Yard',

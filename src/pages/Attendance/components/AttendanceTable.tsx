@@ -32,12 +32,12 @@ export function AttendanceTable({
           <tr className="bg-secondary-foreground text-accent">
             <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.date')}</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.employee')}</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">{t('companyProjects.project')}</th>
+            {/* <th className="px-4 py-4 text-left text-sm font-semibold">{t('companyProjects.project')}</th> */}
             <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.checkIn')}</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.checkOut')}</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.totalHours')}</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.status')}</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.active')}</th>
+            {/* <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.active')}</th> */}
             <th className="px-4 py-4 text-right text-sm font-semibold">{t('common.actions')}</th>
           </tr>
         </thead>
@@ -62,7 +62,7 @@ export function AttendanceTable({
                 >
                   <td className="px-4 py-3 text-sm text-slate-700">{r.date}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{r.employee}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{r.project}</td>
+                  {/* <td className="px-4 py-3 text-sm text-slate-700">{r.project}</td> */}
                   <td
                     className={cn(
                       'px-4 py-3 text-sm',
@@ -84,7 +84,7 @@ export function AttendanceTable({
                       {r.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 w-36">
+                  {/* <td className="px-4 py-3 w-36">
                     {onStatusChange ? (
                       <div className="flex items-center gap-2">
                         <Switch
@@ -111,7 +111,7 @@ export function AttendanceTable({
                         {r.isActive !== false ? 'Active' : 'Inactive'}
                       </span>
                     )}
-                  </td>
+                  </td> */}
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <Button
@@ -132,7 +132,7 @@ export function AttendanceTable({
                           <Lock className="h-5 w-5" />
                         </Button>
                       )}
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="icon-sm"
                         onClick={(e) => onEdit(r, e)}
@@ -147,7 +147,7 @@ export function AttendanceTable({
                         className="h-8 w-8 text-red-600 hover:bg-red-50"
                       >
                         <Trash2 className="h-5 w-5" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </td>
                 </motion.tr>

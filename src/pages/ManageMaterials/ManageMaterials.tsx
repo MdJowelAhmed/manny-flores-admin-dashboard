@@ -6,69 +6,100 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MaterialsTable } from './components/MaterialsTable'
 import { ViewMaterialDetailsModal } from './components/ViewMaterialDetailsModal'
-import { AddEditMaterialModal } from './components/AddEditMaterialModal'
+import {
+  AddEditMaterialModal,
+  type MaterialFormSavePayload,
+} from './components/AddEditMaterialModal'
 import { MaterialCategoriesTable } from './components/MaterialCategoriesTable'
 import { AddEditMaterialCategoryModal } from './components/AddEditMaterialCategoryModal'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Pagination } from '@/components/common'
 import {
   mockDrivers,
-  mockMaterialsData,
   type Material,
   type MaterialOrderSubmitPayload,
 } from './manageMaterialsData'
 import { MaterialOrderModal } from './components/MaterialOrderModal'
 import { toast } from '@/utils/toast'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { deleteMaterialCategory } from '@/redux/slices/materialCategorySlice'
 import type { MaterialCategory } from '@/types'
 import { DEFAULT_PAGINATION } from '@/utils/constants'
+import {
+  useGetCategoriesQuery,
+  useDeleteCategoryMutation,
+  mapCategoryFromApi,
+} from '@/redux/api/categoryApi'
+import {
+  useGetMaterialsQuery,
+  useAddMaterialMutation,
+  useUpdateMaterialMutation,
+  useDeleteMaterialMutation,
+  mapMaterialFromApi,
+} from '@/redux/api/materialsApi'
 
 export default function ManageMaterials() {
   const { t } = useTranslation()
-  const dispatch = useAppDispatch()
-  const materialCategories = useAppSelector((s) => s.materialCategories.list)
 
-  const [materials, setMaterials] = useState<Material[]>(mockMaterialsData)
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
   const [isMaterialOrderModalOpen, setIsMaterialOrderModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [materialToDelete, setMaterialToDelete] = useState<Material | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
   const [materialsPage, setMaterialsPage] = useState(DEFAULT_PAGINATION.page)
   const [materialsLimit, setMaterialsLimit] = useState(DEFAULT_PAGINATION.limit)
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<MaterialCategory | null>(null)
-  const [isDeletingCategory, setIsDeletingCategory] = useState(false)
   const [categoryPage, setCategoryPage] = useState(DEFAULT_PAGINATION.page)
   const [categoryLimit, setCategoryLimit] = useState(DEFAULT_PAGINATION.limit)
 
+  const {
+    data: materialsResponse,
+    isLoading: isMaterialsLoading,
+    isFetching: isMaterialsFetching,
+  } = useGetMaterialsQuery({ page: materialsPage, limit: materialsLimit })
+
+  const { data: categoriesResponse, isLoading: isCategoriesLoading } =
+    useGetCategoriesQuery({ type: 'MATERIAL' })
+
+  const [addMaterial, { isLoading: isAddingMaterial }] = useAddMaterialMutation()
+  const [updateMaterial, { isLoading: isUpdatingMaterial }] = useUpdateMaterialMutation()
+  const [deleteMaterial, { isLoading: isDeletingMaterial }] = useDeleteMaterialMutation()
+  const [deleteCategory, { isLoading: isDeletingCategory }] = useDeleteCategoryMutation()
+
+  const materials = useMemo(
+    () => (materialsResponse?.data ?? []).map(mapMaterialFromApi),
+    [materialsResponse]
+  )
+
+  const materialCategories = useMemo(
+    () => (categoriesResponse?.data ?? []).map(mapCategoryFromApi),
+    [categoriesResponse]
+  )
+
+  const materialsPagination = materialsResponse?.pagination
+  const materialsTotalPages = materialsPagination?.totalPage ?? 1
+  const materialsTotalItems = materialsPagination?.total ?? materials.length
+
   const selectedCategory =
     materialCategories.find((c) => c.id === editingCategoryId) ?? null
-
-  const paginatedMaterials = useMemo(() => {
-    const start = (materialsPage - 1) * materialsLimit
-    return materials.slice(start, start + materialsLimit)
-  }, [materials, materialsLimit, materialsPage])
-
-  const materialsTotalPages = Math.max(1, Math.ceil(materials.length / materialsLimit))
-
-  const handleMaterialsPageChange = (newPage: number) => setMaterialsPage(newPage)
-  const handleMaterialsLimitChange = (newLimit: number) => {
-    setMaterialsLimit(newLimit)
-    setMaterialsPage(1)
-  }
 
   const paginatedCategories = useMemo(() => {
     const start = (categoryPage - 1) * categoryLimit
     return materialCategories.slice(start, start + categoryLimit)
   }, [materialCategories, categoryLimit, categoryPage])
 
-  const categoryTotalPages = Math.max(1, Math.ceil(materialCategories.length / categoryLimit))
+  const categoryTotalPages = Math.max(
+    1,
+    Math.ceil(materialCategories.length / categoryLimit)
+  )
+
+  const handleMaterialsPageChange = (newPage: number) => setMaterialsPage(newPage)
+  const handleMaterialsLimitChange = (newLimit: number) => {
+    setMaterialsLimit(newLimit)
+    setMaterialsPage(1)
+  }
 
   const handleCategoryPageChange = (newPage: number) => setCategoryPage(newPage)
   const handleCategoryLimitChange = (newLimit: number) => {
@@ -98,42 +129,46 @@ export default function ManageMaterials() {
     /* Future: POST material orders to API */
   }
 
-  const handleSave = (data: Partial<Material>) => {
-    if (data.id) {
-      setMaterials((prev) =>
-        prev.map((m) =>
-          m.id === data.id
-            ? {
-                ...m,
-                ...data,
-                allocated: data.allocated ?? m.allocated,
-                jobAllocations: data.jobAllocations ?? m.jobAllocations,
-              }
-            : m
-        )
-      )
-    } else {
-      const newMaterial: Material = {
-        id: `mat-${Date.now()}`,
-        materialName: data.materialName ?? '',
-        category: data.category ?? '',
-        unit: data.unit ?? 'bag',
-        currentStock: data.currentStock ?? 0,
-        allocated: 0,
-        supplier: data.supplier ?? '',
-        costPrice: data.costPrice ?? 0,
-        projectRate: data.projectRate ?? 0,
-        assignedProject: data.assignedProject ?? '',
-        unitPrice: data.unitPrice ?? 0,
-        minimumStock: data.minimumStock ?? 0,
-        supplierEmail: data.supplierEmail ?? '',
-        supplierContact: data.supplierContact ?? '',
-        lastPurchaseDate: data.lastPurchaseDate ?? '',
-        assignedProjects: data.assignedProjects ?? [],
-        jobAllocations: [],
+  const handleSave = async (data: MaterialFormSavePayload) => {
+    const body = {
+      name: data.name,
+      category: data.categoryId,
+      unitPrice: data.unitPrice,
+      quantity: data.quantity,
+      stock: data.stock,
+    }
+
+    try {
+      if (data.id) {
+        await updateMaterial({ id: data.id, ...body }).unwrap()
+        toast({
+          title: t('common.success'),
+          description: t('manageMaterials.materialUpdated'),
+          variant: 'success',
+        })
+      } else {
+        await addMaterial(body).unwrap()
+        toast({
+          title: t('common.success'),
+          description: t('manageMaterials.materialCreated'),
+          variant: 'success',
+        })
+        setMaterialsPage(1)
       }
-      setMaterials((prev) => [newMaterial, ...prev])
-      setMaterialsPage(1)
+      setIsAddEditModalOpen(false)
+      setSelectedMaterial(null)
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('common.error')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
     }
   }
 
@@ -144,26 +179,29 @@ export default function ManageMaterials() {
 
   const handleConfirmDelete = async () => {
     if (!materialToDelete) return
-    setIsDeleting(true)
     try {
-      await new Promise((r) => setTimeout(r, 300))
-      setMaterials((prev) => prev.filter((m) => m.id !== materialToDelete.id))
+      await deleteMaterial(materialToDelete.id).unwrap()
       toast({
         variant: 'success',
         title: t('manageMaterials.materialDeleted'),
-        description: t('manageMaterials.materialRemoved', { name: materialToDelete.materialName }),
+        description: t('manageMaterials.materialRemoved', {
+          name: materialToDelete.materialName,
+        }),
       })
       setIsConfirmOpen(false)
       setMaterialToDelete(null)
       if (selectedMaterial?.id === materialToDelete.id) {
         setSelectedMaterial(null)
       }
-      const nextTotalPages = Math.max(1, Math.ceil((materials.length - 1) / materialsLimit))
-      if (materialsPage > nextTotalPages) setMaterialsPage(nextTotalPages)
+      if (materials.length === 1 && materialsPage > 1) {
+        setMaterialsPage(materialsPage - 1)
+      }
     } catch {
-      toast({ title: t('common.error'), description: t('manageMaterials.failedToDelete'), variant: 'destructive' })
-    } finally {
-      setIsDeleting(false)
+      toast({
+        title: t('common.error'),
+        description: t('manageMaterials.failedToDelete'),
+        variant: 'destructive',
+      })
     }
   }
 
@@ -179,7 +217,7 @@ export default function ManageMaterials() {
   }
 
   const handleDeleteCategory = (c: MaterialCategory) => {
-    const inUse = materials.some((m) => m.category === c.name)
+    const inUse = materials.some((m) => m.categoryId === c.id)
     if (inUse) {
       toast({
         title: t('common.error'),
@@ -193,22 +231,33 @@ export default function ManageMaterials() {
 
   const handleConfirmDeleteCategory = async () => {
     if (!categoryToDelete) return
-    setIsDeletingCategory(true)
     try {
-      await new Promise((r) => setTimeout(r, 300))
-      dispatch(deleteMaterialCategory(categoryToDelete.id))
+      await deleteCategory(categoryToDelete.id).unwrap()
       toast({
         variant: 'success',
         title: t('manageMaterials.categoryDeleted'),
         description: t('manageMaterials.categoryRemoved', { name: categoryToDelete.name }),
       })
       setCategoryToDelete(null)
-      const nextTotalPages = Math.max(1, Math.ceil((materialCategories.length - 1) / categoryLimit))
-      if (categoryPage > nextTotalPages) setCategoryPage(nextTotalPages)
-    } finally {
-      setIsDeletingCategory(false)
+      if (paginatedCategories.length === 1 && categoryPage > 1) {
+        setCategoryPage(categoryPage - 1)
+      }
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('common.error')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
     }
   }
+
+  const isSavingMaterial = isAddingMaterial || isUpdatingMaterial
 
   return (
     <motion.div
@@ -259,16 +308,22 @@ export default function ManageMaterials() {
             </Button>
           </div>
           <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-            <MaterialsTable
-              materials={paginatedMaterials}
-              onView={handleView}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+            {isMaterialsLoading || isMaterialsFetching ? (
+              <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+                {t('common.loading')}
+              </div>
+            ) : (
+              <MaterialsTable
+                materials={materials}
+                onView={handleView}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            )}
             <Pagination
               currentPage={materialsPage}
               totalPages={materialsTotalPages}
-              totalItems={materials.length}
+              totalItems={materialsTotalItems}
               itemsPerPage={materialsLimit}
               onPageChange={handleMaterialsPageChange}
               onItemsPerPageChange={handleMaterialsLimitChange}
@@ -278,9 +333,6 @@ export default function ManageMaterials() {
 
         <TabsContent value="categories" className="mt-0 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
-            {/* <p className="text-sm text-muted-foreground">
-              {t('manageMaterials.categoriesTabHint')}
-            </p> */}
             <Button
               onClick={handleAddCategory}
               className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
@@ -290,11 +342,17 @@ export default function ManageMaterials() {
             </Button>
           </div>
           <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-            <MaterialCategoriesTable
-              categories={paginatedCategories}
-              onEdit={handleEditCategory}
-              onDelete={handleDeleteCategory}
-            />
+            {isCategoriesLoading ? (
+              <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+                {t('common.loading')}
+              </div>
+            ) : (
+              <MaterialCategoriesTable
+                categories={paginatedCategories}
+                onEdit={handleEditCategory}
+                onDelete={handleDeleteCategory}
+              />
+            )}
             <Pagination
               currentPage={categoryPage}
               totalPages={categoryTotalPages}
@@ -324,6 +382,7 @@ export default function ManageMaterials() {
         }}
         material={selectedMaterial}
         onSave={handleSave}
+        isSaving={isSavingMaterial}
       />
 
       <MaterialOrderModal
@@ -352,11 +411,13 @@ export default function ManageMaterials() {
         }}
         onConfirm={handleConfirmDelete}
         title={t('manageMaterials.deleteMaterial')}
-        description={t('manageMaterials.deleteMaterialConfirm', { name: materialToDelete?.materialName ?? '' })}
+        description={t('manageMaterials.deleteMaterialConfirm', {
+          name: materialToDelete?.materialName ?? '',
+        })}
         confirmText={t('common.delete')}
         cancelText={t('common.cancel')}
         variant="danger"
-        isLoading={isDeleting}
+        isLoading={isDeletingMaterial}
       />
 
       <ConfirmDialog

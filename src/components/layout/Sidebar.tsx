@@ -85,11 +85,18 @@ const navItems: NavItem[] = [
     feature: 'invoice',
   },
   {
-    title: 'Company & Projects',
-    titleKey: 'sidebar.companyProjects',
-    href: '/company-projects',
-    icon: Building2,
-    feature: 'company-projects',
+    title: 'Project Scheduling',
+    titleKey: 'sidebar.projectScheduling',
+    href: '/project-scheduling',
+    icon: CalendarDays,
+    feature: 'project-scheduling',
+  },
+  {
+    title: 'Payment',
+    titleKey: 'sidebar.payment',
+    href: '/payments',
+    icon: BadgeDollarSign,
+    feature: 'payments',
   },
   {
     title: 'Employee Management',
@@ -106,11 +113,25 @@ const navItems: NavItem[] = [
     feature: 'attendance',
   },
   {
+    title: 'Payroll management',
+    titleKey: 'sidebar.payrollManagement',
+    href: '/payroll-management',
+    icon: DollarSign,
+    feature: 'payroll-management',
+  },
+  {
     title: 'Communication',
     titleKey: 'sidebar.communication',
     href: '/communication',
     icon: MessageCircle,
     feature: 'communication',
+  },
+  {
+    title: 'Company & Projects',
+    titleKey: 'sidebar.companyProjects',
+    href: '/company-projects',
+    icon: Building2,
+    feature: 'company-projects',
   },
   {
     title: 'Customer & Finance',
@@ -119,27 +140,30 @@ const navItems: NavItem[] = [
     icon: Wallet,
     feature: 'customer-finance',
   },
+
+ 
   {
-    title: 'Payment',
-    titleKey: 'sidebar.payment',
-    href: '/payments',
-    icon: BadgeDollarSign,
-    feature: 'payments',
-  },
-  {
-    title: 'Manage Materials',
+    title: 'Material Maintenance',
     titleKey: 'sidebar.manageMaterials',
     href: '/manage-materials',
     icon: Package2,
     feature: 'manage-materials',
   },
   {
-    title: 'Project Scheduling',
-    titleKey: 'sidebar.projectScheduling',
-    href: '/project-scheduling',
-    icon: CalendarDays,
-    feature: 'project-scheduling',
+    title: 'Equipment Maintenance',
+    titleKey: 'sidebar.equipmentMaintenance',
+    href: '/equipment-maintenance',
+    icon: Wrench,
+    feature: 'equipment-maintenance',
   },
+  {
+    title: 'Vehicle Maintenance',
+    titleKey: 'sidebar.vehicleMaintenance',
+    href: '/vehicle-maintenance',
+    icon: Truck,
+    feature: 'vehicle-maintenance',
+  },
+
   {
     title: 'Documents & Approvals',
     titleKey: 'sidebar.documentsApprovals',
@@ -147,13 +171,7 @@ const navItems: NavItem[] = [
     icon: FileCheck,
     feature: 'documents-approvals',
   },
-  {
-    title: 'Payroll management',
-    titleKey: 'sidebar.payrollManagement',
-    href: '/payroll-management',
-    icon: DollarSign,
-    feature: 'payroll-management',
-  },
+
   {
     title: 'Resource Requests & Report',
     titleKey: 'sidebar.resourceRequestsReport',
@@ -168,20 +186,7 @@ const navItems: NavItem[] = [
     icon: ClipboardList,
     feature: 'change-orders',
   },
-  {
-    title: 'Vehicle Maintenance',
-    titleKey: 'sidebar.vehicleMaintenance',
-    href: '/vehicle-maintenance',
-    icon: Truck,
-    feature: 'vehicle-maintenance',
-  },
-  {
-    title: 'Equipment Maintenance',
-    titleKey: 'sidebar.equipmentMaintenance',
-    href: '/equipment-maintenance',
-    icon: Wrench,
-    feature: 'equipment-maintenance',
-  },
+
   {
     title: 'Review',
     titleKey: 'sidebar.review',
