@@ -5,14 +5,13 @@ import { motion } from 'framer-motion'
 export interface StatCardProps {
     title: string
     value: string | number
-    change: number
     icon: React.ElementType
     description: string
     index: number
 }
 
-export function StatCard({ title, value,  icon: Icon, index }: StatCardProps) {
-    
+export function StatCard({ title, value, icon: Icon, index }: StatCardProps) {
+
 
     return (
         <motion.div
@@ -33,7 +32,7 @@ export function StatCard({ title, value,  icon: Icon, index }: StatCardProps) {
                         <Icon className="h-8 w-8 text-primary" />
                     </div>
                 </div>
-                
+
             </Card>
         </motion.div>
     )

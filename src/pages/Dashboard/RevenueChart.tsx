@@ -34,9 +34,9 @@ interface RevenueChartProps {
 
 const strKFormatter = (num: number) => {
     if (num >= 1000) {
-        return (num / 1000).toFixed(0) + 'k'
+        return '$' + (num / 1000).toFixed(0) + 'k'
     }
-    return num.toString()
+    return '$' + num.toString()
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

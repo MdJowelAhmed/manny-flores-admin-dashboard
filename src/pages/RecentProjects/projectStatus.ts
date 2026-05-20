@@ -7,6 +7,7 @@ export const PROJECT_STATUS_HEX: Record<RecentProject['status'], string> = {
   'In Progress': '#FFCC00',
   Scheduled: '#3B82F6',
   Overdue: '#FF383C',
+  'Pending Approval': '#F59E0B',
 }
 
 /**
@@ -16,12 +17,12 @@ export const PROJECT_STATUS_HEX: Record<RecentProject['status'], string> = {
 export function getProjectStatusBadgeStyle(
   status: RecentProject['status']
 ): CSSProperties {
-  const hex = PROJECT_STATUS_HEX[status]
+  const hex = PROJECT_STATUS_HEX[status] || '#6B7280'
   const backgroundColor = `${hex}26`
 
   const color =
-    status === 'In Progress'
-      ? '#3D3300' /* readable on light yellow */
+    status === 'In Progress' || status === 'Pending Approval'
+      ? '#3D3300' /* readable on light yellow/amber */
       : hex
 
   return {
@@ -43,5 +44,9 @@ export function getProjectStatusTranslationKey(
       return 'recentProjectsPage.scheduled'
     case 'Overdue':
       return 'recentProjectsPage.overdue'
+    case 'Pending Approval':
+      return 'recentProjectsPage.pendingApproval'
+    default:
+      return 'recentProjectsPage.scheduled'
   }
 }

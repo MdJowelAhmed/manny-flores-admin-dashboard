@@ -3,6 +3,7 @@ export type ProjectStatus =
   | 'In Progress'
   | 'Scheduled'
   | 'Overdue'
+  | 'Pending Approval'
 
 /** Attached project plans (blobUrl set when user uploads in-session) */
 export interface ProjectPlanFile {

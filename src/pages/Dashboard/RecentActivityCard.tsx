@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 import { Eye, Trash2 } from 'lucide-react'
-import type { RecentProject } from '@/pages/RecentProjects/recentProjectsData'
-import { useRecentProjects } from '@/contexts/RecentProjectsContext'
+import type { RecentProject, ProjectStatus } from '@/pages/RecentProjects/recentProjectsData'
+import Spinner from '@/components/common/Spinner'
 import { ProjectViewDetailsModal } from '@/pages/RecentProjects/components/ProjectViewDetailsModal'
 import { ProjectPlanUploadModal } from '@/pages/RecentProjects/components/ProjectPlanUploadModal'
 import {
@@ -13,11 +13,11 @@ import {
 } from '@/pages/RecentProjects/projectStatus'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useTranslation } from 'react-i18next'
+import { useOverviewRecentProjectsQuery } from '@/redux/slices/super-admin/overviewApi'
 
 export function RecentActivityCard() {
     const navigate = useNavigate()
-    const { projects, addPlanFiles, removePlanFile, removeProject } =
-        useRecentProjects()
+
     const [showViewModal, setShowViewModal] = useState(false)
     const [showPlanModal, setShowPlanModal] = useState(false)
     const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -25,6 +25,46 @@ export function RecentActivityCard() {
         null
     )
     const { t } = useTranslation()
+    const [deletedIds, setDeletedIds] = useState<string[]>([])
+
+    // API CALLS
+    const { data: recentProjectsApi, isLoading: recentProjectsLoading } = useOverviewRecentProjectsQuery({ limit: 10, page: 1 })
+
+    const apiData = recentProjectsApi?.data || []
+    const mappedProjects = apiData.map((item: any) => {
+        const mapStatus = (status: string): ProjectStatus => {
+            switch (status) {
+                case 'COMPLETED':
+                    return 'Completed'
+                case 'IN_PROGRESS':
+                    return 'In Progress'
+                case 'SCHEDULED':
+                    return 'Scheduled'
+                case 'PENDING':
+                    return 'Pending Approval'
+                default:
+                    return 'Scheduled'
+            }
+        }
+        return {
+            id: item.id ? (item.id.includes('-') ? `#${item.id.split('-')[0]}` : `#${item.id.slice(0, 8)}`) : '#N/A',
+            customerName: item.customerName || 'N/A',
+            project: item.projectName || 'N/A',
+            status: mapStatus(item.projectStatus),
+            progress: item.projectStatus === 'COMPLETED' ? 100 : item.projectStatus === 'IN_PROGRESS' ? 60 : item.projectStatus === 'PENDING' ? 15 : 0,
+            value: item.totalCost ? `$${item.totalCost}` : '$0',
+            startDate: item.estimateStartDate ? new Date(item.estimateStartDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
+            endDate: item.estimateEndDate ? new Date(item.estimateEndDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
+            email: item.customerEmail,
+            company: item.customerName,
+            projectName: item.projectName,
+            description: item.description,
+            planFiles: [],
+            originalId: item.id
+        }
+    })
+
+    const visibleProjects = mappedProjects.filter((p: any) => !deletedIds.includes(p.originalId))
 
     const handleViewDetails = (project: RecentProject) => {
         setSelectedProject(project)
@@ -43,15 +83,27 @@ export function RecentActivityCard() {
 
     const handleConfirmDelete = () => {
         if (!selectedProject) return
-        removeProject(selectedProject.id)
+        // removeProject(selectedProject.id)
+        const proj = selectedProject as any
+        if (proj.originalId) {
+            setDeletedIds(prev => [...prev, proj.originalId])
+        }
         setShowDeleteModal(false)
         setSelectedProject(null)
         navigate('/recent-projects')
     }
 
     const resolvedViewProject: RecentProject | null = selectedProject
-        ? projects.find((p) => p.id === selectedProject.id) ?? selectedProject
+        ? (visibleProjects.find((p: any) => p.id === selectedProject.id) as any) ?? selectedProject
         : null
+
+    if (recentProjectsLoading) {
+        return (
+            <div className="flex items-center justify-center p-12 bg-white rounded-lg border-none min-h-[300px] shadow-sm">
+                <Spinner />
+            </div>
+        )
+    }
 
     return (
         <motion.div
@@ -88,7 +140,7 @@ export function RecentActivityCard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-slate-700">
-                                {projects.slice(0, 4).map((project, index) => (
+                                {visibleProjects.slice(0, 4).map((project: any, index: any) => (
                                     <motion.tr
                                         key={`${project.id}`}
                                         initial={{ opacity: 0, x: -20 }}
@@ -187,8 +239,7 @@ export function RecentActivityCard() {
                 project={resolvedViewProject}
                 onRemovePlanFile={
                     resolvedViewProject
-                        ? (planFileId) =>
-                              removePlanFile(resolvedViewProject.id, planFileId)
+                        ? () => { }
                         : undefined
                 }
             />
@@ -200,7 +251,7 @@ export function RecentActivityCard() {
                     setSelectedProject(null)
                 }}
                 project={selectedProject}
-                onUploadSuccess={(projectId, files) => addPlanFiles(projectId, files)}
+                onUploadSuccess={() => { }}
             />
 
             <ConfirmDialog
