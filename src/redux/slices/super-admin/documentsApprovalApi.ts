@@ -32,8 +32,25 @@ const documentsApprovalApi = baseApi.injectEndpoints({
                 }
             },
         }),
+        updateDocument: builder.mutation<any, { id: string, data: any }>({
+            query: ({ id, data }) => {
+                return {
+                    url: `/documents/${id}`,
+                    method: 'PATCH',
+                    body: data
+                }
+            },
+        }),
+        deleteDocument: builder.mutation<any, string>({
+            query: (id) => {
+                return {
+                    url: `/documents/${id}`,
+                    method: 'DELETE',
+                }
+            },
+        }),
 
     })
 })
 
-export const { useGetDocumentsApprovalsQuery, useGetDocumentsOverviewQuery, useUploadDocumentMutation } = documentsApprovalApi;
+export const { useGetDocumentsApprovalsQuery, useGetDocumentsOverviewQuery, useUploadDocumentMutation, useUpdateDocumentMutation, useDeleteDocumentMutation } = documentsApprovalApi;

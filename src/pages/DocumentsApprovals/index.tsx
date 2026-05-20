@@ -1,22 +1,32 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { FileText, Send, UploadCloud, Download } from 'lucide-react'
+import { FileText, Send, UploadCloud, Download, Eye, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SearchInput } from '@/components/common/SearchInput'
 import { UploadDocumentModal } from './components/UploadDocumentModal.tsx'
 import { SendDocumentRequestModal } from './components/SendDocumentRequestModal.tsx'
+import { ViewDocumentDetailsModal } from './components/ViewDocumentDetailsModal.tsx'
+import { EditDocumentModal } from './components/EditDocumentModal.tsx'
+import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Pagination } from '@/components/common/Pagination'
-import { useGetDocumentsApprovalsQuery, useGetDocumentsOverviewQuery } from '@/redux/slices/super-admin/documentsApprovalApi.ts'
+import { useDeleteDocumentMutation, useGetDocumentsApprovalsQuery, useGetDocumentsOverviewQuery } from '@/redux/slices/super-admin/documentsApprovalApi.ts'
 import { useDebounce } from '@/hooks/useDebounce.ts'
 import Spinner from '@/components/common/Spinner.tsx'
 import { imageUrl } from '@/redux/baseApi'
+import { sonnerToast } from '@/utils/toast'
 
 export default function DocumentsApprovals() {
   const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isRequestOpen, setIsRequestOpen] = useState(false)
+
+  // Selection states for modals
+  const [selectedDoc, setSelectedDoc] = useState<any | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
   // Pagination
   const [page, setPage] = useState(1)
@@ -27,12 +37,33 @@ export default function DocumentsApprovals() {
   const { data: overviewData, isLoading: overviewLoading } = useGetDocumentsOverviewQuery()
   const { data: documentsData, isLoading: documentsLoading, refetch: documentsRefetch } = useGetDocumentsApprovalsQuery({ limit, page, search: debouncedSearch })
 
+  const [deleteDocument, { isLoading: isDeleting }] = useDeleteDocumentMutation()
+
   const documents = documentsData?.data || []
   const totalItems = documentsData?.pagination?.total || 0
   const totalPages = documentsData?.pagination?.totalPage || 1
 
   const handleCreated = () => {
     documentsRefetch()
+  }
+
+  const handleDelete = async () => {
+    if (!selectedDoc) return
+
+    const promise = deleteDocument(selectedDoc.id).unwrap()
+
+    try {
+      await sonnerToast.promise(promise, {
+        loading: t('common.processing') || 'Deleting document...',
+        success: t('common.deleted') || 'Document deleted successfully!',
+        error: (err: any) => err?.data?.message || 'Failed to delete document.',
+      })
+      documentsRefetch()
+      setIsDeleteOpen(false)
+      setSelectedDoc(null)
+    } catch (err) {
+      console.error('Delete error:', err)
+    }
   }
 
   if (documentsLoading || overviewLoading) {
@@ -173,15 +204,50 @@ export default function DocumentsApprovals() {
                         {doc.documentType || '—'}
                       </td>
                       <td className="px-6 py-4 align-middle text-right">
-                        <a
-                          href={fullDocUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-muted/40 transition-colors"
-                          title="Download document"
-                        >
-                          <Download className="h-5 w-5" />
-                        </a>
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDoc(doc)
+                              setIsDetailModalOpen(true)
+                            }}
+                            className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-muted/40 transition-colors"
+                            title={t('common.viewDetails') || 'View details'}
+                          >
+                            <Eye className="h-5 w-5" />
+                          </button>
+                          <a
+                            href={fullDocUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-muted/40 transition-colors"
+                            title="Download document"
+                          >
+                            <Download className="h-5 w-5" />
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDoc(doc)
+                              setIsEditOpen(true)
+                            }}
+                            className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-yellow-600 hover:bg-muted/40 transition-colors"
+                            title={t('common.edit') || 'Edit'}
+                          >
+                            <Pencil className="h-5 w-5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDoc(doc)
+                              setIsDeleteOpen(true)
+                            }}
+                            className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-destructive hover:bg-muted/40 transition-colors"
+                            title={t('common.delete') || 'Delete'}
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   )
@@ -209,6 +275,40 @@ export default function DocumentsApprovals() {
       <UploadDocumentModal open={isUploadOpen} onClose={() => setIsUploadOpen(false)} onCreated={handleCreated} />
 
       <SendDocumentRequestModal open={isRequestOpen} onClose={() => setIsRequestOpen(false)} />
+
+      <ViewDocumentDetailsModal
+        open={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false)
+          setSelectedDoc(null)
+        }}
+        document={selectedDoc}
+      />
+
+      <EditDocumentModal
+        open={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false)
+          setSelectedDoc(null)
+        }}
+        documentsRefetch={documentsRefetch}
+        document={selectedDoc}
+      />
+
+      <ConfirmDialog
+        open={isDeleteOpen}
+        onClose={() => {
+          setIsDeleteOpen(false)
+          setSelectedDoc(null)
+        }}
+        onConfirm={handleDelete}
+        title={t('common.areYouSure') || 'Are you sure?'}
+        description={t('common.deleteConfirmation') || 'This action cannot be undone.'}
+        confirmText={t('common.delete') || 'Delete'}
+        cancelText={t('common.cancel') || 'Cancel'}
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </motion.div>
   )
 }
