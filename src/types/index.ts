@@ -752,6 +752,7 @@ export interface Vehicle {
   id: string
   vehicleName: string
   category: string
+  categoryId?: string
   type: string
   assignedTo: string
   usage: string

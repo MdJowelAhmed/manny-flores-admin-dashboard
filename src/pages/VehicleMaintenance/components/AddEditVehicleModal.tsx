@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { FormInput, FormSelect, DatePicker } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
 import type { Vehicle } from '@/types'
 import { vehicleTypeOptions } from '../vehicleMaintenanceData'
 import { toast } from '@/utils/toast'
-import { parseFlexibleDate, formatDateDisplay } from '@/utils/formatters'
+import { parseFlexibleDate } from '@/utils/formatters'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -14,13 +15,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useAppSelector } from '@/redux/hooks'
+import { useGetCategoriesQuery, mapCategoryFromApi } from '@/redux/api/categoryApi'
+
+export interface VehicleFormSavePayload {
+  id?: string
+  model: string
+  year: number
+  type: string
+  categoryId: string
+  purchaseDate: string
+  purchaseCost: number
+  insuranceExpires: string
+  maintenanceLastServiceDate?: string
+  maintenanceNextServiceDate?: string
+}
 
 interface AddEditVehicleModalProps {
   open: boolean
   onClose: () => void
   vehicle: Vehicle | null
-  onSave: (data: Partial<Vehicle>) => void
+  onSave: (data: VehicleFormSavePayload) => void | Promise<void>
+  isSaving?: boolean
 }
 
 export function AddEditVehicleModal({
@@ -28,124 +43,155 @@ export function AddEditVehicleModal({
   onClose,
   vehicle,
   onSave,
+  isSaving = false,
 }: AddEditVehicleModalProps) {
+  const { t } = useTranslation()
   const isEdit = !!vehicle
 
-  const vehicleCategories = useAppSelector((s) => s.vehicleCategories.list)
+  const { data: categoriesResponse } = useGetCategoriesQuery(
+    { type: 'VEHICLE' },
+    { skip: !open }
+  )
+
+  const vehicleCategories = useMemo(
+    () => (categoriesResponse?.data ?? []).map(mapCategoryFromApi),
+    [categoriesResponse]
+  )
 
   const [model, setModel] = useState('')
   const [year, setYear] = useState('')
-  const [category, setCategory] = useState<string>('')
+  const [categoryId, setCategoryId] = useState<string>('')
   const [type, setType] = useState('')
   const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(undefined)
   const [purchaseCost, setPurchaseCost] = useState('')
   const [insuranceExpiry, setInsuranceExpiry] = useState<Date | undefined>(undefined)
-  const [empName, setEmpName] = useState('')
-  const [empProject, setEmpProject] = useState('')
-  const [empStartDate, setEmpStartDate] = useState<Date | undefined>(undefined)
-  const [empLocation, setEmpLocation] = useState('')
   const [lastService, setLastService] = useState<Date | undefined>(undefined)
   const [nextService, setNextService] = useState<Date | undefined>(undefined)
 
   const categoryOptions = useMemo(() => {
-    const names = vehicleCategories.map((c) => c.name)
-    const set = new Set<string>(names)
-    if (vehicle?.category) set.add(vehicle.category)
-    return Array.from(set)
-  }, [vehicle?.category, vehicleCategories])
+    const opts = vehicleCategories.map((c) => ({ id: c.id, name: c.name }))
+    if (vehicle?.categoryId && !opts.some((c) => c.id === vehicle.categoryId)) {
+      opts.unshift({ id: vehicle.categoryId, name: vehicle.category || vehicle.categoryId })
+    }
+    return opts
+  }, [vehicle?.category, vehicle?.categoryId, vehicleCategories])
 
   useEffect(() => {
-    if (open) {
-      const names = vehicleCategories.map((c) => c.name)
-      const opts = Array.from(new Set([...names, ...(vehicle?.category ? [vehicle.category] : [])]))
-      const first = opts[0] ?? ''
-
-      if (vehicle) {
-        setModel(vehicle.model)
-        setYear(vehicle.year)
-        setCategory(vehicle.category && opts.includes(vehicle.category) ? vehicle.category : first)
-        setType(vehicle.type)
-        setPurchaseDate(parseFlexibleDate(vehicle.purchaseDate) ?? undefined)
-        setPurchaseCost(vehicle.purchaseCost)
-        setInsuranceExpiry(parseFlexibleDate(vehicle.insuranceExpiry) ?? undefined)
-        const emp = vehicle.assignedEmployee
-        setEmpName(emp?.name ?? '')
-        setEmpProject(emp?.project ?? '')
-        setEmpStartDate(parseFlexibleDate(emp?.startDate ?? '') ?? undefined)
-        setEmpLocation(emp?.location ?? '')
-        setLastService(parseFlexibleDate(vehicle.lastService) ?? undefined)
-        setNextService(parseFlexibleDate(vehicle.nextService) ?? undefined)
-      } else {
-        setModel('')
-        setYear('')
-        setCategory(first)
-        setType('')
-        setPurchaseDate(undefined)
-        setPurchaseCost('')
-        setInsuranceExpiry(undefined)
-        setEmpName('')
-        setEmpProject('')
-        setEmpStartDate(undefined)
-        setEmpLocation('')
-        setLastService(undefined)
-        setNextService(undefined)
-      }
-    }
-  }, [vehicle, open, vehicleCategories])
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const payload: Partial<Vehicle> = {
-      model: model.trim(),
-      year: year.trim(),
-      category,
-      type,
-      purchaseDate: purchaseDate ? formatDateDisplay(purchaseDate) : '',
-      purchaseCost: purchaseCost.trim(),
-      insuranceExpiry: insuranceExpiry ? formatDateDisplay(insuranceExpiry) : '',
-      assignedEmployee: {
-        name: empName.trim(),
-        project: empProject.trim(),
-        startDate: empStartDate ? formatDateDisplay(empStartDate) : '',
-        location: empLocation.trim(),
-      },
-      lastService: lastService ? formatDateDisplay(lastService) : '',
-      nextService: nextService ? formatDateDisplay(nextService) : '',
-    }
-    if (isEdit && vehicle) {
-      payload.vehicleName = `${model} #${vehicle.id.split('-').pop()}`
-      payload.assignedTo = empName.trim() || vehicle.assignedTo
+    if (!open) return
+    const firstId = categoryOptions[0]?.id ?? ''
+    if (vehicle) {
+      setModel(vehicle.model)
+      setYear(vehicle.year)
+      setCategoryId(vehicle.categoryId || firstId)
+      setType(vehicle.type)
+      setPurchaseDate(parseFlexibleDate(vehicle.purchaseDate) ?? undefined)
+      const costNum = parseFloat(String(vehicle.purchaseCost).replace(/[^0-9.-]/g, ''))
+      setPurchaseCost(Number.isFinite(costNum) ? String(costNum) : '')
+      setInsuranceExpiry(parseFlexibleDate(vehicle.insuranceExpiry) ?? undefined)
+      setLastService(parseFlexibleDate(vehicle.lastService) ?? undefined)
+      setNextService(parseFlexibleDate(vehicle.nextService) ?? undefined)
     } else {
-      const id = `v-${Date.now()}`
-      payload.vehicleName = `${model} #${id.split('-').pop()?.slice(-2) ?? '00'}`
-      payload.assignedTo = empName.trim()
-      payload.usage = '0 km'
-      payload.status = 'Available'
-      payload.id = id
+      setModel('')
+      setYear('')
+      setCategoryId(firstId)
+      setType('')
+      setPurchaseDate(undefined)
+      setPurchaseCost('')
+      setInsuranceExpiry(undefined)
+      setLastService(undefined)
+      setNextService(undefined)
     }
-    onSave(payload)
-    toast({
-      title: 'Success',
-      description: isEdit ? 'Vehicle updated successfully.' : 'Vehicle added successfully.',
-      variant: 'success',
+  }, [categoryOptions, open, vehicle])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!model.trim()) {
+      toast({
+        title: t('common.error'),
+        description: t('vehicleMaintenance.modelRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!categoryOptions.length) {
+      toast({
+        title: t('common.error'),
+        description: t('vehicleMaintenance.addCategoryFirst'),
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!categoryId.trim()) {
+      toast({
+        title: t('common.error'),
+        description: t('vehicleMaintenance.categoryRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!purchaseDate) {
+      toast({
+        title: t('common.error'),
+        description: t('vehicleMaintenance.purchaseDateRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!insuranceExpiry) {
+      toast({
+        title: t('common.error'),
+        description: t('vehicleMaintenance.insuranceRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const parsedYear = parseInt(year, 10)
+    const parsedCost = parseFloat(purchaseCost.replace(/[^0-9.-]/g, '')) || 0
+
+    await onSave({
+      id: vehicle?.id,
+      model: model.trim(),
+      year: Number.isFinite(parsedYear) ? parsedYear : new Date().getFullYear(),
+      type: type.trim(),
+      categoryId,
+      purchaseDate: purchaseDate.toISOString(),
+      purchaseCost: parsedCost,
+      insuranceExpires: insuranceExpiry.toISOString(),
+      maintenanceLastServiceDate: lastService?.toISOString(),
+      maintenanceNextServiceDate: nextService?.toISOString(),
     })
-    onClose()
   }
 
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit Vehicles Details' : 'Add Vehicles Details'}
+      title={isEdit ? t('vehicleMaintenance.editVehicle') : t('vehicleMaintenance.addVehicle')}
       size="lg"
       className="max-w-3xl bg-white max-h-[90vh] overflow-y-auto rounded-xl"
+      footer={
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            form="vehicle-form"
+            className="min-w-[100px] bg-primary hover:bg-primary/90 text-white font-semibold"
+            disabled={isSaving}
+            isLoading={isSaving}
+          >
+            {isEdit ? t('common.save') : t('vehicleMaintenance.addVehicle')}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form id="vehicle-form" onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <h3 className="text-sm font-bold text-foreground mb-3">Basic Information</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">
+            {t('vehicleMaintenance.basicInformation')}
+          </h3>
           <div className="grid grid-cols-2 gap-4">
             <FormInput
-              label="Model"
+              label={t('vehicleMaintenance.model')}
               placeholder="e.g. Ford F-150"
               value={model}
               onChange={(e) => setModel(e.target.value)}
@@ -153,36 +199,41 @@ export function AddEditVehicleModal({
               className="border-gray-200"
             />
             <FormInput
-              label="Year"
+              label={t('vehicleMaintenance.year')}
               placeholder="e.g. 2023"
               value={year}
               onChange={(e) => setYear(e.target.value)}
               required
+              type="number"
               className="border-gray-200"
             />
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label>{t('vehicleMaintenance.category')}</Label>
               <Select
-                value={category || undefined}
-                onValueChange={setCategory}
+                value={categoryId || undefined}
+                onValueChange={setCategoryId}
                 disabled={categoryOptions.length === 0}
               >
                 <SelectTrigger className="h-11 rounded-md border-gray-200 bg-background">
                   <SelectValue
-                    placeholder={categoryOptions.length === 0 ? 'No categories' : 'Select category'}
+                    placeholder={
+                      categoryOptions.length === 0
+                        ? t('vehicleMaintenance.noCategories')
+                        : t('vehicleMaintenance.selectCategory')
+                    }
                   />
                 </SelectTrigger>
                 <SelectContent>
                   {categoryOptions.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <FormSelect
-              label="Type"
+              label={t('resourceRequests.type')}
               value={type}
               options={vehicleTypeOptions}
               onChange={setType}
@@ -190,20 +241,23 @@ export function AddEditVehicleModal({
               className="border-gray-200"
             />
             <DatePicker
-              label="Purchase Date"
+              label={t('vehicleMaintenance.purchaseDate')}
               value={purchaseDate}
               onChange={setPurchaseDate}
               className="border-gray-200"
             />
             <FormInput
-              label="Purchase Cost"
-              placeholder="e.g. $587,874.000"
+              label={t('vehicleMaintenance.purchaseCost')}
+              placeholder="25000"
               value={purchaseCost}
               onChange={(e) => setPurchaseCost(e.target.value)}
+              type="number"
+              min={0}
+              step="0.01"
               className="border-gray-200"
             />
             <DatePicker
-              label="Insurance Expiry"
+              label={t('vehicleMaintenance.insuranceExpiry')}
               value={insuranceExpiry}
               onChange={setInsuranceExpiry}
               className="border-gray-200 col-span-2"
@@ -212,63 +266,23 @@ export function AddEditVehicleModal({
         </div>
 
         <div>
-          <h3 className="text-sm font-bold text-foreground mb-3">Assigned Employee</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <FormInput
-              label="Name"
-              placeholder="Employee name"
-              value={empName}
-              onChange={(e) => setEmpName(e.target.value)}
-              className="border-gray-200"
-            />
-            {/* <FormInput
-              label="Project"
-              placeholder="Project name"
-              value={empProject}
-              onChange={(e) => setEmpProject(e.target.value)}
-              className="border-gray-200"
-            /> */}
-            <DatePicker
-              label="Start date"
-              value={empStartDate}
-              onChange={setEmpStartDate}
-              className="border-gray-200"
-            />
-            <FormInput
-              label="Location"
-              placeholder="e.g. Site B - North Perimeter"
-              value={empLocation}
-              onChange={(e) => setEmpLocation(e.target.value)}
-              className="border-gray-200"
-            />
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-sm font-bold text-foreground mb-3">Maintenance</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">
+            {t('vehicleMaintenance.maintenance')}
+          </h3>
           <div className="grid grid-cols-2 gap-4">
             <DatePicker
-              label="Last Service"
+              label={t('vehicleMaintenance.lastService')}
               value={lastService}
               onChange={setLastService}
               className="border-gray-200"
             />
             <DatePicker
-              label="Next Service"
+              label={t('vehicleMaintenance.nextService')}
               value={nextService}
               onChange={setNextService}
               className="border-gray-200"
             />
           </div>
-        </div>
-
-        <div className="pt-4 border-t border-gray-200">
-          <Button
-            type="submit"
-            className="w-full bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg font-medium"
-          >
-            {isEdit ? 'Update' : 'Add Vehicle'}
-          </Button>
         </div>
       </form>
     </ModalWrapper>
