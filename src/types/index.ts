@@ -786,6 +786,7 @@ export interface Equipment {
   status: EquipmentStatus
   model: string
   category: string
+  categoryId?: string
   purchaseDate: string
   purchaseCost: string
   warrantyExpiry: string
