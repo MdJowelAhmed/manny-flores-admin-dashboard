@@ -600,6 +600,13 @@
     "scheduleAdded": "Horario agregado correctamente."
   },
   "documentsApprovals": {
+    "sendDocumentRequest": "Enviar Solicitud de Documento",
+    "uploadDocument": "Subir Documento",
+    "selectProjectPlaceholder": "Selecciona un proyecto",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Ingresa una descripción para tu solicitud...",
+    "requestRequired": "Por favor, completa todos los campos requeridos.",
+    "requestSent": "Solicitud de documento enviada correctamente.",
     "title": "Documentos y Aprobaciones",
     "pageTitle": "Estado del proyecto y seguimiento documental",
     "documentName": "Nombre del Documento",
