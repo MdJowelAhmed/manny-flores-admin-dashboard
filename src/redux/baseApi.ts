@@ -23,3 +23,5 @@ export const baseApi = createApi({
     tagTypes: ['Auth', 'Category', 'Materials'],
     endpoints: () => ({}),
 })
+
+export const imageUrl = import.meta.env.VITE_API_BASE_URL

@@ -1,66 +1,69 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
-import { FormInput } from '@/components/common/Form'
+import { FormInput, FormSelect } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
-import { toast } from '@/utils/toast'
+import { sonnerToast } from '@/utils/toast'
 import { cn } from '@/utils/cn'
-import { formatDateDisplay } from '@/utils/formatters'
-import type { DocumentEntry } from '../documentsApprovalsData'
+import { useUploadDocumentMutation } from '@/redux/slices/super-admin/documentsApprovalApi'
 
 interface UploadDocumentModalProps {
   open: boolean
   onClose: () => void
-  onCreated: (doc: DocumentEntry) => void
+  onCreated: () => void
 }
 
 export function UploadDocumentModal({ open, onClose, onCreated }: UploadDocumentModalProps) {
   const { t } = useTranslation()
   const [projectName, setProjectName] = useState('')
+  const [documentType, setDocumentType] = useState<string>('pdf')
   const [file, setFile] = useState<File | null>(null)
+  
+  const [uploadDocument, { isLoading }] = useUploadDocumentMutation()
 
   useEffect(() => {
     if (!open) return
     setProjectName('')
+    setDocumentType('pdf')
     setFile(null)
   }, [open])
 
   const hint = useMemo(() => t('documentsApprovals.fileHint'), [t])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const documentTypeOptions = useMemo(() => [
+    { value: 'image', label: 'Image' },
+    { value: 'pdf', label: 'PDF' },
+    { value: 'docs', label: 'Document (DOCS)' },
+  ], [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const name = projectName.trim()
-    if (!name || !file) {
-      toast({ title: t('common.error'), description: t('documentsApprovals.uploadDocRequired'), variant: 'destructive' })
+    
+    if (!file) {
+      sonnerToast.error(t('documentsApprovals.uploadDocRequired') || 'Please choose a file to upload.')
       return
     }
 
-    const dateStr = formatDateDisplay(new Date())
-    const doc: DocumentEntry = {
-      id: `doc-${Date.now()}`,
-      projectTitle: name,
-      documentTypeLabel: t('documentsApprovals.uploadedDocumentLabel', { file: file.name }),
-      documentCategory: 'project_documentation',
-      uploadDate: dateStr,
-      version: 'v1.0',
-      uploadedBy: t('documentsApprovals.placeholderUploader'),
-      budgetAmount: 0,
-      timeline: '—',
-      status: 'review',
-      modalSubtitle: t('documentsApprovals.uploadDocument'),
-      projectName: name,
-      startDate: dateStr,
-      auditTrail: [
-        {
-          title: t('documentsApprovals.auditUploaded'),
-          by: t('documentsApprovals.placeholderUploader'),
-          date: dateStr,
-        },
-      ],
+    const formData = new FormData()
+    if (projectName.trim()) {
+      formData.append('projectName', projectName.trim())
     }
-    onCreated(doc)
-    toast({ title: t('common.success'), description: t('documentsApprovals.uploadSuccess'), variant: 'success' })
-    onClose()
+    formData.append('documentType', documentType)
+    formData.append('documentUrl', file)
+
+    const promise = uploadDocument(formData).unwrap()
+
+    try {
+      await sonnerToast.promise(promise, {
+        loading: t('common.processing') || 'Uploading document...',
+        success: t('documentsApprovals.uploadSuccess') || 'Document uploaded successfully!',
+        error: (err: any) => err?.data?.message || 'Failed to upload document.',
+      })
+      onCreated()
+      onClose()
+    } catch (err) {
+      console.error('Upload error:', err)
+    }
   }
 
   return (
@@ -72,11 +75,16 @@ export function UploadDocumentModal({ open, onClose, onCreated }: UploadDocument
       className="max-w-2xl bg-white"
       footer={
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={onClose} className="rounded-lg">
+          <Button type="button" variant="outline" onClick={onClose} className="rounded-lg" disabled={isLoading}>
             {t('common.cancel')}
           </Button>
-          <Button type="submit" form="upload-document-form" className="rounded-lg bg-primary hover:bg-primary/90 text-white">
-            {t('common.submit')}
+          <Button 
+            type="submit" 
+            form="upload-document-form" 
+            className="rounded-lg bg-primary hover:bg-primary/90 text-white"
+            disabled={isLoading}
+          >
+            {isLoading ? t('common.processing') : t('common.submit')}
           </Button>
         </div>
       }
@@ -87,8 +95,16 @@ export function UploadDocumentModal({ open, onClose, onCreated }: UploadDocument
           placeholder={t('projectScheduling.placeholderProjectName')}
           value={projectName}
           onChange={(e) => setProjectName(e.target.value)}
-          required
           className="rounded-lg bg-muted/20 border-gray-200/80 h-11"
+        />
+
+        <FormSelect
+          label={t('documentsApprovals.documentType') || 'Document Type'}
+          value={documentType}
+          options={documentTypeOptions}
+          onChange={(val) => setDocumentType(val)}
+          required
+          className="w-full"
         />
 
         <div className="space-y-2">
@@ -104,6 +120,7 @@ export function UploadDocumentModal({ open, onClose, onCreated }: UploadDocument
               className="hidden"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
+              required
             />
             <div className="text-sm font-medium text-slate-800">
               {file ? file.name : t('documentsApprovals.uploadDocumentCta')}
@@ -115,4 +132,5 @@ export function UploadDocumentModal({ open, onClose, onCreated }: UploadDocument
     </ModalWrapper>
   )
 }
+
 
