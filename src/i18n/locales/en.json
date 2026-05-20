@@ -180,6 +180,7 @@
     "inProgress": "In Progress",
     "scheduled": "Scheduled",
     "pending": "Pending",
+    "cancelled": "Cancelled",
     "recentProjects": "Recent Projects",
     "viewAll": "view all",
     "id": "ID",
