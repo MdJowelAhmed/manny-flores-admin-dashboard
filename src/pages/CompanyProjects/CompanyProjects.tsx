@@ -119,7 +119,12 @@ export default function CompanyProjects() {
       setProjects((prev) =>
         prev.map((p) =>
           p.id === selectedProject.id
-            ? { ...p, ...data, remaining: (data.totalBudget ?? p.totalBudget) - (data.amountSpent ?? p.amountSpent) }
+            ? {
+                ...p,
+                ...data,
+                remaining: (data.totalBudget ?? p.totalBudget) - (data.amountSpent ?? p.amountSpent),
+                lineItems: data.lineItems ?? p.lineItems,
+              }
             : p
         )
       )
@@ -140,6 +145,7 @@ export default function CompanyProjects() {
         status: (data.status as ProjectStatus) ?? 'Active',
         amountDue: data.amountDue,
         description: data.description,
+        lineItems: data.lineItems,
       }
       setProjects((prev) => [newProject, ...prev])
     }

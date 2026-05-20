@@ -5,7 +5,7 @@ const Spinner = () => {
             <div className="scale-pulse p-2 rounded-2xl  ">
                 {/* Logo */}
                 <div className="flex items-center w-full ">
-                    <img src={'/logo.png'} alt="logo" className="w-20 h-fit object-contain" />
+                    <img src={'/image3.svg'} alt="logo" className="w-20 h-fit object-contain" />
                 </div>
             </div>
 

@@ -18,7 +18,6 @@ import { useOverviewRecentProjectsQuery } from '@/redux/slices/super-admin/overv
 
 export default function RecentProjects() {
   const { t } = useTranslation()
-
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = Math.max(
     1,
@@ -123,10 +122,7 @@ export default function RecentProjects() {
     setShowDeleteModal(true)
   }
 
-  const handleUploadPlan = (project: RecentProject) => {
-    setSelectedProject(project)
-    setShowPlanModal(true)
-  }
+
 
   const handleConfirmDelete = () => {
     if (!selectedProject) return
@@ -186,15 +182,7 @@ export default function RecentProjects() {
                       <th className="px-6 py-4 text-left text-sm font-bold">
                         {t('recentProjectsPage.status')}
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold">
-                        {t('recentProjectsPage.progress')}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold">
-                        {t('recentProjectsPage.value')}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold">
-                        {t('recentProjectsPage.projectPlan')}
-                      </th>
+
                       <th className="px-6 py-4 text-left text-sm font-bold">
                         {t('recentProjectsPage.action')}
                       </th>
@@ -227,33 +215,8 @@ export default function RecentProjects() {
                             {t(getProjectStatusTranslationKey(project.status))}
                           </span>
                         </td>
-                        <td className="px-6 py-5">
-                          <div className="flex items-center gap-3">
-                            <div className="h-2 w-24 min-w-[6rem] rounded-full bg-gray-100 overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-emerald-500"
-                                style={{ width: `${project.progress}%` }}
-                              />
-                            </div>
-                            <span className="text-sm font-medium text-gray-600">
-                              {project.progress}%
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 text-sm font-medium">
-                          {project.value}
-                        </td>
-                        <td className="px-6 py-5">
-                          <button
-                            type="button"
-                            onClick={() => handleUploadPlan(project)}
-                            className="rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600"
-                          >
-                            {(project.planFiles?.length ?? 0) > 0
-                              ? t('recentProjectsPage.planUploaded')
-                              : t('recentProjectsPage.uploadPlan')}
-                          </button>
-                        </td>
+
+
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
                             <button
