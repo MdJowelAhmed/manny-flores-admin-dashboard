@@ -5,8 +5,10 @@ import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { ModalWrapper, FormInput } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import { useAppDispatch } from '@/redux/hooks'
-import { addMaterialCategory, updateMaterialCategory } from '@/redux/slices/materialCategorySlice'
+import {
+  useAddCategoryMutation,
+  useUpdateCategoryMutation,
+} from '@/redux/api/categoryApi'
 import type { MaterialCategory } from '@/types'
 import { toast } from '@/utils/toast'
 
@@ -15,6 +17,8 @@ const schema = z.object({
 })
 
 type FormData = z.infer<typeof schema>
+
+const MATERIAL_CATEGORY_TYPE = 'MATERIAL' as const
 
 interface AddEditMaterialCategoryModalProps {
   open: boolean
@@ -30,8 +34,9 @@ export function AddEditMaterialCategoryModal({
   category,
 }: AddEditMaterialCategoryModalProps) {
   const { t } = useTranslation()
-  const dispatch = useAppDispatch()
   const isEdit = !!editingId
+  const [addCategory, { isLoading: isAdding }] = useAddCategoryMutation()
+  const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation()
 
   const {
     register,
@@ -52,31 +57,43 @@ export function AddEditMaterialCategoryModal({
     }
   }, [open, isEdit, category, reset])
 
-  const onSubmit = (data: FormData) => {
-    const ts = new Date().toISOString()
-    const payload: MaterialCategory = {
-      id: isEdit && category ? category.id : `mc-${Date.now()}`,
-      name: data.name.trim(),
-      createdAt: isEdit && category ? category.createdAt : ts,
-      updatedAt: ts,
+  const onSubmit = async (data: FormData) => {
+    const name = data.name.trim()
+    const body = { name, type: MATERIAL_CATEGORY_TYPE }
+
+    try {
+      if (isEdit && category) {
+        await updateCategory({ id: category.id, ...body }).unwrap()
+        toast({
+          title: t('manageMaterials.categoryUpdated'),
+          description: t('manageMaterials.categoryUpdatedDesc'),
+          variant: 'success',
+        })
+      } else {
+        await addCategory(body).unwrap()
+        toast({
+          title: t('manageMaterials.categoryCreated'),
+          description: t('manageMaterials.categoryCreatedDesc'),
+          variant: 'success',
+        })
+      }
+      onClose()
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('common.error')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
     }
-    if (isEdit) {
-      dispatch(updateMaterialCategory(payload))
-      toast({
-        title: t('manageMaterials.categoryUpdated'),
-        description: t('manageMaterials.categoryUpdatedDesc'),
-        variant: 'success',
-      })
-    } else {
-      dispatch(addMaterialCategory(payload))
-      toast({
-        title: t('manageMaterials.categoryCreated'),
-        description: t('manageMaterials.categoryCreatedDesc'),
-        variant: 'success',
-      })
-    }
-    onClose()
   }
+
+  const isLoading = isAdding || isUpdating || isSubmitting
 
   return (
     <ModalWrapper
@@ -91,7 +108,8 @@ export function AddEditMaterialCategoryModal({
             type="submit"
             form="material-category-form"
             className="min-w-[100px] bg-[#00AB41] hover:bg-[#009638] text-white font-semibold"
-            disabled={isSubmitting}
+            disabled={isLoading}
+            isLoading={isLoading}
           >
             {isEdit ? t('common.save') : t('manageMaterials.addCategory')}
           </Button>

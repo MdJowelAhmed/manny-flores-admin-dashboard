@@ -11,15 +11,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useAppSelector } from '@/redux/hooks'
+import {
+  useGetCategoriesQuery,
+  mapCategoryFromApi,
+} from '@/redux/api/categoryApi'
 import type { Material } from '../manageMaterialsData'
 import { toast } from '@/utils/toast'
+
+export interface MaterialFormSavePayload {
+  id?: string
+  name: string
+  categoryId: string
+  unitPrice: number
+  quantity: number
+  stock: number
+}
 
 interface AddEditMaterialModalProps {
   open: boolean
   onClose: () => void
   material: Material | null
-  onSave: (data: Partial<Material>) => void
+  onSave: (data: MaterialFormSavePayload) => void | Promise<void>
+  isSaving?: boolean
 }
 
 export function AddEditMaterialModal({
@@ -27,47 +40,47 @@ export function AddEditMaterialModal({
   onClose,
   material,
   onSave,
+  isSaving = false,
 }: AddEditMaterialModalProps) {
   const { t } = useTranslation()
   const isEdit = !!material?.id
-  const materialCategories = useAppSelector((s) => s.materialCategories.list)
+
+  const { data: categoriesResponse } = useGetCategoriesQuery(
+    { type: 'MATERIAL' },
+    { skip: !open }
+  )
+
+  const materialCategories = useMemo(
+    () => (categoriesResponse?.data ?? []).map(mapCategoryFromApi),
+    [categoriesResponse]
+  )
 
   const [materialName, setMaterialName] = useState('')
-  const [category, setCategory] = useState<string>('')
+  const [categoryId, setCategoryId] = useState('')
   const [unitPrice, setUnitPrice] = useState('')
-  const [totalStock, setTotalStock] = useState('')
-  const [minimumStock, setMinimumStock] = useState('')
-
-  const categoryOptions = useMemo(() => {
-    const names = materialCategories.map((c) => c.name)
-    const set = new Set<string>(names)
-    if (material?.category) set.add(material.category)
-    return Array.from(set)
-  }, [material?.category, materialCategories])
+  const [stock, setStock] = useState('')
+  const [quantity, setQuantity] = useState('')
 
   useEffect(() => {
     if (!open) return
-    const names = materialCategories.map((c) => c.name)
-    const opts = Array.from(new Set([...names, ...(material?.category ? [material.category] : [])]))
-    const first = opts[0] ?? ''
+    const firstId = materialCategories[0]?.id ?? ''
 
     if (material) {
       setMaterialName(material.materialName)
-      const cat = material.category
-      setCategory(cat && opts.includes(cat) ? cat : first)
-      setUnitPrice(String(material.unitPrice ?? material.costPrice ?? ''))
-      setTotalStock(String(material.currentStock))
-      setMinimumStock(String(material.minimumStock ?? 0))
+      setCategoryId(material.categoryId || firstId)
+      setUnitPrice(String(material.unitPrice ?? ''))
+      setStock(String(material.currentStock ?? ''))
+      setQuantity(String(material.quantity ?? material.minimumStock ?? ''))
     } else {
       setMaterialName('')
-      setCategory(first)
+      setCategoryId(firstId)
       setUnitPrice('')
-      setTotalStock('')
-      setMinimumStock('')
+      setStock('')
+      setQuantity('')
     }
   }, [material, open, materialCategories])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!materialName.trim()) {
       toast({
@@ -77,7 +90,7 @@ export function AddEditMaterialModal({
       })
       return
     }
-    if (!categoryOptions.length) {
+    if (!materialCategories.length) {
       toast({
         title: t('common.error'),
         description: t('manageMaterials.addCategoryFirst'),
@@ -85,7 +98,7 @@ export function AddEditMaterialModal({
       })
       return
     }
-    if (!category.trim()) {
+    if (!categoryId.trim()) {
       toast({
         title: t('common.error'),
         description: t('manageMaterials.categoryRequired'),
@@ -95,40 +108,18 @@ export function AddEditMaterialModal({
     }
 
     const price = parseFloat(unitPrice.replace(/[^0-9.-]/g, '')) || 0
-    const stock = parseInt(totalStock, 10) || 0
-    const minStock = parseInt(minimumStock, 10) || 0
+    const stockVal = parseInt(stock, 10) || 0
+    const quantityVal = parseInt(quantity, 10) || 0
 
-    onSave({
+    await onSave({
       id: material?.id,
-      materialName: materialName.trim(),
-      category,
+      name: materialName.trim(),
+      categoryId,
       unitPrice: price,
-      costPrice: price,
-      projectRate: price * 2,
-      currentStock: stock,
-      minimumStock: minStock,
-      supplier: material?.supplier ?? '',
-      supplierEmail: material?.supplierEmail ?? '',
-      supplierContact: material?.supplierContact ?? '',
-      lastPurchaseDate: material?.lastPurchaseDate ?? '',
-      unit: material?.unit ?? 'bag',
-      assignedProject: material?.assignedProject ?? '',
-      assignedProjects: material?.assignedProjects ?? [],
-      allocated: material?.allocated ?? 0,
-      jobAllocations: material?.jobAllocations ?? [],
+      quantity: quantityVal,
+      stock: stockVal,
     })
-
-    toast({
-      title: t('common.success'),
-      description: isEdit
-        ? t('manageMaterials.materialUpdated')
-        : t('manageMaterials.materialCreated'),
-      variant: 'success',
-    })
-    onClose()
   }
-
-
 
   return (
     <ModalWrapper
@@ -143,6 +134,8 @@ export function AddEditMaterialModal({
             type="submit"
             form="add-material-form"
             className="min-w-[100px] bg-[#00AB41] hover:bg-[#009638] text-white font-semibold"
+            disabled={isSaving}
+            isLoading={isSaving}
           >
             {isEdit ? t('common.updateMaterial') : t('manageMaterials.addMaterial')}
           </Button>
@@ -150,14 +143,14 @@ export function AddEditMaterialModal({
       }
     >
       <form id="add-material-form" onSubmit={handleSubmit} className="space-y-5">
-        <div className=" space-y-4">
+        <div className="space-y-4">
           <h3 className="text-sm font-bold text-foreground">
             {t('manageMaterials.generalInformation')}
           </h3>
           <div className="space-y-4">
             <FormInput
               label={t('manageMaterials.materialName')}
-              placeholder="Topsoil"
+              placeholder="Portland Cement OPC"
               value={materialName}
               onChange={(e) => setMaterialName(e.target.value)}
               required
@@ -165,23 +158,23 @@ export function AddEditMaterialModal({
             <div className="space-y-2">
               <Label>{t('manageMaterials.category')}</Label>
               <Select
-                value={category || undefined}
-                onValueChange={setCategory}
-                disabled={categoryOptions.length === 0}
+                value={categoryId || undefined}
+                onValueChange={setCategoryId}
+                disabled={materialCategories.length === 0}
               >
                 <SelectTrigger className="h-11 rounded-md border-gray-200 bg-background">
                   <SelectValue
                     placeholder={
-                      categoryOptions.length === 0
+                      materialCategories.length === 0
                         ? t('manageMaterials.noCategoriesAddInTab')
                         : t('manageMaterials.selectCategory')
                     }
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoryOptions.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
+                  {materialCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -190,31 +183,34 @@ export function AddEditMaterialModal({
           </div>
         </div>
 
-        <div className=" space-y-4">
+        <div className="space-y-4">
           <h3 className="text-sm font-bold text-foreground">
             {t('manageMaterials.priceAndRate')}
           </h3>
-          <div className="">
+          <div>
             <FormInput
               label={t('manageMaterials.unitPrice')}
-              placeholder="$12"
+              placeholder="8.75"
               value={unitPrice}
               onChange={(e) => setUnitPrice(e.target.value)}
+              type="number"
+              min={0}
+              step="0.01"
             />
             <FormInput
               label={t('manageMaterials.totalStockLabel')}
-              placeholder="10"
-              value={totalStock}
-              onChange={(e) => setTotalStock(e.target.value)}
+              placeholder="520"
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
               type="number"
               min={0}
             />
             <FormInput
               className="sm:col-span-2"
               label={t('manageMaterials.minimumStock')}
-              placeholder="2"
-              value={minimumStock}
-              onChange={(e) => setMinimumStock(e.target.value)}
+              placeholder="150"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
               type="number"
               min={0}
             />
