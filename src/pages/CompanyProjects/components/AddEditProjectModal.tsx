@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { FormInput, FormSelect, FormTextarea, DatePicker } from '@/components/common/Form'
@@ -7,6 +7,10 @@ import type { Project, ProjectStatus } from '@/types'
 import { projectStatusFilterOptions, paymentMethodOptions } from '../companyProjectsData'
 import { toast } from '@/utils/toast'
 import { parseFlexibleDate, formatDateLong } from '@/utils/formatters'
+import {
+  ProjectResourcePicker,
+  type ProjectResourcePickerHandle,
+} from './ProjectResourcePicker'
 
 interface AddEditProjectModalProps {
   open: boolean
@@ -26,6 +30,7 @@ const customerOptions = [
 export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditProjectModalProps) {
   const { t } = useTranslation()
   const isEdit = !!project
+  const resourcePickerRef = useRef<ProjectResourcePickerHandle>(null)
 
   const [projectName, setProjectName] = useState('')
   const [customer, setCustomer] = useState('')
@@ -40,6 +45,7 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
   const [description, setDescription] = useState('')
 
   useEffect(() => {
+    if (!open) return
     if (project) {
       setProjectName(project.projectName)
       setCustomer(project.customer)
@@ -72,6 +78,7 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
     const total = parseFloat(totalBudget) || 0
     const spent = parseFloat(amountSpent) || 0
     const remaining = total - spent
+    const lineItems = resourcePickerRef.current?.getLineItems() ?? []
 
     onSave({
       projectName: projectName.trim(),
@@ -86,6 +93,7 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
       remaining,
       email: email.trim(),
       description: description.trim() || undefined,
+      lineItems,
     })
     toast({
       title: t('common.success'),
@@ -101,12 +109,13 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
       onClose={onClose}
       title={isEdit ? t('companyProjects.editProject') : t('companyProjects.addProject')}
       size="xl"
-      className="max-w-3xl bg-white max-h-[90vh] overflow-y-auto"
+      className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Information */}
         <div>
-          <h3 className="text-sm font-semibold mb-4 text-foreground">{t('companyProjects.basicInformation')}</h3>
+          <h3 className="text-sm font-semibold mb-4 text-foreground">
+            {t('companyProjects.basicInformation')}
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               label={t('companyProjects.projectName')}
@@ -152,9 +161,10 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
           </div>
         </div>
 
-        {/* Timeline & Budget */}
         <div>
-          <h3 className="text-sm font-semibold mb-4 text-foreground">{t('companyProjects.timelineBudget')}</h3>
+          <h3 className="text-sm font-semibold mb-4 text-foreground">
+            {t('companyProjects.timelineBudget')}
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DatePicker
               label={t('companyProjects.startDate')}
@@ -178,9 +188,10 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
           </div>
         </div>
 
-        {/* Customer Contact */}
         <div>
-          <h3 className="text-sm font-semibold mb-4 text-foreground">{t('companyProjects.customerContact')}</h3>
+          <h3 className="text-sm font-semibold mb-4 text-foreground">
+            {t('companyProjects.customerContact')}
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               label={t('companyProjects.customer')}
@@ -198,7 +209,13 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
           </div>
         </div>
 
-        {/* Project Description */}
+        <ProjectResourcePicker
+          ref={resourcePickerRef}
+          open={open}
+          resetKey={project?.id ?? 'new'}
+          initialLineItems={project?.lineItems}
+        />
+
         <div>
           <FormTextarea
             label={t('companyProjects.projectDescription')}
@@ -210,8 +227,7 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
           />
         </div>
 
-        <div className="flex justify-end gap-3 ">
-        
+        <div className="flex justify-end gap-3">
           <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
             {t('companyProjects.saveProject')}
           </Button>

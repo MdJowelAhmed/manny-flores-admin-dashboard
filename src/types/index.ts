@@ -670,6 +670,17 @@ export interface ControllerFormData {
 // ==================== Company & Project Types ====================
 export type ProjectStatus = 'Active' | 'Completed' | 'Pending'
 
+export type ProjectLineType = 'material' | 'equipment' | 'vehicle'
+
+export interface ProjectLineItem {
+  id: string
+  name: string
+  lineType: ProjectLineType
+  catalogId?: string
+  quantity: number
+  unitPrice: number
+}
+
 export interface Project {
   id: string
   projectName: string
@@ -686,6 +697,7 @@ export interface Project {
   status: ProjectStatus
   amountDue?: number
   description?: string
+  lineItems?: ProjectLineItem[]
 }
 
 export interface ProjectFilters {

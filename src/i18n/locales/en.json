@@ -325,7 +325,8 @@
     "projectDescriptionPlaceholder": "Enter project description...",
     "saveProject": "Save Project",
     "projectUpdated": "Project updated successfully.",
-    "projectCreated": "Project created successfully."
+    "projectCreated": "Project created successfully.",
+    "resourcesSection": "Materials, Equipment & Vehicles"
   },
   "customerManagement": {
     "recentProjects": "Recent Projects",
