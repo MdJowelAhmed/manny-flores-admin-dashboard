@@ -55,6 +55,7 @@ export function AddEditEmployeeModal({
   const [scheduleEnd, setScheduleEnd] = useState('18:00')
   const [password, setPassword] = useState('')
 
+
   useEffect(() => {
     if (open) {
       if (employee) {
@@ -232,7 +233,7 @@ export function AddEditEmployeeModal({
             type="submit"
             className=" bg-primary hover:bg-primary/90 text-white py-3 rounded-md font-medium "
           >
-           {isEdit ? 'Update Employee' : 'Add Employee'}
+            {isEdit ? 'Update Employee' : 'Add Employee'}
           </Button>
         </div>
       </form>

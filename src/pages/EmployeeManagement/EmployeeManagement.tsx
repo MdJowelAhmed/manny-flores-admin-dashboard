@@ -17,6 +17,7 @@ import {
 import type { Employee, EmployeeStatus } from '@/types'
 import { toast } from '@/utils/toast'
 import { useTranslation } from 'react-i18next'
+import { useAllEmployeeManageQuery, useEmployeeManageOverviewQuery } from '@/redux/slices/super-admin/employee-management'
 
 export default function EmployeeManagement() {
   const { t } = useTranslation()
@@ -24,6 +25,13 @@ export default function EmployeeManagement() {
   const searchQuery = searchParams.get('search') ?? ''
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
+  const { data: allEmployeeManage, isLoading, error } = useAllEmployeeManageQuery({
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchQuery,
+  })
+  const { data: employeeManageOverview } = useEmployeeManageOverviewQuery()
+  console.log('data', allEmployeeManage)
 
   const setSearch = (v: string) => {
     const next = new URLSearchParams(searchParams)
