@@ -1,20 +1,18 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
+import moment from 'moment'
 
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { AttendanceTable } from './components/AttendanceTable'
 import { AddEditAttendanceModal } from './components/AddEditAttendanceModal'
-import {
-  attendanceStats,
-  mockAttendanceData,
-  getEmployeeSlug,
-  type AttendanceRecord,
-} from './attendanceData'
+import { getEmployeeSlug, type AttendanceRecord } from './attendanceData'
 import { toast } from '@/utils/toast'
 import { cn } from '@/utils/cn'
+import { useAllAttendanceQuery, useAttendanceOverviewQuery } from '@/redux/slices/super-admin/attendance'
+import { Clock, UserCheck, Users, UserX } from 'lucide-react'
 
 export default function Attendance() {
   const { t } = useTranslation()
@@ -23,7 +21,13 @@ export default function Attendance() {
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
 
-  const [records, setRecords] = useState<AttendanceRecord[]>(mockAttendanceData)
+  const [records, setRecords] = useState<AttendanceRecord[]>([])
+  const { data: allAttendanceData, isLoading: isAllAttendanceLoading } = useAllAttendanceQuery({
+    page: currentPage,
+    limit: itemsPerPage,
+  })
+  const { data: attendanceOverviewData } = useAttendanceOverviewQuery()
+  console.log("attendanceOverviewData: ", attendanceOverviewData)
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
@@ -36,7 +40,67 @@ export default function Attendance() {
   } | null>(null)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
-  const totalPages = Math.max(1, Math.ceil(records.length / itemsPerPage))
+  const attendanceStats = [
+    {
+      titleKey: 'attendance.totalEmployee' as const,
+      value: attendanceOverviewData?.data?.totalEmployees || 0,
+      icon: Users,
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+    },
+    {
+      titleKey: 'attendance.presentToday' as const,
+      value: attendanceOverviewData?.data?.presentEmployees || 0,
+      icon: UserCheck,
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-600',
+    },
+    {
+      titleKey: 'attendance.absentToday' as const,
+      value: attendanceOverviewData?.data?.absentEmployees || 0,
+      icon: UserX,
+      iconBg: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+    },
+    {
+      titleKey: 'attendance.lateArrivals' as const,
+      value: attendanceOverviewData?.data?.lateArrivals || 0,
+      icon: Clock,
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
+    },
+  ]
+
+  const totalItems = allAttendanceData?.pagination?.total || 0
+  const totalPages = allAttendanceData?.pagination?.totalPage || 1
+
+  useEffect(() => {
+    if (allAttendanceData?.data) {
+      const mapped = allAttendanceData.data.map((item: any) => {
+        let mappedStatus: 'Present' | 'Late' | 'Absent' = 'Present'
+        if (item.status) {
+          const s = item.status.toUpperCase()
+          if (s === 'PRESENT') mappedStatus = 'Present'
+          else if (s === 'LATE') mappedStatus = 'Late'
+          else if (s === 'ABSENT') mappedStatus = 'Absent'
+        }
+
+        return {
+          id: item.id,
+          date: item.todayDate ? moment(item.todayDate).format('DD MMM, YYYY') : '',
+          employee: item.user?.name || 'Unknown',
+          project: 'General',
+          checkIn: item.checkInTime ? moment(item.checkInTime).format('hh:mm A') : '--:--',
+          checkOut: item.checkOutTime ? moment(item.checkOutTime).format('hh:mm A') : '--:--',
+          totalHours: item.workingHours !== undefined ? `${item.workingHours}h` : '--:--',
+          status: mappedStatus,
+          isActive: true, 
+          userId: item.user?.id || null,
+        }
+      })
+      setRecords(mapped)
+    }
+  }, [allAttendanceData])
 
   const setPage = (p: number) => {
     const next = new URLSearchParams(searchParams)
@@ -53,11 +117,6 @@ export default function Attendance() {
   useEffect(() => {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
   }, [totalPages, currentPage])
-
-  const paginatedRecords = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return records.slice(start, start + itemsPerPage)
-  }, [records, currentPage, itemsPerPage])
 
   const handleView = (r: AttendanceRecord) => {
     navigate(`/attendance/employee/${getEmployeeSlug(r.employee)}`)
@@ -80,15 +139,15 @@ export default function Attendance() {
         prev.map((r) =>
           r.id === data.id
             ? {
-                ...r,
-                ...data,
-                date: data.date ?? r.date,
-                status: data.status ?? r.status,
-                checkIn: data.checkIn ?? r.checkIn,
-                checkOut: data.checkOut ?? r.checkOut,
-                totalHours: data.totalHours ?? r.totalHours,
-                isActive: data.isActive ?? r.isActive,
-              }
+              ...r,
+              ...data,
+              date: data.date ?? r.date,
+              status: data.status ?? r.status,
+              checkIn: data.checkIn ?? r.checkIn,
+              checkOut: data.checkOut ?? r.checkOut,
+              totalHours: data.totalHours ?? r.totalHours,
+              isActive: data.isActive ?? r.isActive,
+            }
             : r
         )
       )
@@ -102,7 +161,7 @@ export default function Attendance() {
         checkOut: data.checkOut ?? '--:--',
         totalHours: data.totalHours ?? '--:--',
         status: (data.status as AttendanceRecord['status']) ?? 'Present',
-        isActive: true,
+        isActive: true, 
       }
       setRecords((prev) => [newRecord, ...prev])
     }
@@ -204,36 +263,33 @@ export default function Attendance() {
 
       {/* Table */}
       <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-        {/* <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-accent">Attendance Records</h2>
-          <Button
-            size="sm"
-            onClick={handleAdd}
-            className="bg-primary hover:bg-primary/90 text-white"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add
-          </Button>
-        </div> */}
-        <AttendanceTable
-          records={paginatedRecords}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onStatusChange={handleStatusChangeClick}
-        />
-        {records.length > 0 && (
-          <div className="border-t border-gray-100 px-4 py-3">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={records.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={setPage}
-              onItemsPerPageChange={setLimit}
-              showItemsPerPage
-            />
+        {isAllAttendanceLoading ? (
+          <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+            {t('common.loading')}
           </div>
+        ) : (
+          <>
+            <AttendanceTable
+              records={records}
+              onView={handleView}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onStatusChange={handleStatusChangeClick}
+            />
+            {records.length > 0 && (
+              <div className="border-t border-gray-100 px-4 py-3">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setPage}
+                  onItemsPerPageChange={setLimit}
+                  showItemsPerPage
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -273,8 +329,8 @@ export default function Attendance() {
         description={
           pendingStatusChange
             ? t('attendance.changeStatusConfirm', {
-                status: pendingStatusChange.isActive ? t('attendance.active') : t('attendance.inactive'),
-              })
+              status: pendingStatusChange.isActive ? t('attendance.active') : t('attendance.inactive'),
+            })
             : ''
         }
         confirmText={t('attendance.update')}
