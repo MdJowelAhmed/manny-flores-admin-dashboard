@@ -1,10 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { FormInput, DatePicker } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
-import type { Equipment } from '@/types'
-import { toast } from '@/utils/toast'
-import { parseFlexibleDate, formatDateDisplay } from '@/utils/formatters'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -13,13 +11,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useAppSelector } from '@/redux/hooks'
+import {
+  useGetCategoriesQuery,
+  mapCategoryFromApi,
+} from '@/redux/api/categoryApi'
+import type { Equipment } from '@/types'
+import { parseFlexibleDate } from '@/utils/formatters'
+import { toast } from '@/utils/toast'
+
+export interface EquipmentFormSavePayload {
+  id?: string
+  equipmentName: string
+  categoryId: string
+  purchaseDate: string
+  purchaseCost: number
+  warrantyExpiryDate: string
+}
 
 interface AddEditEquipmentModalProps {
   open: boolean
   onClose: () => void
   equipment: Equipment | null
-  onSave: (data: Partial<Equipment>) => void
+  onSave: (data: EquipmentFormSavePayload) => void | Promise<void>
+  isSaving?: boolean
 }
 
 export function AddEditEquipmentModal({
@@ -27,160 +41,180 @@ export function AddEditEquipmentModal({
   onClose,
   equipment,
   onSave,
+  isSaving = false,
 }: AddEditEquipmentModalProps) {
-  const isEdit = !!equipment
+  const { t } = useTranslation()
+  const isEdit = !!equipment?.id
 
-  const equipmentCategories = useAppSelector((s) => s.equipmentCategories.list)
+  const { data: categoriesResponse } = useGetCategoriesQuery(
+    { type: 'EQUIPMENT' },
+    { skip: !open }
+  )
 
-  const [model, setModel] = useState('')
-  const [category, setCategory] = useState('')
+  const equipmentCategories = useMemo(
+    () => (categoriesResponse?.data ?? []).map(mapCategoryFromApi),
+    [categoriesResponse]
+  )
+
+  const [equipmentName, setEquipmentName] = useState('')
+  const [categoryId, setCategoryId] = useState('')
   const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(undefined)
   const [purchaseCost, setPurchaseCost] = useState('')
   const [warrantyExpiry, setWarrantyExpiry] = useState<Date | undefined>(undefined)
-  const [empName, setEmpName] = useState('')
-  const [empProject, setEmpProject] = useState('')
-  const [empStartDate, setEmpStartDate] = useState<Date | undefined>(undefined)
-  const [empLocation, setEmpLocation] = useState('')
-  const [lastService, setLastService] = useState<Date | undefined>(undefined)
-  const [nextService, setNextService] = useState<Date | undefined>(undefined)
-
-  const categoryOptions = useMemo(() => {
-    const names = equipmentCategories.map((c) => c.name)
-    const set = new Set<string>(names)
-    if (equipment?.category) set.add(equipment.category)
-    return Array.from(set)
-  }, [equipment?.category, equipmentCategories])
 
   useEffect(() => {
-    if (open) {
-      const names = equipmentCategories.map((c) => c.name)
-      const opts = Array.from(new Set([...names, ...(equipment?.category ? [equipment.category] : [])]))
-      const first = opts[0] ?? ''
+    if (!open) return
+    const firstId = equipmentCategories[0]?.id ?? ''
 
-      if (equipment) {
-        setModel(equipment.model)
-        setCategory(equipment.category && opts.includes(equipment.category) ? equipment.category : first)
-        setPurchaseDate(parseFlexibleDate(equipment.purchaseDate) ?? undefined)
-        setPurchaseCost(equipment.purchaseCost)
-        setWarrantyExpiry(parseFlexibleDate(equipment.warrantyExpiry) ?? undefined)
-        const emp = equipment.assignedEmployee
-        setEmpName(emp?.name ?? '')
-        setEmpProject(emp?.project ?? '')
-        setEmpStartDate(parseFlexibleDate(emp?.startDate ?? '') ?? undefined)
-        setEmpLocation(emp?.location ?? '')
-        setLastService(parseFlexibleDate(equipment.lastService) ?? undefined)
-        setNextService(parseFlexibleDate(equipment.nextService) ?? undefined)
-      } else {
-        setModel('')
-        setCategory(first)
-        setPurchaseDate(undefined)
-        setPurchaseCost('')
-        setWarrantyExpiry(undefined)
-        setEmpName('')
-        setEmpProject('')
-        setEmpStartDate(undefined)
-        setEmpLocation('')
-        setLastService(undefined)
-        setNextService(undefined)
-      }
+    if (equipment) {
+      setEquipmentName(equipment.equipmentName)
+      setCategoryId(equipment.categoryId || firstId)
+      setPurchaseDate(parseFlexibleDate(equipment.purchaseDate) ?? undefined)
+      const costNum = parseFloat(String(equipment.purchaseCost).replace(/[^0-9.-]/g, ''))
+      setPurchaseCost(Number.isFinite(costNum) ? String(costNum) : '')
+      setWarrantyExpiry(parseFlexibleDate(equipment.warrantyExpiry) ?? undefined)
+    } else {
+      setEquipmentName('')
+      setCategoryId(firstId)
+      setPurchaseDate(undefined)
+      setPurchaseCost('')
+      setWarrantyExpiry(undefined)
     }
   }, [equipment, open, equipmentCategories])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const payload: Partial<Equipment> = {
-      model: model.trim(),
-      category,
-      purchaseDate: purchaseDate ? formatDateDisplay(purchaseDate) : '',
-      purchaseCost: purchaseCost.trim(),
-      warrantyExpiry: warrantyExpiry ? formatDateDisplay(warrantyExpiry) : '',
-      assignedEmployee: {
-        name: empName.trim(),
-        project: empProject.trim(),
-        startDate: empStartDate ? formatDateDisplay(empStartDate) : '',
-        location: empLocation.trim(),
-      },
-      lastService: lastService ? formatDateDisplay(lastService) : '',
-      nextService: nextService ? formatDateDisplay(nextService) : '',
+    if (!equipmentName.trim()) {
+      toast({
+        title: t('common.error'),
+        description: t('equipmentMaintenance.nameRequired'),
+        variant: 'destructive',
+      })
+      return
     }
-    if (isEdit && equipment) {
-      payload.equipmentName = equipment.equipmentName
-      payload.type = category || equipment.type
-      payload.assignedTo = empName.trim() || equipment.assignedTo
-    } else {
-      const id = `eq-${Date.now()}`
-      payload.equipmentName = model.trim() || 'Equipment'
-      payload.type = category
-      payload.assignedTo = empName.trim()
-      payload.usage = '0 hrs'
-      payload.status = 'Available'
-      payload.id = id
+    if (!equipmentCategories.length) {
+      toast({
+        title: t('common.error'),
+        description: t('equipmentMaintenance.addCategoryFirst'),
+        variant: 'destructive',
+      })
+      return
     }
-    onSave(payload)
-    toast({
-      title: 'Success',
-      description: isEdit ? 'Equipment updated successfully.' : 'Equipment added successfully.',
-      variant: 'success',
+    if (!categoryId.trim()) {
+      toast({
+        title: t('common.error'),
+        description: t('equipmentMaintenance.categoryRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!purchaseDate) {
+      toast({
+        title: t('common.error'),
+        description: t('equipmentMaintenance.purchaseDateRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!warrantyExpiry) {
+      toast({
+        title: t('common.error'),
+        description: t('equipmentMaintenance.warrantyRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const cost = parseFloat(purchaseCost.replace(/[^0-9.-]/g, '')) || 0
+
+    await onSave({
+      id: equipment?.id,
+      equipmentName: equipmentName.trim(),
+      categoryId,
+      purchaseDate: purchaseDate.toISOString(),
+      purchaseCost: cost,
+      warrantyExpiryDate: warrantyExpiry.toISOString(),
     })
-    onClose()
   }
 
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit Equipment Details' : 'Add Equipment'}
+      title={isEdit ? t('equipmentMaintenance.editEquipment') : t('equipmentMaintenance.addEquipment')}
       size="lg"
       className="max-w-3xl bg-white max-h-[90vh] overflow-y-auto rounded-xl"
+      footer={
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            form="equipment-form"
+            className="min-w-[100px] bg-primary hover:bg-primary/90 text-white font-semibold"
+            disabled={isSaving}
+            isLoading={isSaving}
+          >
+            {isEdit ? t('common.save') : t('equipmentMaintenance.addEquipment')}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form id="equipment-form" onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <h3 className="text-sm font-bold text-foreground mb-3">Basic Information</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3">
+            {t('equipmentMaintenance.basicInformation')}
+          </h3>
           <div className="grid grid-cols-2 gap-4">
             <FormInput
-              label="Model"
-              placeholder="e.g. Hitachi ZX200"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
+              label={t('equipmentMaintenance.equipmentName')}
+              placeholder="Industrial Air Compressor"
+              value={equipmentName}
+              onChange={(e) => setEquipmentName(e.target.value)}
               required
-              className="border-gray-200"
+              className="border-gray-200 col-span-2"
             />
-            <div className="space-y-2">
-              <Label>Category</Label>
+            <div className="space-y-2 col-span-2 sm:col-span-1">
+              <Label>{t('equipmentMaintenance.category')}</Label>
               <Select
-                value={category || undefined}
-                onValueChange={setCategory}
-                disabled={categoryOptions.length === 0}
+                value={categoryId || undefined}
+                onValueChange={setCategoryId}
+                disabled={equipmentCategories.length === 0}
               >
                 <SelectTrigger className="h-11 rounded-md border-gray-200 bg-background">
                   <SelectValue
-                    placeholder={categoryOptions.length === 0 ? 'No categories' : 'Select category'}
+                    placeholder={
+                      equipmentCategories.length === 0
+                        ? t('equipmentMaintenance.noCategories')
+                        : t('equipmentMaintenance.selectCategory')
+                    }
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoryOptions.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
+                  {equipmentCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <DatePicker
-              label="Purchase Date"
+              label={t('equipmentMaintenance.purchaseDate')}
               value={purchaseDate}
               onChange={setPurchaseDate}
               className="border-gray-200"
             />
             <FormInput
-              label="Purchase Cost"
-              placeholder="e.g. $587,874.000"
+              label={t('equipmentMaintenance.purchaseCost')}
+              placeholder="18500"
               value={purchaseCost}
               onChange={(e) => setPurchaseCost(e.target.value)}
+              type="number"
+              min={0}
+              step="0.01"
               className="border-gray-200"
             />
             <DatePicker
-              label="Warranty Expiry"
+              label={t('equipmentMaintenance.warrantyExpiry')}
               value={warrantyExpiry}
               onChange={setWarrantyExpiry}
               className="border-gray-200 col-span-2"
@@ -188,65 +222,6 @@ export function AddEditEquipmentModal({
           </div>
         </div>
 
-        <div>
-          <h3 className="text-sm font-bold text-foreground mb-3">Assigned Employee</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <FormInput
-              label="Name"
-              placeholder="Employee name"
-              value={empName}
-              onChange={(e) => setEmpName(e.target.value)}
-              className="border-gray-200"
-            />
-            <FormInput
-              label="Project"
-              placeholder="Project name"
-              value={empProject}
-              onChange={(e) => setEmpProject(e.target.value)}
-              className="border-gray-200"
-            />
-            <DatePicker
-              label="Start date"
-              value={empStartDate}
-              onChange={setEmpStartDate}
-              className="border-gray-200"
-            />
-            <FormInput
-              label="Location"
-              placeholder="e.g. Site B - North Perimeter"
-              value={empLocation}
-              onChange={(e) => setEmpLocation(e.target.value)}
-              className="border-gray-200"
-            />
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-sm font-bold text-foreground mb-3">Maintenance</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <DatePicker
-              label="Last Service"
-              value={lastService}
-              onChange={setLastService}
-              className="border-gray-200"
-            />
-            <DatePicker
-              label="Next Service"
-              value={nextService}
-              onChange={setNextService}
-              className="border-gray-200"
-            />
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-gray-200">
-          <Button
-            type="submit"
-            className="w-full bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg font-medium"
-          >
-            {isEdit ? 'Update' : 'Add Equipment'}
-          </Button>
-        </div>
       </form>
     </ModalWrapper>
   )

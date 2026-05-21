@@ -754,6 +754,7 @@ export interface Vehicle {
   id: string
   vehicleName: string
   category: string
+  categoryId?: string
   type: string
   assignedTo: string
   usage: string
@@ -788,6 +789,7 @@ export interface Equipment {
   status: EquipmentStatus
   model: string
   category: string
+  categoryId?: string
   purchaseDate: string
   purchaseCost: string
   warrantyExpiry: string

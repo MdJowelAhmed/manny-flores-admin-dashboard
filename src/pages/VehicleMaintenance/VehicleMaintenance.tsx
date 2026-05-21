@@ -1,5 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
@@ -10,84 +9,93 @@ import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { VehicleTable } from './components/VehicleTable'
 import { ViewVehicleDetailsModal } from './components/ViewVehicleDetailsModal'
-import { AddEditVehicleModal } from './components/AddEditVehicleModal'
-import { mockVehiclesData } from './vehicleMaintenanceData'
+import {
+  AddEditVehicleModal,
+  type VehicleFormSavePayload,
+} from './components/AddEditVehicleModal'
 import type { Vehicle } from '@/types'
 import { toast } from '@/utils/toast'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { deleteVehicleCategory } from '@/redux/slices/vehicleCategorySlice'
 import type { VehicleCategory } from '@/types'
 import { DEFAULT_PAGINATION } from '@/utils/constants'
 import { VehicleCategoriesTable } from './components/VehicleCategoriesTable'
 import { AddEditVehicleCategoryModal } from './components/AddEditVehicleCategoryModal'
+import {
+  useGetCategoriesQuery,
+  useDeleteCategoryMutation,
+  mapCategoryFromApi,
+} from '@/redux/api/categoryApi'
+import {
+  useGetVehiclesQuery,
+  useAddVehicleMutation,
+  useUpdateVehicleMutation,
+  useDeleteVehicleMutation,
+  mapVehicleFromApi,
+} from '@/redux/api/vehiclesApi'
 
 export default function VehicleMaintenance() {
   const { t } = useTranslation()
-  const dispatch = useAppDispatch()
-  const vehicleCategories = useAppSelector((s) => s.vehicleCategories.list)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const searchQuery = searchParams.get('search') ?? ''
-  const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-  const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
 
-  const setSearch = (v: string) => {
-    const next = new URLSearchParams(searchParams)
-    v ? next.set('search', v) : next.delete('search')
-    next.delete('page')
-    setSearchParams(next, { replace: true })
-  }
-  const setPage = (p: number) => {
-    const next = new URLSearchParams(searchParams)
-    p > 1 ? next.set('page', String(p)) : next.delete('page')
-    setSearchParams(next, { replace: true })
-  }
-  const setLimit = (l: number) => {
-    const next = new URLSearchParams(searchParams)
-    l !== 10 ? next.set('limit', String(l)) : next.delete('limit')
-    next.delete('page')
-    setSearchParams(next, { replace: true })
-  }
-
-  const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehiclesData)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [vehiclesPage, setVehiclesPage] = useState(DEFAULT_PAGINATION.page)
+  const [vehiclesLimit, setVehiclesLimit] = useState(DEFAULT_PAGINATION.limit)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
   const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<VehicleCategory | null>(null)
-  const [isDeletingCategory, setIsDeletingCategory] = useState(false)
   const [categoryPage, setCategoryPage] = useState(DEFAULT_PAGINATION.page)
   const [categoryLimit, setCategoryLimit] = useState(DEFAULT_PAGINATION.limit)
 
-  const selectedCategory =
-    vehicleCategories.find((c) => c.id === editingCategoryId) ?? null
+  const {
+    data: vehiclesResponse,
+    isLoading: isVehiclesLoading,
+    isFetching: isVehiclesFetching,
+  } = useGetVehiclesQuery({ page: vehiclesPage, limit: vehiclesLimit })
+
+  const { data: categoriesResponse, isLoading: isCategoriesLoading } =
+    useGetCategoriesQuery({ type: 'VEHICLE' })
+
+  const [addVehicle, { isLoading: isAddingVehicle }] = useAddVehicleMutation()
+  const [updateVehicle, { isLoading: isUpdatingVehicle }] = useUpdateVehicleMutation()
+  const [deleteVehicle, { isLoading: isDeletingVehicle }] = useDeleteVehicleMutation()
+  const [deleteCategory, { isLoading: isDeletingCategory }] = useDeleteCategoryMutation()
+
+  const vehicleCategories = useMemo(
+    () => (categoriesResponse?.data ?? []).map(mapCategoryFromApi),
+    [categoriesResponse]
+  )
+
+  const categoryNameById = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const c of vehicleCategories) map[c.id] = c.name
+    return map
+  }, [vehicleCategories])
+
+  const vehicles = useMemo(
+    () => (vehiclesResponse?.data ?? []).map((doc) => mapVehicleFromApi(doc, categoryNameById)),
+    [vehiclesResponse, categoryNameById]
+  )
 
   const filteredVehicles = useMemo(() => {
+    if (!searchQuery.trim()) return vehicles
+    const q = searchQuery.toLowerCase()
     return vehicles.filter((v) => {
-      const matchesSearch =
-        !searchQuery ||
-        v.vehicleName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
-      return matchesSearch
+      return (
+        v.vehicleName.toLowerCase().includes(q) ||
+        v.category.toLowerCase().includes(q) ||
+        v.type.toLowerCase().includes(q) ||
+        v.assignedTo.toLowerCase().includes(q)
+      )
     })
   }, [vehicles, searchQuery])
 
-  const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / itemsPerPage))
-
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages >= 1) setPage(1)
-  }, [totalPages, currentPage])
-
-  const paginatedVehicles = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filteredVehicles.slice(start, start + itemsPerPage)
-  }, [filteredVehicles, currentPage, itemsPerPage])
+  const vehiclesPagination = vehiclesResponse?.pagination
+  const vehiclesTotalPages = vehiclesPagination?.totalPage ?? 1
+  const vehiclesTotalItems = vehiclesPagination?.total ?? vehicles.length
 
   const paginatedCategories = useMemo(() => {
     const start = (categoryPage - 1) * categoryLimit
@@ -98,6 +106,15 @@ export default function VehicleMaintenance() {
     1,
     Math.ceil(vehicleCategories.length / categoryLimit)
   )
+
+  const selectedCategory =
+    vehicleCategories.find((c) => c.id === editingCategoryId) ?? null
+
+  const handleVehiclesPageChange = (newPage: number) => setVehiclesPage(newPage)
+  const handleVehiclesLimitChange = (newLimit: number) => {
+    setVehiclesLimit(newLimit)
+    setVehiclesPage(1)
+  }
 
   const handleCategoryPageChange = (newPage: number) => setCategoryPage(newPage)
   const handleCategoryLimitChange = (newLimit: number) => {
@@ -127,6 +144,7 @@ export default function VehicleMaintenance() {
   const handleAdd = () => {
     setSelectedVehicle(null)
     setIsAddEditModalOpen(true)
+    setVehiclesPage(1)
   }
 
   const handleAddCategory = () => {
@@ -141,11 +159,11 @@ export default function VehicleMaintenance() {
   }
 
   const handleDeleteCategory = (c: VehicleCategory) => {
-    const inUse = vehicles.some((v) => v.category === c.name)
+    const inUse = vehicles.some((v) => v.categoryId === c.id)
     if (inUse) {
       toast({
         title: t('common.error'),
-        description: `Category "${c.name}" is in use by existing vehicles.`,
+        description: t('vehicleMaintenance.categoryInUse', { name: c.name }),
         variant: 'destructive',
       })
       return
@@ -155,55 +173,77 @@ export default function VehicleMaintenance() {
 
   const handleConfirmDeleteCategory = async () => {
     if (!categoryToDelete) return
-    setIsDeletingCategory(true)
     try {
-      await new Promise((r) => setTimeout(r, 300))
-      dispatch(deleteVehicleCategory(categoryToDelete.id))
+      await deleteCategory(categoryToDelete.id).unwrap()
       toast({
         variant: 'success',
-        title: 'Category deleted',
-        description: `Category "${categoryToDelete.name}" removed successfully.`,
+        title: t('vehicleMaintenance.categoryDeleted'),
+        description: t('vehicleMaintenance.categoryRemoved', { name: categoryToDelete.name }),
       })
       setCategoryToDelete(null)
-      const nextTotalPages = Math.max(
-        1,
-        Math.ceil((vehicleCategories.length - 1) / categoryLimit)
-      )
-      if (categoryPage > nextTotalPages) setCategoryPage(nextTotalPages)
-    } finally {
-      setIsDeletingCategory(false)
+      if (paginatedCategories.length === 1 && categoryPage > 1) {
+        setCategoryPage(categoryPage - 1)
+      }
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('common.error')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
     }
   }
 
-  const handleSave = (data: Partial<Vehicle>) => {
-    if (selectedVehicle) {
-      setVehicles((prev) =>
-        prev.map((v) =>
-          v.id === selectedVehicle.id ? { ...v, ...data } : v
-        )
-      )
-    } else {
-      const newVehicle: Vehicle = {
-        id: data.id ?? `v-${Date.now()}`,
-        vehicleName: data.vehicleName ?? '',
-        category: data.category ?? '',
-        type: data.type ?? '',
-        assignedTo: data.assignedTo ?? '',
-        usage: (data as Vehicle).usage ?? '0 km',
-        nextService: data.nextService ?? '',
-        status: (data as Vehicle).status ?? 'Available',
-        model: data.model ?? '',
-        year: data.year ?? '',
-        purchaseDate: data.purchaseDate ?? '',
-        purchaseCost: data.purchaseCost ?? '',
-        insuranceExpiry: data.insuranceExpiry ?? '',
-        assignedEmployee: data.assignedEmployee,
-        lastService: data.lastService ?? '',
-      }
-      setVehicles((prev) => [newVehicle, ...prev])
+  const handleSave = async (data: VehicleFormSavePayload) => {
+    const body = {
+      model: data.model,
+      year: data.year,
+      type: data.type,
+      categoryId: data.categoryId,
+      purchaseDate: data.purchaseDate,
+      purchaseCost: data.purchaseCost,
+      insuranceExpires: data.insuranceExpires,
+      maintenanceLastServiceDate: data.maintenanceLastServiceDate,
+      maintenanceNextServiceDate: data.maintenanceNextServiceDate,
     }
-    setIsAddEditModalOpen(false)
-    setSelectedVehicle(null)
+
+    try {
+      if (data.id) {
+        await updateVehicle({ id: data.id, ...body }).unwrap()
+        toast({
+          title: t('common.success'),
+          description: t('vehicleMaintenance.vehicleUpdated'),
+          variant: 'success',
+        })
+      } else {
+        await addVehicle(body).unwrap()
+        toast({
+          title: t('common.success'),
+          description: t('vehicleMaintenance.vehicleCreated'),
+          variant: 'success',
+        })
+        setVehiclesPage(1)
+      }
+      setIsAddEditModalOpen(false)
+      setSelectedVehicle(null)
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('common.error')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
+    }
   }
 
   const handleDelete = (vehicle: Vehicle) => {
@@ -221,10 +261,8 @@ export default function VehicleMaintenance() {
 
   const handleConfirmDelete = async () => {
     if (!vehicleToDelete) return
-    setIsDeleting(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      setVehicles((prev) => prev.filter((v) => v.id !== vehicleToDelete.id))
+      await deleteVehicle(vehicleToDelete.id).unwrap()
       toast({
         variant: 'success',
         title: t('vehicleMaintenance.vehicleDeleted'),
@@ -237,12 +275,15 @@ export default function VehicleMaintenance() {
         setIsViewModalOpen(false)
         setIsAddEditModalOpen(false)
       }
+      if (vehicles.length === 1 && vehiclesPage > 1) {
+        setVehiclesPage(vehiclesPage - 1)
+      }
     } catch {
       toast({ title: t('common.error'), description: t('vehicleMaintenance.failedToDelete'), variant: 'destructive' })
-    } finally {
-      setIsDeleting(false)
     }
   }
+
+  const isSavingVehicle = isAddingVehicle || isUpdatingVehicle
 
   return (
     <motion.div
@@ -269,7 +310,7 @@ export default function VehicleMaintenance() {
           <div className="flex items-center justify-end gap-3">
             <SearchInput
               value={searchQuery}
-              onChange={setSearch}
+              onChange={setSearchQuery}
               placeholder={t('vehicleMaintenance.searchVehicles')}
               className="w-[280px] bg-white"
               debounceMs={150}
@@ -281,25 +322,26 @@ export default function VehicleMaintenance() {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <VehicleTable
-              vehicles={paginatedVehicles}
-              onView={handleView}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-
-            {filteredVehicles.length > 0 && (
-              <div className="border-t border-gray-100 px-6 py-4">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={filteredVehicles.length}
-                  itemsPerPage={itemsPerPage}
-                  onPageChange={setPage}
-                  onItemsPerPageChange={setLimit}
-                />
+            {isVehiclesLoading || isVehiclesFetching ? (
+              <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+                {t('common.loading')}
               </div>
+            ) : (
+              <VehicleTable
+                vehicles={filteredVehicles}
+                onView={handleView}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             )}
+            <Pagination
+              currentPage={vehiclesPage}
+              totalPages={vehiclesTotalPages}
+              totalItems={vehiclesTotalItems}
+              itemsPerPage={vehiclesLimit}
+              onPageChange={handleVehiclesPageChange}
+              onItemsPerPageChange={handleVehiclesLimitChange}
+            />
           </div>
         </TabsContent>
 
@@ -310,16 +352,22 @@ export default function VehicleMaintenance() {
               className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Category
+              {t('vehicleMaintenance.addCategory')}
             </Button>
           </div>
 
           <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-            <VehicleCategoriesTable
-              categories={paginatedCategories}
-              onEdit={handleEditCategory}
-              onDelete={handleDeleteCategory}
-            />
+            {isCategoriesLoading ? (
+              <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+                {t('common.loading')}
+              </div>
+            ) : (
+              <VehicleCategoriesTable
+                categories={paginatedCategories}
+                onEdit={handleEditCategory}
+                onDelete={handleDeleteCategory}
+              />
+            )}
             <Pagination
               currentPage={categoryPage}
               totalPages={categoryTotalPages}
@@ -351,6 +399,7 @@ export default function VehicleMaintenance() {
         }}
         vehicle={selectedVehicle}
         onSave={handleSave}
+        isSaving={isSavingVehicle}
       />
 
       <AddEditVehicleCategoryModal
@@ -375,16 +424,18 @@ export default function VehicleMaintenance() {
         confirmText={t('common.delete')}
         cancelText={t('common.cancel')}
         variant="danger"
-        isLoading={isDeleting}
+        isLoading={isDeletingVehicle}
       />
 
       <ConfirmDialog
         open={!!categoryToDelete}
         onClose={() => !isDeletingCategory && setCategoryToDelete(null)}
         onConfirm={handleConfirmDeleteCategory}
-        title="Delete Category"
-        description={`Are you sure you want to delete "${categoryToDelete?.name ?? ''}"?`}
-        confirmText="Delete"
+        title={t('vehicleMaintenance.deleteCategory')}
+        description={t('vehicleMaintenance.deleteCategoryConfirm', {
+          name: categoryToDelete?.name ?? '',
+        })}
+        confirmText={t('common.delete')}
         cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeletingCategory}

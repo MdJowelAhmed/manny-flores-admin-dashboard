@@ -2,13 +2,13 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper, FormInput } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import { useAppDispatch } from '@/redux/hooks'
 import {
-  addVehicleCategory,
-  updateVehicleCategory,
-} from '@/redux/slices/vehicleCategorySlice'
+  useAddCategoryMutation,
+  useUpdateCategoryMutation,
+} from '@/redux/api/categoryApi'
 import type { VehicleCategory } from '@/types'
 import { toast } from '@/utils/toast'
 
@@ -17,6 +17,7 @@ const schema = z.object({
 })
 
 type FormData = z.infer<typeof schema>
+const VEHICLE_CATEGORY_TYPE = 'VEHICLE' as const
 
 interface AddEditVehicleCategoryModalProps {
   open: boolean
@@ -31,8 +32,10 @@ export function AddEditVehicleCategoryModal({
   editingId,
   category,
 }: AddEditVehicleCategoryModalProps) {
-  const dispatch = useAppDispatch()
+  const { t } = useTranslation()
   const isEdit = !!editingId
+  const [addCategory, { isLoading: isAdding }] = useAddCategoryMutation()
+  const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation()
 
   const {
     register,
@@ -53,32 +56,43 @@ export function AddEditVehicleCategoryModal({
     }
   }, [open, isEdit, category, reset])
 
-  const onSubmit = (data: FormData) => {
-    const ts = new Date().toISOString()
-    const payload: VehicleCategory = {
-      id: isEdit && category ? category.id : `vc-${Date.now()}`,
-      name: data.name.trim(),
-      createdAt: isEdit && category ? category.createdAt : ts,
-      updatedAt: ts,
-    }
+  const onSubmit = async (data: FormData) => {
+    const name = data.name.trim()
+    const body = { name, type: VEHICLE_CATEGORY_TYPE }
 
-    if (isEdit) {
-      dispatch(updateVehicleCategory(payload))
-      toast({
-        title: 'Updated',
-        description: 'Vehicle category updated successfully.',
-        variant: 'success',
-      })
-    } else {
-      dispatch(addVehicleCategory(payload))
-      toast({
-        title: 'Added',
-        description: 'Vehicle category added successfully.',
-        variant: 'success',
-      })
+    try {
+      if (isEdit && category) {
+        await updateCategory({ id: category.id, ...body }).unwrap()
+        toast({
+          title: t('vehicleMaintenance.categoryUpdated'),
+          description: t('vehicleMaintenance.categoryUpdatedDesc'),
+          variant: 'success',
+        })
+      } else {
+        await addCategory(body).unwrap()
+        toast({
+          title: t('vehicleMaintenance.categoryCreated'),
+          description: t('vehicleMaintenance.categoryCreatedDesc'),
+          variant: 'success',
+        })
+      }
+      onClose()
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('common.error')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
     }
-    onClose()
   }
+
+  const isLoading = isAdding || isUpdating || isSubmitting
 
   return (
     <ModalWrapper
@@ -93,9 +107,10 @@ export function AddEditVehicleCategoryModal({
             type="submit"
             form="vehicle-category-form"
             className="min-w-[100px] bg-[#00AB41] hover:bg-[#009638] text-white font-semibold"
-            disabled={isSubmitting}
+            disabled={isLoading}
+            isLoading={isLoading}
           >
-            {isEdit ? 'Save' : 'Add Category'}
+            {isEdit ? t('common.save') : t('vehicleMaintenance.addCategory')}
           </Button>
         </div>
       }
@@ -106,8 +121,8 @@ export function AddEditVehicleCategoryModal({
         className="space-y-4"
       >
         <FormInput
-          label="Category Name"
-          placeholder="e.g. Light Duty"
+          label={t('vehicleMaintenance.categoryName')}
+          placeholder={t('vehicleMaintenance.categoryNamePlaceholder')}
           error={errors.name?.message}
           required
           {...register('name')}

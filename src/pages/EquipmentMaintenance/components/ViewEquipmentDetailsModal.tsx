@@ -9,6 +9,7 @@ interface ViewEquipmentDetailsModalProps {
   equipment: Equipment | null
   onEdit: () => void
   onDelete: () => void
+  onAssign: () => void
 }
 
 function DetailRow({
@@ -41,6 +42,7 @@ export function ViewEquipmentDetailsModal({
   equipment,
   onEdit,
   onDelete,
+  onAssign,
 }: ViewEquipmentDetailsModalProps) {
   if (!equipment) return null
   const emp = equipment.assignedEmployee
@@ -56,7 +58,7 @@ export function ViewEquipmentDetailsModal({
       <div className="space-y-5">
         <div className="p-4 bg-gray-100 rounded-lg space-y-2">
           <h3 className="text-sm font-bold text-foreground mb-3">Basic Information</h3>
-          <DetailRow label="Model" value={equipment.model} />
+          <DetailRow label="Equipment" value={equipment.equipmentName} />
           <DetailRow label="Category" value={equipment.category} />
           <DetailRow label="Purchase Date" value={equipment.purchaseDate} />
           <DetailRow label="Purchase Cost" value={equipment.purchaseCost} />
@@ -79,17 +81,25 @@ export function ViewEquipmentDetailsModal({
           <DetailRow label="Next Service" value={equipment.nextService} highlight />
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex flex-wrap gap-3 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onAssign}
+            className="flex-1 min-w-[120px] py-2.5 rounded-lg font-medium"
+          >
+            Assign Employee
+          </Button>
           <Button
             onClick={onEdit}
-            className="flex-1 bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg font-medium"
+            className="flex-1 min-w-[120px] bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg font-medium"
           >
             Edit
           </Button>
           <Button
             onClick={onDelete}
             variant="destructive"
-            className="flex-1 py-2.5 rounded-lg font-medium"
+            className="flex-1 min-w-[120px] py-2.5 rounded-lg font-medium"
           >
             Delete
           </Button>
