@@ -267,7 +267,7 @@ console.log('Mapped Attendance Records:',profile)
       <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
-            <img src={"http://10.10.7.28:5000/image.png"} alt={employeeName}  className="w-full h-full object-cover rounded-full"/>
+            <AvatarImage src={getImageUrl(records[0]?.profile || '')} alt={employeeName} />
             <AvatarFallback className="bg-primary/20 text-primary text-lg">
               {employeeName
                 .split(' ')
