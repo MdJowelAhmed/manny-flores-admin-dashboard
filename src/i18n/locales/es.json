@@ -597,7 +597,21 @@
     "placeholderCompany": "Diseño e instalación de jardines",
     "placeholderTeam": "Equipo A",
     "scheduleUpdated": "Horario actualizado correctamente.",
-    "scheduleAdded": "Horario agregado correctamente."
+    "scheduleAdded": "Horario agregado correctamente.",
+    "rescheduleProject": "Reprogramar proyecto",
+    "rescheduleNote": "Nota al cliente",
+    "rescheduleNotePlaceholder": "Lamentamos informarle que...",
+    "rescheduleDatesRequired": "Seleccione las fechas de inicio y fin.",
+    "rescheduleEndBeforeStart": "La fecha de fin debe ser igual o posterior a la de inicio.",
+    "rescheduleFailed": "No se pudo reprogramar el proyecto. Inténtelo de nuevo.",
+    "assignEmployee": "Asignar empleado",
+    "employeeAssigned": "Empleado asignado al proyecto.",
+    "assignEmployeeFailed": "No se pudo asignar el empleado. Inténtelo de nuevo.",
+    "markComplete": "Marcar completado",
+    "projectCompleted": "Proyecto marcado como completado.",
+    "completeProjectFailed": "No se pudo completar el proyecto. Inténtelo de nuevo.",
+    "status": "Estado",
+    "loadingProjects": "Cargando proyectos..."
   },
   "documentsApprovals": {
     "sendDocumentRequest": "Enviar Solicitud de Documento",
@@ -1123,7 +1137,21 @@
     "unitSqft": "pie²",
     "unitHr": "h",
     "unitDay": "día",
-    "unitEach": "ud."
+    "unitEach": "ud.",
+    "customerSignature": "Firma del cliente",
+    "customerSignaturePending": "Esperando la firma del cliente",
+    "providerSignature": "Tu firma",
+    "signaturesTitle": "Firmas",
+    "submitSignatures": "Enviar",
+    "noSignatureYet": "Aún no hay firma registrada.",
+    "signedOn": "Firmado el {{date}}",
+    "signedSuccessTitle": "Firma guardada",
+    "signedSuccessDescription": "La factura se firmó correctamente.",
+    "signature": {
+      "instructions": "Firme en el cuadro a continuación para aceptar esta factura.",
+      "clear": "Limpiar",
+      "confirm": "Confirmar firma"
+    }
   },
   "payments": {
     "overviewTitle": "Resumen de pagos",

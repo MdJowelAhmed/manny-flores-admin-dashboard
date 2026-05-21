@@ -1,4 +1,4 @@
-import { baseApi } from '../baseApi'
+import { baseApi, imageUrl } from '../baseApi'
 import { normalizeProjectStatus } from '@/pages/Estimate/estimateData'
 import type { InvoiceLineItem, InvoiceRecord } from '@/pages/Invoice/invoiceData'
 import { formatDateDayMonth } from '@/utils/formatters'
@@ -30,6 +30,17 @@ export interface InvoiceVehicleApiDoc {
   createdAt?: string
 }
 
+export interface InvoiceApiSignature {
+  id: string
+  estimateId: string
+  customerSignature: string
+  providerSignature?: string | null
+  isProvideSignature: boolean
+  createdAt?: string
+  updatedAt?: string
+  userId?: string
+}
+
 export interface InvoiceApiDoc {
   id: string
   projectName: string
@@ -48,6 +59,9 @@ export interface InvoiceApiDoc {
   updatedAt: string
   materials: InvoiceMaterialApiDoc[]
   vehicles: InvoiceVehicleApiDoc[]
+  invoiceWithSignatures?: InvoiceApiSignature | null
+  customerSignature?: string | null
+  isProvideSignature?: boolean
 }
 
 export interface InvoiceListResponse {
@@ -96,7 +110,21 @@ function mapLineItems(doc: InvoiceApiDoc): InvoiceLineItem[] {
   return [...materials, ...vehicles]
 }
 
+function signatureUrl(raw?: string | null): string | null {
+  if (!raw?.trim()) return null
+  if (raw.startsWith('http') || raw.startsWith('data:')) return raw
+  const base = imageUrl?.replace(/\/$/, '') ?? ''
+  const path = raw.startsWith('/') ? raw : `/${raw}`
+  return `${base}${path}`
+}
+
 export function mapInvoiceFromApi(doc: InvoiceApiDoc): InvoiceRecord {
+  const sigRaw =
+    doc.invoiceWithSignatures?.customerSignature ?? doc.customerSignature ?? null
+  const providerSigRaw = doc.invoiceWithSignatures?.providerSignature ?? null
+  const hasSig =
+    doc.invoiceWithSignatures?.isProvideSignature ?? doc.isProvideSignature ?? !!sigRaw
+
   return {
     id: doc.id,
     customerName: doc.customerName,
@@ -116,6 +144,10 @@ export function mapInvoiceFromApi(doc: InvoiceApiDoc): InvoiceRecord {
     isApproved: doc.isApproved,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
+    customerSignature: signatureUrl(sigRaw),
+    providerSignature: signatureUrl(providerSigRaw),
+    isProvideSignature: hasSig,
+    signedAt: doc.invoiceWithSignatures?.createdAt,
   }
 }
 

@@ -597,7 +597,21 @@
     "placeholderCompany": "Garden Design & Installation",
     "placeholderTeam": "Team A",
     "scheduleUpdated": "Schedule updated successfully.",
-    "scheduleAdded": "Schedule added successfully."
+    "scheduleAdded": "Schedule added successfully.",
+    "rescheduleProject": "Reschedule project",
+    "rescheduleNote": "Note to client",
+    "rescheduleNotePlaceholder": "Sorry to inform you that...",
+    "rescheduleDatesRequired": "Please select start and end dates.",
+    "rescheduleEndBeforeStart": "End date must be on or after the start date.",
+    "rescheduleFailed": "Could not reschedule the project. Please try again.",
+    "assignEmployee": "Assign employee",
+    "employeeAssigned": "Employee assigned to the project.",
+    "assignEmployeeFailed": "Could not assign employee. Please try again.",
+    "markComplete": "Mark complete",
+    "projectCompleted": "Project marked as completed.",
+    "completeProjectFailed": "Could not complete the project. Please try again.",
+    "status": "Status",
+    "loadingProjects": "Loading projects..."
   },
   "documentsApprovals": {
     "selectProjectPlaceholder": "Select a project",
@@ -1234,7 +1248,21 @@
     "unitSqft": "sqft",
     "unitHr": "hr",
     "unitDay": "day",
-    "unitEach": "unit"
+    "unitEach": "unit",
+    "customerSignature": "Customer signature",
+    "customerSignaturePending": "Awaiting customer signature",
+    "providerSignature": "Your signature",
+    "signaturesTitle": "Signatures",
+    "submitSignatures": "Submit",
+    "noSignatureYet": "No signature on file yet.",
+    "signedOn": "Signed {{date}}",
+    "signedSuccessTitle": "Signature saved",
+    "signedSuccessDescription": "The invoice was signed successfully.",
+    "signature": {
+      "instructions": "Sign in the box below to accept this invoice.",
+      "clear": "Clear",
+      "confirm": "Confirm signature"
+    }
   },
   "payments": {
     "overviewTitle": "Payments overview",

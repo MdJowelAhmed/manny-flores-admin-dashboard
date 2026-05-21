@@ -7,5 +7,7 @@ export { ConfirmDialog } from './ConfirmDialog'
 export { ImageUploader } from './ImageUploader'
 export { StatusBadge } from './StatusBadge'
 export { TiptapEditor } from './TiptapEditor'
+export { SignaturePad } from './SignaturePad'
+export { SignatureCanvas, type SignatureCanvasHandle } from './SignatureCanvas'
 export * from './Form'
 

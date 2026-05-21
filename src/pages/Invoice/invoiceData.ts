@@ -29,6 +29,15 @@ export interface InvoiceRecord {
   isApproved?: boolean
   createdAt?: string
   updatedAt?: string
+  customerSignature?: string | null
+  providerSignature?: string | null
+  isProvideSignature?: boolean
+  signedAt?: string
+}
+
+export interface InvoiceSignatures {
+  customerSignature: string
+  providerSignature: string
 }
 
 export function computeInvoiceTotals(invoice: InvoiceRecord) {

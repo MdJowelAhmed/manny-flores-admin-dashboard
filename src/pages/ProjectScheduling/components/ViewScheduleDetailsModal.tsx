@@ -64,8 +64,27 @@ export function ViewScheduleDetailsModal({
           </div>
           <div className="rounded-xl border border-gray-100 bg-muted/20 px-4">
             <DetailRow label={t('projectScheduling.projectName')} value={schedule.projectTitle} />
-            <DetailRow label={t('projectScheduling.uploadDate')} value={schedule.uploadDate} />
-            <DetailRow label={t('projectScheduling.team')} value={schedule.team} />
+            <DetailRow
+              label={t('projectScheduling.startDate')}
+              value={schedule.scheduledDate}
+            />
+            <DetailRow
+              label={t('projectScheduling.endDate')}
+              value={
+                schedule.estimateEndDate
+                  ? new Date(schedule.estimateEndDate).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : '—'
+              }
+            />
+            <DetailRow
+              label={t('projectScheduling.status')}
+              value={schedule.status}
+            />
+            <DetailRow label={t('projectScheduling.team')} value={schedule.team || '—'} />
           </div>
         </div>
       </div>

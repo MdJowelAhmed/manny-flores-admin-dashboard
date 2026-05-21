@@ -49,19 +49,25 @@ export function createScheduleFromEstimate(estimate: EstimateRecord): ScheduledP
 
   return {
     id: makeId('sch'),
+    estimateId: estimate.id,
+    status: 'PENDING',
+    projectStatus: estimate.projectStatus,
     scheduledDate,
+    estimateStartDate: estimate.deadlineFrom,
+    estimateEndDate: estimate.deadlineTo,
     projectTitle: estimate.title,
     category: 'Estimate',
     project: estimate.title,
     uploadDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     uploadedBy: 'System',
-    team: 'Team A',
+    team: '',
     customer: estimate.customerName,
     email: estimate.customerEmail || '',
     company: estimate.customerName,
     serviceLocation: estimate.location,
     eta: '09:00 AM',
     assignedAvatarUrls: [],
+    assignedEmployeeIds: [],
   }
 }
 

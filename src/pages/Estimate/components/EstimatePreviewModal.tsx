@@ -9,7 +9,7 @@ function lineItemTotal(row: EstimateLineItem): number {
   if (row.lineTotal != null && !Number.isNaN(row.lineTotal)) return row.lineTotal
   return row.quantity * row.unitPrice
 }
-import { EstimateSignaturePad } from './EstimateSignaturePad'
+import { SignaturePad } from '@/components/common/SignaturePad'
 
 interface EstimatePreviewModalProps {
   open: boolean
@@ -69,7 +69,13 @@ export function EstimatePreviewModal({
       }
     >
       {signing ? (
-        <EstimateSignaturePad onSave={handleSigned} onCancel={() => setSigning(false)} />
+        <SignaturePad
+          onSave={handleSigned}
+          onCancel={() => setSigning(false)}
+          instructions={t('estimate.signature.instructions')}
+          clearLabel={t('estimate.signature.clear')}
+          confirmLabel={t('estimate.signature.confirm')}
+        />
       ) : (
         <div className="space-y-8 text-gray-900">
           <div className="flex flex-wrap items-start justify-between gap-6 border-b border-gray-100 pb-6">

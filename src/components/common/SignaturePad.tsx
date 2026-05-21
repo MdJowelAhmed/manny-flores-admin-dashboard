@@ -2,12 +2,23 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
-interface EstimateSignaturePadProps {
+interface SignaturePadProps {
   onSave: (dataUrl: string) => void
   onCancel: () => void
+  instructions?: string
+  clearLabel?: string
+  confirmLabel?: string
+  cancelLabel?: string
 }
 
-export function EstimateSignaturePad({ onSave, onCancel }: EstimateSignaturePadProps) {
+export function SignaturePad({
+  onSave,
+  onCancel,
+  instructions,
+  clearLabel,
+  confirmLabel,
+  cancelLabel,
+}: SignaturePadProps) {
   const { t } = useTranslation()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drawing = useRef(false)
@@ -79,7 +90,9 @@ export function EstimateSignaturePad({ onSave, onCancel }: EstimateSignaturePadP
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">{t('estimate.signature.instructions')}</p>
+      <p className="text-sm text-muted-foreground">
+        {instructions ?? t('common.signature.instructions', 'Sign in the box below.')}
+      </p>
       <canvas
         ref={canvasRef}
         className="h-36 w-full touch-none rounded-lg border-2 border-dashed border-gray-300 bg-white cursor-crosshair"
@@ -90,13 +103,18 @@ export function EstimateSignaturePad({ onSave, onCancel }: EstimateSignaturePadP
       />
       <div className="flex flex-wrap gap-2 justify-end">
         <Button type="button" variant="outline" onClick={onCancel}>
-          {t('common.cancel')}
+          {cancelLabel ?? t('common.cancel')}
         </Button>
         <Button type="button" variant="outline" onClick={clear}>
-          {t('estimate.signature.clear')}
+          {clearLabel ?? t('common.signature.clear', 'Clear')}
         </Button>
-        <Button type="button" className="bg-primary text-white hover:bg-primary/90" onClick={save} disabled={!hasStroke}>
-          {t('estimate.signature.confirm')}
+        <Button
+          type="button"
+          className="bg-primary text-white hover:bg-primary/90"
+          onClick={save}
+          disabled={!hasStroke}
+        >
+          {confirmLabel ?? t('common.signature.confirm', 'Confirm signature')}
         </Button>
       </div>
     </div>

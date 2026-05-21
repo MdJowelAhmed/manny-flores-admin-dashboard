@@ -156,7 +156,7 @@ export function AddTeamModal({
               <button
                 type="button"
                 className={cn(
-                  'flex h-11 w-full items-center justify-between rounded-lg border border-gray-200/80 bg-muted/50 px-3 text-sm',
+                  'flex h-11 w-full items-center justify-between rounded-lg border border-gray-200/80 bg-muted/50 px-3 text-sm text-gray-900',
                   'hover:bg-secondary-foreground transition-colors'
                 )}
               >
