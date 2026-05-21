@@ -3,34 +3,80 @@ import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { FormInput } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
-import { toast } from '@/utils/toast'
-import { cn } from '@/utils/cn'
+import { sonnerToast, toast } from '@/utils/toast'
+import { useRequestDocumentMutation } from '@/redux/slices/super-admin/documentsApprovalApi'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Loader2 } from 'lucide-react'
 
-interface SendDocumentRequestModalProps {
-  open: boolean
-  onClose: () => void
-}
 
-export function SendDocumentRequestModal({ open, onClose }: SendDocumentRequestModalProps) {
+
+export function SendDocumentRequestModal({ open, onClose, projectLoading, projectFetching, projectRefetch, projectPage, setProjectPage, projects, setProjects, getProjectsApi }: any) {
   const { t } = useTranslation()
-  const [userName, setUserName] = useState('')
-  const [file, setFile] = useState<File | null>(null)
+  const [selectedProjectId, setSelectedProjectId] = useState('')
+  const [description, setDescription] = useState('')
 
+
+  const [requestDocument] = useRequestDocumentMutation()
+
+  // Accumulate pages — data is directly getProjectsApi?.data (flat array)
+  useEffect(() => {
+    const incoming = getProjectsApi?.data
+    if (!Array.isArray(incoming)) return
+    setProjects((prev: any) => (projectPage === 1 ? incoming : [...prev, ...incoming]))
+  }, [open])
+
+  // On modal open: reset state and force a fresh fetch
   useEffect(() => {
     if (!open) return
-    setUserName('')
-    setFile(null)
+    setSelectedProjectId('')
+    setDescription('')
+    setProjectPage(1)
+    setProjects([])
+    // RTK Query may return stale cache without firing useEffect above,
+    // so explicitly refetch to guarantee fresh data
+    projectRefetch()
   }, [open])
+
+  const pagination = getProjectsApi?.pagination
+  const hasMore = pagination ? projectPage < pagination.totalPage : false
+
+  const handleDropdownScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+    const nearBottom = scrollHeight - scrollTop <= clientHeight + 20
+    if (nearBottom && !projectFetching && hasMore) {
+      setProjectPage((p: any) => p + 1)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!userName.trim() || !file) {
-      toast({ title: t('common.error'), description: t('documentsApprovals.requestRequired'), variant: 'destructive' })
+    if (!selectedProjectId || !description.trim()) {
+      toast({
+        title: t('common.error'),
+        description: t('documentsApprovals.requestRequired'),
+        variant: 'destructive',
+      })
       return
     }
-    await new Promise((r) => setTimeout(r, 350))
-    toast({ title: t('common.success'), description: t('documentsApprovals.requestSent'), variant: 'success' })
-    onClose()
+
+    const data = {
+      projectId: selectedProjectId,
+      description: description
+    }
+
+    try {
+      sonnerToast.promise(requestDocument(data).unwrap(), {
+        loading: t('common.loading'),
+        success: () => {
+          onClose()
+          return t('documentsApprovals.requestSent')
+        },
+        error: t('common.error'),
+      })
+
+    } catch {
+      // handled by toast.promise
+    }
   }
 
   return (
@@ -45,44 +91,90 @@ export function SendDocumentRequestModal({ open, onClose }: SendDocumentRequestM
           <Button type="button" variant="outline" onClick={onClose} className="rounded-lg">
             {t('common.cancel')}
           </Button>
-          <Button type="submit" form="send-document-request-form" className="rounded-lg bg-primary hover:bg-primary/90 text-white">
+          <Button
+            type="submit"
+            form="send-document-request-form"
+            className="rounded-lg bg-primary hover:bg-primary/90 text-white"
+          >
             {t('common.submit')}
           </Button>
         </div>
       }
     >
-      <form id="send-document-request-form" onSubmit={handleSubmit} className="space-y-4">
-        <FormInput
-          label={t('documentsApprovals.userName')}
-          placeholder={t('projectScheduling.placeholderProjectName')}
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          required
-          className="rounded-lg bg-muted/20 border-gray-200/80 h-11"
-        />
+      <form id="send-document-request-form" onSubmit={handleSubmit} className="space-y-5">
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">{t('documentsApprovals.uploadDocument')}</label>
-          <label
-            className={cn(
-              'block w-full rounded-xl border border-gray-200 bg-muted/10',
-              'px-4 py-10 text-center cursor-pointer hover:bg-muted/20 transition-colors'
-            )}
-          >
-            <input
-              type="file"
-              className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
-            />
-            <div className="text-sm font-medium text-slate-800">
-              {file ? file.name : t('documentsApprovals.uploadDocumentCta')}
-            </div>
-            <div className="text-xs text-muted-foreground mt-2">{t('documentsApprovals.fileHint')}</div>
+        {/* Project select */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-slate-700">
+            {t('documentsApprovals.project')}
           </label>
+          <Select
+            value={selectedProjectId}
+            onValueChange={setSelectedProjectId}
+            disabled={projectLoading}
+          >
+            <SelectTrigger className="rounded-lg h-11 bg-muted/20 border-gray-200/80">
+              {projectLoading ? (
+                <span className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('common.loading')}
+                </span>
+              ) : (
+                <SelectValue placeholder={t('documentsApprovals.selectProjectPlaceholder')} />
+              )}
+            </SelectTrigger>
+
+            <SelectContent>
+              <div
+                className="max-h-52 overflow-y-auto"
+                onScroll={handleDropdownScroll}
+              >
+                {getProjectsApi?.data?.map((project: any) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.estimates?.projectName ?? project.id}
+                  </SelectItem>
+                ))}
+
+                {/* Loading next page spinner */}
+                {projectFetching && (
+                  <div className="flex justify-center py-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+
+                {/* All loaded */}
+                {!hasMore && !projectFetching && projects.length > 0 && (
+                  <p className="text-xs text-center text-muted-foreground py-2">
+                    {t('common.allLoaded')}
+                  </p>
+                )}
+
+                {/* Empty state */}
+                {!projectLoading && !projectFetching && projects.length === 0 && (
+                  <p className="text-xs text-center text-muted-foreground py-3">
+                    {t('common.noData')}
+                  </p>
+                )}
+              </div>
+            </SelectContent>
+          </Select>
         </div>
+
+        {/* Description */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-slate-700">
+            {t('documentsApprovals.description')}
+          </label>
+          <FormInput
+            placeholder={t('documentsApprovals.descriptionPlaceholder')}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+            className="rounded-lg bg-muted/20 border-gray-200/80 h-24"
+          />
+        </div>
+
       </form>
     </ModalWrapper>
   )
 }
-
