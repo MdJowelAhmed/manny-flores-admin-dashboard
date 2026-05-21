@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
@@ -10,86 +10,167 @@ import { EmployeeSummaryCard } from './components/EmployeeSummaryCard'
 import { EmployeeTable } from './components/EmployeeTable'
 import { ViewEmployeeDetailsModal } from './components/ViewEmployeeDetailsModal'
 import { AddEditEmployeeModal } from './components/AddEditEmployeeModal'
-import {
-  employeeStats,
-  mockEmployeesData,
-} from './employeeManagementData'
-import type { Employee, EmployeeStatus } from '@/types'
+import { employeeStats } from './employeeManagementData'
+import type { Employee } from '@/types'
 import { toast } from '@/utils/toast'
 import { useTranslation } from 'react-i18next'
+import {
+  useAllEmployeeManageQuery,
+  useDeleteEmployeeManageMutation,
+  useEmployeeManageOverviewQuery,
+  useUpdateEmployeeManageMutation,
+} from '@/redux/slices/super-admin/employeeManagement'
 
 export default function EmployeeManagement() {
   const { t } = useTranslation()
+
   const [searchParams, setSearchParams] = useSearchParams()
+
   const searchQuery = searchParams.get('search') ?? ''
-  const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-  const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
+  const currentPage = Math.max(
+    1,
+    parseInt(searchParams.get('page') || '1', 10)
+  )
+  const itemsPerPage = Math.max(
+    1,
+    parseInt(searchParams.get('limit') || '10', 10)
+  )
 
-  const setSearch = (v: string) => {
+  // =========================
+  // API CALLS
+  // =========================
+
+  const {
+    data: allEmployeeManage,
+    // isLoading, 
+    error,
+    refetch
+  } = useAllEmployeeManageQuery({
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchQuery,
+  })
+
+  const { data: employeeManageOverview } =
+    useEmployeeManageOverviewQuery()
+
+  const [deleteEmployee] =
+    useDeleteEmployeeManageMutation()
+
+  const [updateEmployeeManage] = useUpdateEmployeeManageMutation()
+
+
+
+  // =========================
+  // URL PARAM HANDLERS
+  // =========================
+
+  const setSearch = (value: string) => {
     const next = new URLSearchParams(searchParams)
-    v ? next.set('search', v) : next.delete('search')
+
+    value ? next.set('search', value) : next.delete('search')
+
     next.delete('page')
+
     setSearchParams(next, { replace: true })
   }
-  const setPage = (p: number) => {
+
+  const setPage = (page: number) => {
     const next = new URLSearchParams(searchParams)
-    p > 1 ? next.set('page', String(p)) : next.delete('page')
+
+    page > 1
+      ? next.set('page', String(page))
+      : next.delete('page')
+
     setSearchParams(next, { replace: true })
   }
-  const setLimit = (l: number) => {
+
+  const setLimit = (limit: number) => {
     const next = new URLSearchParams(searchParams)
-    l !== 10 ? next.set('limit', String(l)) : next.delete('limit')
+
+    limit !== 10
+      ? next.set('limit', String(limit))
+      : next.delete('limit')
+
     next.delete('page')
+
     setSearchParams(next, { replace: true })
   }
 
-  const [employees, setEmployees] = useState<Employee[]>(mockEmployeesData)
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
-  const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
-  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  // =========================
+  // TABLE DATA FORMAT
+  // =========================
 
-  const stats = useMemo(() => {
-    const total = employees.length
-    const active = employees.filter((e) => e.status === 'Active').length
-    const onLeave = employees.filter((e) => e.status === 'inactive').length
-    return { total, active, onLeave }
-  }, [employees])
+  const employees: Employee[] = useMemo(() => {
+    return (
+      allEmployeeManage?.data?.map((employee: any) => ({
+        id: employee.id,
+        employeeId: employee.id.slice(0, 8),
+        fullName: employee.name,
+        email: employee.email,
+        department: employee.city || 'N/A',
+        status: employee.isBanned ? 'inactive' : 'Active',
+        joiningDate: employee.createdAt,
+        role: employee.role,
+        workSchedule: employee.country || 'N/A',
+        contact: employee.contact,
+        verified: employee.verified,
+        profile: employee.profile,
+      })) || []
+    )
+  }, [allEmployeeManage])
 
-  const filteredEmployees = useMemo(() => {
-    return employees.filter((e) => {
-      const matchesSearch =
-        !searchQuery ||
-        e.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.department.toLowerCase().includes(searchQuery.toLowerCase())
-      return matchesSearch
-    })
-  }, [employees, searchQuery])
+  // =========================
+  // OVERVIEW STATS
+  // =========================
 
-  const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / itemsPerPage))
+  const stats = {
+    total: employeeManageOverview?.data?.totalEmployees || 0,
+    active: employeeManageOverview?.data?.activeEmployees || 0,
+    onLeave: employeeManageOverview?.data?.absentEmployees || 0,
+  }
 
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages >= 1) setPage(1)
-  }, [totalPages, currentPage])
+  // =========================
+  // LOCAL STATES
+  // =========================
 
-  const paginatedEmployees = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filteredEmployees.slice(start, start + itemsPerPage)
-  }, [filteredEmployees, currentPage, itemsPerPage])
+  const [isViewModalOpen, setIsViewModalOpen] =
+    useState(false)
+
+  const [isAddEditModalOpen, setIsAddEditModalOpen] =
+    useState(false)
+
+  const [isConfirmOpen, setIsConfirmOpen] =
+    useState(false)
+
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<Employee | null>(null)
+
+  const [employeeToDelete, setEmployeeToDelete] =
+    useState<Employee | null>(null)
+
+  const [isDeleting, setIsDeleting] =
+    useState(false)
+
+  // =========================
+  // HANDLERS
+  // =========================
 
   const handleView = (employee: Employee) => {
     setSelectedEmployee(employee)
     setIsViewModalOpen(true)
   }
 
-  const handleEdit = (employee: Employee, e: React.MouseEvent) => {
+  const handleEdit = (
+    employee: Employee,
+    e: React.MouseEvent
+  ) => {
     e?.stopPropagation?.()
+
     setSelectedEmployee(employee)
+
     setIsViewModalOpen(false)
+
     setIsAddEditModalOpen(true)
   }
 
@@ -105,42 +186,37 @@ export default function EmployeeManagement() {
     setIsAddEditModalOpen(true)
   }
 
-  const handleSave = (data: Partial<Employee>) => {
-    if (selectedEmployee) {
-      setEmployees((prev) =>
-        prev.map((e) =>
-          e.id === selectedEmployee.id ? { ...e, ...data } : e
-        )
-      )
-    } else {
-      const newEmployee: Employee = {
-        id: `emp-${Date.now()}`,
-        employeeId: `#${Math.floor(100000 + Math.random() * 900000)}`,
-        fullName: data.fullName ?? '',
-        email: data.email ?? '',
-        department: data.department ?? '',
-        status: data.status ?? 'Active',
-        joiningDate: data.joiningDate ?? '',
-        role: data.role ?? '',
-        workSchedule: data.workSchedule ?? '',
-      }
-      setEmployees((prev) => [newEmployee, ...prev])
-    }
+  const handleSave = () => {
     setIsAddEditModalOpen(false)
     setSelectedEmployee(null)
   }
 
-  const handleStatusChange = (employee: Employee, newStatus: EmployeeStatus) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.id === employee.id ? { ...e, status: newStatus } : e))
-    )
-    toast({
-      variant: 'success',
-      title: t('employeeManagement.statusUpdated'),
-      description: t('employeeManagement.statusChangedTo', { name: employee.fullName, status: newStatus }),
-    })
-  }
+  const handleStatusChange = async (employee: Employee, checked: boolean) => {
+    try {
+      await updateEmployeeManage({
+        id: employee.id,
+        data: {
+          isBanned: !checked,
+        },
+      }).unwrap()
+      refetch()
+      toast({
+        title: 'Success',
+        description: checked
+          ? 'Employee activated'
+          : 'Employee banned',
+        variant: 'success',
+      })
 
+      // optional: refetch or update local cache
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.data?.message || 'Status update failed',
+        variant: 'destructive',
+      })
+    }
+  }
   const handleDelete = (employee: Employee) => {
     setEmployeeToDelete(employee)
     setIsConfirmOpen(true)
@@ -148,27 +224,58 @@ export default function EmployeeManagement() {
 
   const handleConfirmDelete = async () => {
     if (!employeeToDelete) return
+
     setIsDeleting(true)
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      setEmployees((prev) => prev.filter((e) => e.id !== employeeToDelete.id))
+      await deleteEmployee(employeeToDelete?.id).unwrap()
+
       toast({
         variant: 'success',
         title: t('employeeManagement.employeeDeleted'),
-        description: t('employeeManagement.employeeRemoved', { name: employeeToDelete.fullName }),
+        description: t(
+          'employeeManagement.employeeRemoved',
+          {
+            name: employeeToDelete.fullName,
+          }
+        ),
       })
+      refetch()
       setIsConfirmOpen(false)
       setEmployeeToDelete(null)
-      if (selectedEmployee?.id === employeeToDelete.id) {
+
+      if (
+        selectedEmployee?.id === employeeToDelete.id
+      ) {
         setSelectedEmployee(null)
         setIsViewModalOpen(false)
         setIsAddEditModalOpen(false)
       }
-    } catch {
-      toast({ title: t('common.error'), description: t('employeeManagement.errorDeleteEmployee'), variant: 'destructive' })
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t(
+          'employeeManagement.errorDeleteEmployee'
+        ),
+        variant: 'destructive',
+      })
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  // =========================
+  // ERROR UI
+  // =========================
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[300px]">
+        <p className="text-red-500">
+          {t('common.somethingWentWrong')}
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -178,16 +285,23 @@ export default function EmployeeManagement() {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      {/* Stats Cards */}
+      {/* ========================= */}
+      {/* OVERVIEW CARDS */}
+      {/* ========================= */}
+
       <div className="grid gap-4 md:grid-cols-3">
         {employeeStats.map((stat, index) => {
           const Icon = stat.icon
+
           const value =
-            stat.titleKey === 'employeeManagement.totalEmployee'
+            stat.titleKey ===
+              'employeeManagement.totalEmployee'
               ? stats.total
-              : stat.titleKey === 'employeeManagement.activeNow'
+              : stat.titleKey ===
+                'employeeManagement.activeNow'
                 ? stats.active
                 : stats.onLeave
+
           return (
             <EmployeeSummaryCard
               key={stat.titleKey}
@@ -202,20 +316,33 @@ export default function EmployeeManagement() {
         })}
       </div>
 
-      {/* Track Employee Section */}
+      {/* ========================= */}
+      {/* EMPLOYEE TABLE */}
+      {/* ========================= */}
+
       <div className="border-0">
         <div className="flex flex-row items-center justify-between pb-6">
-          <h2 className="text-xl font-bold text-accent">{t('employeeManagement.trackEmployee')}</h2>
+          <h2 className="text-xl font-bold text-accent">
+            {t('employeeManagement.trackEmployee')}
+          </h2>
+
           <div className="flex items-center gap-3">
             <SearchInput
               value={searchQuery}
               onChange={setSearch}
-              placeholder={t('employeeManagement.searchEmployee')}
+              placeholder={t(
+                'employeeManagement.searchEmployee'
+              )}
               className="w-[280px] bg-white"
-              debounceMs={150}
+              debounceMs={300}
             />
-            <Button onClick={handleAdd} className="bg-primary hover:bg-primary/90 text-white">
+
+            <Button
+              onClick={handleAdd}
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
               <Plus className="h-4 w-4 mr-2" />
+
               {t('employeeManagement.addEmployee')}
             </Button>
           </div>
@@ -223,19 +350,24 @@ export default function EmployeeManagement() {
 
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
           <EmployeeTable
-            employees={paginatedEmployees}
+            employees={employees}
+            // loading={isLoading}
             onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onStatusChange={handleStatusChange}
           />
 
-          {filteredEmployees.length > 0 && (
+          {allEmployeeManage?.pagination && (
             <div className="border-t border-gray-100 px-6 py-4">
               <Pagination
                 currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={filteredEmployees.length}
+                totalPages={
+                  allEmployeeManage.pagination.totalPage
+                }
+                totalItems={
+                  allEmployeeManage.pagination.total
+                }
                 itemsPerPage={itemsPerPage}
                 onPageChange={setPage}
                 onItemsPerPageChange={setLimit}
@@ -245,7 +377,10 @@ export default function EmployeeManagement() {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* ========================= */}
+      {/* VIEW MODAL */}
+      {/* ========================= */}
+
       <ViewEmployeeDetailsModal
         open={isViewModalOpen}
         onClose={() => {
@@ -256,6 +391,10 @@ export default function EmployeeManagement() {
         onEdit={handleOpenEditFromView}
       />
 
+      {/* ========================= */}
+      {/* ADD / EDIT MODAL */}
+      {/* ========================= */}
+
       <AddEditEmployeeModal
         open={isAddEditModalOpen}
         onClose={() => {
@@ -264,7 +403,12 @@ export default function EmployeeManagement() {
         }}
         employee={selectedEmployee}
         onSave={handleSave}
+        refetch={refetch}
       />
+
+      {/* ========================= */}
+      {/* DELETE CONFIRM MODAL */}
+      {/* ========================= */}
 
       <ConfirmDialog
         open={isConfirmOpen}
@@ -274,7 +418,12 @@ export default function EmployeeManagement() {
         }}
         onConfirm={handleConfirmDelete}
         title={t('employeeManagement.deleteEmployee')}
-        description={t('employeeManagement.deleteConfirmation', { name: employeeToDelete?.fullName })}
+        description={t(
+          'employeeManagement.deleteConfirmation',
+          {
+            name: employeeToDelete?.fullName,
+          }
+        )}
         confirmText={t('common.delete')}
         variant="danger"
         isLoading={isDeleting}
