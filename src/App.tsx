@@ -49,6 +49,7 @@ import Notifications from './pages/Notifications/Notifications'
 import InvoicePage from './pages/Invoice'
 import EstimatePage from './pages/Estimate'
 import Payments from './pages/Payments/Payments'
+import { UserProvider } from './provider/UserContext'
 
 function AppEntryRedirect() {
   const { user } = useAppSelector((state) => state.auth)
@@ -69,372 +70,374 @@ function App() {
   }, [dispatch])
 
   return (
-    <TooltipProvider>
-      <Routes>
-        {/* Auth Routes - No sidebar/header */}
-        <Route path="/auth" element={<AuthLayout />}>
-          <Route index element={<Navigate to="/auth/login" replace />} />
-          <Route path="login" element={<Login />} />
-          <Route path="forgot-password" element={<ForgotPassword />} />
-          <Route path="verify-email" element={<VerifyEmail />} />
-          <Route path="reset-password" element={<ResetPassword />} />
-        </Route>
-
-        {/* Protected Dashboard Routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<AppEntryRedirect />} />
-
-          {/* Dashboard - All roles */}
-          <Route
-            path="dashboard"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
-                <Dashboard />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* User Management - Super Admin only */}
-          <Route
-            path="users"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
-                <UserList />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Subscribers - Super Admin, Admin, Marketing */}
-          <Route
-            path="subscribers"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
-                <SubscriberList />
-              </RoleBasedRoute>
-            }
-          />
-
-
-
-          {/* Push Notification - Super Admin, Admin, Marketing */}
-          <Route
-            path="push-notification"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
-                <PushNotificationList />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Controllers - Super Admin only */}
-          <Route
-            path="controllers"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
-                <ControllerList />
-              </RoleBasedRoute>
-            }
-          />
-
-
-
-          {/* Recent Projects - Super Admin, Admin */}
-          <Route
-            path="recent-projects"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <RecentProjects />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Notifications - Super Admin, Admin, Marketing */}
-          <Route
-            path="notifications"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
-                <Notifications />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Company & Projects - Super Admin, Admin */}
-          <Route
-            path="company-projects"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <CompanyProjects />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Customer Management - Super Admin, Admin */}
-          <Route
-            path="customer-management"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <CustomerManagement />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Employee Management - Super Admin, Admin */}
-          <Route
-            path="employee-management"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <EmployeeManagement />
-              </RoleBasedRoute>
-            }
-          />
-          {/* Estimate - Super Admin, Admin */}
-          <Route
-            path="estimate"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <EstimatePage />
-              </RoleBasedRoute>
-            }
-          />
-          {/* Invoice - Super Admin, Admin */}
-          <Route
-            path="invoice"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <InvoicePage />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Vehicle Maintenance - Super Admin, Admin */}
-          <Route
-            path="vehicle-maintenance"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <VehicleMaintenance />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Equipment Maintenance - Super Admin, Admin */}
-          <Route
-            path="equipment-maintenance"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <EquipmentMaintenance />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Reviews - Super Admin, Admin, Marketing */}
-          <Route
-            path="reviews"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
-                <ReviewList />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Communication - Super Admin, Admin, Marketing */}
-          <Route
-            path="communication"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
-                <Communication />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Documents & Approvals - Super Admin, Admin */}
-          <Route
-            path="documents-approvals"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <DocumentsApprovals />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Project Scheduling - Super Admin, Admin */}
-          <Route
-            path="project-scheduling"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <ProjectScheduling />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Manage Materials - Super Admin, Admin */}
-          <Route
-            path="manage-materials"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <ManageMaterials />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Customer & Finance - Super Admin, Admin */}
-          <Route
-            path="customer-finance"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <CustomerFinance />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Payments - Super Admin, Admin */}
-          <Route
-            path="payments"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <Payments />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Payroll Management - Super Admin, Admin */}
-          <Route
-            path="payroll-management"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <PayrollManagement />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Resource Requests & Report - Super Admin, Admin */}
-          <Route
-            path="resource-requests-report"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <ResourceRequestsReport />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Change Orders - Super Admin, Admin */}
-          <Route
-            path="change-orders"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <ChangeOrders />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Daily Safety Reports - Super Admin, Admin */}
-          <Route
-            path="daily-safety-reports"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <DailySafetyReports />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Attendance - Super Admin, Admin */}
-          <Route path="attendance">
-            <Route
-              index
-              element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <Attendance />
-                </RoleBasedRoute>
-              }
-            />
-            <Route
-              path="employee/:userId"
-              element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <AttendanceDetail />
-                </RoleBasedRoute>
-              }
-            />
+    <UserProvider>
+      <TooltipProvider>
+        <Routes>
+          {/* Auth Routes - No sidebar/header */}
+          <Route path="/auth" element={<AuthLayout />}>
+            <Route index element={<Navigate to="/auth/login" replace />} />
+            <Route path="login" element={<Login />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="verify-email" element={<VerifyEmail />} />
+            <Route path="reset-password" element={<ResetPassword />} />
           </Route>
 
-          {/* Revenue - Super Admin, Admin */}
+          {/* Protected Dashboard Routes */}
           <Route
-            path="transactions-history"
+            path="/"
             element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <TransactionsHistory />
-              </RoleBasedRoute>
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<AppEntryRedirect />} />
 
-          {/* Orders - Super Admin, Admin */}
-          <Route
-            path="orders"
-            element={
-              <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                <OrderList />
-              </RoleBasedRoute>
-            }
-          />
+            {/* Dashboard - All roles */}
+            <Route
+              path="dashboard"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                  <Dashboard />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* User Management - Super Admin only */}
+            <Route
+              path="users"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                  <UserList />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Subscribers - Super Admin, Admin, Marketing */}
+            <Route
+              path="subscribers"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                  <SubscriberList />
+                </RoleBasedRoute>
+              }
+            />
 
 
 
-          {/* Settings - Super Admin, Admin (Profile) */}
-          <Route path="settings">
+            {/* Push Notification - Super Admin, Admin, Marketing */}
             <Route
-              path="profile"
+              path="push-notification"
               element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <ProfileSettings />
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                  <PushNotificationList />
                 </RoleBasedRoute>
               }
             />
+
+            {/* Controllers - Super Admin only */}
             <Route
-              path="password"
+              path="controllers"
               element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <ChangePassword />
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                  <ControllerList />
                 </RoleBasedRoute>
               }
             />
+
+
+
+            {/* Recent Projects - Super Admin, Admin */}
             <Route
-              path="terms"
+              path="recent-projects"
               element={
                 <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <TermsSettings />
+                  <RecentProjects />
                 </RoleBasedRoute>
               }
             />
+
+            {/* Notifications - Super Admin, Admin, Marketing */}
             <Route
-              path="privacy"
+              path="notifications"
               element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <PrivacySettings />
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                  <Notifications />
                 </RoleBasedRoute>
               }
             />
+
+            {/* Company & Projects - Super Admin, Admin */}
             <Route
-              path="about-us"
+              path="company-projects"
               element={
                 <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
-                  <AboutUsSettings />
+                  <CompanyProjects />
                 </RoleBasedRoute>
               }
             />
+
+            {/* Customer Management - Super Admin, Admin */}
+            <Route
+              path="customer-management"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <CustomerManagement />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Employee Management - Super Admin, Admin */}
+            <Route
+              path="employee-management"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <EmployeeManagement />
+                </RoleBasedRoute>
+              }
+            />
+            {/* Estimate - Super Admin, Admin */}
+            <Route
+              path="estimate"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <EstimatePage />
+                </RoleBasedRoute>
+              }
+            />
+            {/* Invoice - Super Admin, Admin */}
+            <Route
+              path="invoice"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <InvoicePage />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Vehicle Maintenance - Super Admin, Admin */}
+            <Route
+              path="vehicle-maintenance"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <VehicleMaintenance />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Equipment Maintenance - Super Admin, Admin */}
+            <Route
+              path="equipment-maintenance"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <EquipmentMaintenance />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Reviews - Super Admin, Admin, Marketing */}
+            <Route
+              path="reviews"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                  <ReviewList />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Communication - Super Admin, Admin, Marketing */}
+            <Route
+              path="communication"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                  <Communication />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Documents & Approvals - Super Admin, Admin */}
+            <Route
+              path="documents-approvals"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <DocumentsApprovals />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Project Scheduling - Super Admin, Admin */}
+            <Route
+              path="project-scheduling"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <ProjectScheduling />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Manage Materials - Super Admin, Admin */}
+            <Route
+              path="manage-materials"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <ManageMaterials />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Customer & Finance - Super Admin, Admin */}
+            <Route
+              path="customer-finance"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <CustomerFinance />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Payments - Super Admin, Admin */}
+            <Route
+              path="payments"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <Payments />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Payroll Management - Super Admin, Admin */}
+            <Route
+              path="payroll-management"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <PayrollManagement />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Resource Requests & Report - Super Admin, Admin */}
+            <Route
+              path="resource-requests-report"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <ResourceRequestsReport />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Change Orders - Super Admin, Admin */}
+            <Route
+              path="change-orders"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <ChangeOrders />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Daily Safety Reports - Super Admin, Admin */}
+            <Route
+              path="daily-safety-reports"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <DailySafetyReports />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Attendance - Super Admin, Admin */}
+            <Route path="attendance">
+              <Route
+                index
+                element={
+                  <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                    <Attendance />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="employee/:userId"
+                element={
+                  <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                    <AttendanceDetail />
+                  </RoleBasedRoute>
+                }
+              />
+            </Route>
+
+            {/* Revenue - Super Admin, Admin */}
+            <Route
+              path="transactions-history"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <TransactionsHistory />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Orders - Super Admin, Admin */}
+            <Route
+              path="orders"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <OrderList />
+                </RoleBasedRoute>
+              }
+            />
+
+
+
+            {/* Settings - Super Admin, Admin (Profile) */}
+            <Route path="settings">
+              <Route
+                path="profile"
+                element={
+                  <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                    <ProfileSettings />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="password"
+                element={
+                  <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                    <ChangePassword />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="terms"
+                element={
+                  <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                    <TermsSettings />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="privacy"
+                element={
+                  <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                    <PrivacySettings />
+                  </RoleBasedRoute>
+                }
+              />
+              <Route
+                path="about-us"
+                element={
+                  <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                    <AboutUsSettings />
+                  </RoleBasedRoute>
+                }
+              />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Catch all - 404 Not Found */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster position="top-right" richColors closeButton />
-    </TooltipProvider>
+          {/* Catch all - 404 Not Found */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster position="top-right" richColors closeButton />
+      </TooltipProvider>
+    </UserProvider>
   )
 }
 

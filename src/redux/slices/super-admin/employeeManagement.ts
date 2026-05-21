@@ -38,7 +38,7 @@ const employeeManageApi = baseApi.injectEndpoints({
             },
         }),
 
-        updateEmployeeManage: builder.mutation<any, { id: string; data: { name: string; email: string; password: string; confirmPassword: string; contact: string; role: string } }>({
+        updateEmployeeManage: builder.mutation<any, { id: string; data: { name?: string; email?: string; password?: string; confirmPassword?: string; contact?: string; role?: string; isBanned?: boolean } }>({
             query: ({ id, data }) => {
                 return {
                     url: `/admin/users/${id}`,

@@ -11,13 +11,14 @@ import { EmployeeTable } from './components/EmployeeTable'
 import { ViewEmployeeDetailsModal } from './components/ViewEmployeeDetailsModal'
 import { AddEditEmployeeModal } from './components/AddEditEmployeeModal'
 import { employeeStats } from './employeeManagementData'
-import type { Employee, EmployeeStatus } from '@/types'
+import type { Employee } from '@/types'
 import { toast } from '@/utils/toast'
 import { useTranslation } from 'react-i18next'
 import {
   useAllEmployeeManageQuery,
   useDeleteEmployeeManageMutation,
   useEmployeeManageOverviewQuery,
+  useUpdateEmployeeManageMutation,
 } from '@/redux/slices/super-admin/employeeManagement'
 
 export default function EmployeeManagement() {
@@ -55,6 +56,10 @@ export default function EmployeeManagement() {
 
   const [deleteEmployee] =
     useDeleteEmployeeManageMutation()
+
+  const [updateEmployeeManage] = useUpdateEmployeeManageMutation()
+
+
 
   // =========================
   // URL PARAM HANDLERS
@@ -186,23 +191,32 @@ export default function EmployeeManagement() {
     setSelectedEmployee(null)
   }
 
-  const handleStatusChange = (
-    employee: Employee,
-    newStatus: EmployeeStatus
-  ) => {
-    toast({
-      variant: 'success',
-      title: t('employeeManagement.statusUpdated'),
-      description: t(
-        'employeeManagement.statusChangedTo',
-        {
-          name: employee.fullName,
-          status: newStatus,
-        }
-      ),
-    })
-  }
+  const handleStatusChange = async (employee: Employee, checked: boolean) => {
+    try {
+      await updateEmployeeManage({
+        id: employee.id,
+        data: {
+          isBanned: !checked,
+        },
+      }).unwrap()
+      refetch()
+      toast({
+        title: 'Success',
+        description: checked
+          ? 'Employee activated'
+          : 'Employee banned',
+        variant: 'success',
+      })
 
+      // optional: refetch or update local cache
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.data?.message || 'Status update failed',
+        variant: 'destructive',
+      })
+    }
+  }
   const handleDelete = (employee: Employee) => {
     setEmployeeToDelete(employee)
     setIsConfirmOpen(true)

@@ -737,6 +737,7 @@ export interface Employee {
   workSchedule: string
   contact?: string
   projects?: EmployeeProject[]
+  isBanned: boolean
 }
 
 // ==================== Vehicle Maintenance Types ====================

@@ -20,8 +20,9 @@ export const baseApi = createApi({
             return headers
         },
     }),
-    tagTypes: ['Auth', 'Category', 'Materials', 'EmployeeManagement'],
+    tagTypes: ['Auth', 'Category', 'Materials', 'EmployeeManagement', 'chats'],
     endpoints: () => ({}),
 })
 
 export const imageUrl = import.meta.env.VITE_API_BASE_URL
+export const socketUrl = import.meta.env.VITE_API_BASE_URL 
