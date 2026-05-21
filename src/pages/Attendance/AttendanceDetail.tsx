@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import moment from 'moment'
 import { Calendar, UserCheck, UserX, Clock, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -9,14 +10,11 @@ import { Pagination } from '@/components/common/Pagination'
 import { AttendanceDetailTable } from './AttendanceDetailTable'
 import { ViewAttendanceDetailsModal } from './components/ViewAttendanceDetailsModal'
 import { AddEditAttendanceModal } from './components/AddEditAttendanceModal'
-import {
-  mockAttendanceData,
-  getEmployeeName,
-  employeeProfiles,
-  type AttendanceRecord,
-} from './attendanceData'
+import { type AttendanceRecord } from './attendanceData'
 import { toast } from '@/utils/toast'
 import { cn } from '@/utils/cn'
+import { useSingleAttendanceQuery } from '@/redux/slices/super-admin/attendance'
+import { getImageUrl } from '@/utils/getImageUrl'
 
 const detailStats = [
   { key: 'totalDays', title: 'Total Days', icon: Calendar, iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
@@ -26,18 +24,51 @@ const detailStats = [
 ]
 
 export default function AttendanceDetail() {
-  const { employeeSlug } = useParams<{ employeeSlug: string }>()
+  const { userId } = useParams<{ userId: string }>()
+  const { data: singleAttendance, isLoading: isSingleAttendanceLoading } = useSingleAttendanceQuery({
+    id: userId || ""
+  })
+  console.log('Single Attendance Data:', userId)
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
 
-  const employeeName = employeeSlug ? getEmployeeName(employeeSlug) : ''
-  const profile = employeeName ? employeeProfiles[employeeName] : null
+  const [records, setRecords] = useState<AttendanceRecord[]>([])
 
-  const [records, setRecords] = useState<AttendanceRecord[]>(() =>
-    mockAttendanceData.filter((r) => r.employee === employeeName)
-  )
+  useEffect(() => {
+    if (singleAttendance?.data) {
+      const mapped = singleAttendance.data.map((item: any) => {
+        let mappedStatus: 'Present' | 'Late' | 'Absent' = 'Present'
+        if (item.status) {
+          const s = item.status.toUpperCase()
+          if (s === 'PRESENT') mappedStatus = 'Present'
+          else if (s === 'LATE') mappedStatus = 'Late'
+          else if (s === 'ABSENT') mappedStatus = 'Absent'
+        }
+
+        return {
+          id: item.id,
+          profile: item.user?.profile || '',
+          date: item.todayDate ? moment(item.todayDate).format('DD MMM, YYYY') : '',
+          employee: item.user?.name || 'Unknown',
+          project: 'General',
+          checkIn: item.checkInTime ? moment(item.checkInTime).format('hh:mm A') : '--:--',
+          checkOut: item.checkOutTime ? moment(item.checkOutTime).format('hh:mm A') : '--:--',
+          totalHours: item.workingHours !== undefined ? `${item.workingHours}h` : '--:--',
+          status: mappedStatus,
+          isActive: true,
+          userId: item.userId || item.user?.id || '',
+        }
+      })
+      setRecords(mapped)
+    }
+  }, [singleAttendance])
+
+  const employeeName = records[0]?.employee || 'Employee'
+  console.log('Mapped Attendance Records:', records[0]?.profile)
+  const profile = getImageUrl(records[0]?.profile || '')
+
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
@@ -51,7 +82,8 @@ export default function AttendanceDetail() {
   } | null>(null)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
-  const totalPages = Math.max(1, Math.ceil(records.length / itemsPerPage))
+  const totalItems = singleAttendance?.pagination?.total || 0
+  const totalPages = singleAttendance?.pagination?.totalPage || 1
 
   const setPage = (p: number) => {
     const next = new URLSearchParams(searchParams)
@@ -69,21 +101,18 @@ export default function AttendanceDetail() {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
   }, [totalPages, currentPage])
 
-  const paginatedRecords = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return records.slice(start, start + itemsPerPage)
-  }, [records, currentPage, itemsPerPage])
+  const paginatedRecords = records
 
   const stats = useMemo(() => {
-    const total = records.length
+    const total = totalItems
     const present = records.filter((r) => r.status === 'Present').length
     const absent = records.filter((r) => r.status === 'Absent').length
     const late = records.filter((r) => r.status === 'Late').length
     return { totalDays: total, present, absent, late }
-  }, [records])
+  }, [records, totalItems])
 
   const todayRecord = useMemo(() => {
-    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    const today = moment().format('DD MMM, YYYY')
     return records.find((r) => r.date === today) ?? records[0]
   }, [records])
 
@@ -104,15 +133,15 @@ export default function AttendanceDetail() {
         prev.map((r) =>
           r.id === data.id
             ? {
-                ...r,
-                ...data,
-                date: data.date ?? r.date,
-                status: data.status ?? r.status,
-                checkIn: data.checkIn ?? r.checkIn,
-                checkOut: data.checkOut ?? r.checkOut,
-                totalHours: data.totalHours ?? r.totalHours,
-                isActive: data.isActive ?? r.isActive,
-              }
+              ...r,
+              ...data,
+              date: data.date ?? r.date,
+              status: data.status ?? r.status,
+              checkIn: data.checkIn ?? r.checkIn,
+              checkOut: data.checkOut ?? r.checkOut,
+              totalHours: data.totalHours ?? r.totalHours,
+              isActive: data.isActive ?? r.isActive,
+            }
             : r
         )
       )
@@ -197,7 +226,15 @@ export default function AttendanceDetail() {
     }
   }
 
-  if (!employeeSlug || !employeeName) {
+  if (isSingleAttendanceLoading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+        Loading employee details...
+      </div>
+    )
+  }
+
+  if (!userId) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <p className="text-muted-foreground mb-4">Employee not found</p>
@@ -230,7 +267,7 @@ export default function AttendanceDetail() {
       <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={profile?.avatar} alt={employeeName} />
+            <AvatarImage src={getImageUrl(records[0]?.profile || '')} alt={employeeName} />
             <AvatarFallback className="bg-primary/20 text-primary text-lg">
               {employeeName
                 .split(' ')
@@ -240,7 +277,7 @@ export default function AttendanceDetail() {
           </Avatar>
           <div>
             <h1 className="text-xl font-bold text-foreground">{employeeName}</h1>
-            <p className="text-sm text-muted-foreground">{profile?.role ?? 'Employee'}</p>
+            <p className="text-sm text-muted-foreground">Employee</p>
           </div>
         </div>
         <div className="flex items-center gap-4 sm:gap-6 py-3 px-4 rounded-lg ">
@@ -290,7 +327,7 @@ export default function AttendanceDetail() {
 
       {/* Attendance History Table */}
       <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-       
+
         <AttendanceDetailTable
           records={paginatedRecords}
           onView={handleView}

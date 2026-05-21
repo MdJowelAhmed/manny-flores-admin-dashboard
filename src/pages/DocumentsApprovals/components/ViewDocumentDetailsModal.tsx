@@ -1,152 +1,206 @@
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Calendar, Clock, Download } from 'lucide-react'
+import { Download, FileText } from 'lucide-react'
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import type { DocumentEntry } from '../documentsApprovalsData'
-import { formatCurrency } from '@/utils/formatters'
-import { cn } from '@/utils/cn'
-import { toast } from '@/utils/toast'
+import Spinner from '@/components/common/Spinner.tsx'
+import { imageUrl } from '@/redux/baseApi'
 
 interface ViewDocumentDetailsModalProps {
   open: boolean
   onClose: () => void
-  document: DocumentEntry | null
-}
-
-function DetailRow({
-  label,
-  value,
-  valueClassName,
-}: {
-  label: string
-  value: string | number
-  valueClassName?: string
-}) {
-  return (
-    <div className="flex justify-between items-start gap-6 py-2.5 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-muted-foreground shrink-0">{label}:</span>
-      <span className={cn('text-sm font-medium text-foreground text-right', valueClassName)}>
-        {typeof value === 'number' ? formatCurrency(value) : value}
-      </span>
-    </div>
-  )
+  document: any | null
 }
 
 export function ViewDocumentDetailsModal({
   open,
   onClose,
-  document,
+  document: doc,
 }: ViewDocumentDetailsModalProps) {
   const { t } = useTranslation()
-  if (!document) return null
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
 
-  const statusLabel = t(`documentsApprovals.status.${document.status}`)
-  const statusValueClass =
-    document.status === 'approved'
-      ? 'font-bold text-primary'
-      : document.status === 'review'
-        ? 'font-medium text-orange-600'
-        : document.status === 'signing'
-          ? 'font-medium text-purple-600'
-          : 'font-medium text-destructive'
+  const docType = doc?.documentType?.toUpperCase() || ''
+  const isPdf = docType === 'PDF' || doc?.documentUrl?.toLowerCase().endsWith('.pdf')
+  const isImage = docType === 'IMAGE' || doc?.documentUrl?.match(/\.(jpeg|jpg|gif|png|webp)$/i)
 
-  const handleDownloadReport = () => {
-    const lines = [
-      `${document.projectTitle}`,
-      `${t('documentsApprovals.uploadedBy')}: ${document.uploadedBy}`,
-      `${t('documentsApprovals.projectName')}: ${document.projectName}`,
-      `${t('documentsApprovals.startDate')}: ${document.startDate}`,
-      `${t('documentsApprovals.budget')}: ${formatCurrency(document.budgetAmount)}`,
-      `${t('documentsApprovals.version')}: ${document.version}`,
-      `${t('common.timeline')}: ${document.timeline}`,
-      `${t('documentsApprovals.statusLabel')}: ${statusLabel}`,
-      '',
-      t('documentsApprovals.auditTrail'),
-      ...document.auditTrail.map((a) => `${a.title} — ${a.by} • ${a.date}`),
-    ]
-    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = globalThis.document.createElement('a')
-    a.href = url
-    a.download = `full-report-${document.id}.txt`
-    a.click()
-    URL.revokeObjectURL(url)
-    toast({
-      title: t('common.success'),
-      description: t('documentsApprovals.reportDownloaded'),
-      variant: 'success',
-    })
-  }
+  const fullDocUrl = doc?.documentUrl?.startsWith('http')
+    ? doc.documentUrl
+    : `${imageUrl}${doc?.documentUrl || ''}`
+
+  useEffect(() => {
+    if (!open || !doc || (!isPdf && !isImage)) {
+      setPreviewBlobUrl(null)
+      setPreviewError(null)
+      return
+    }
+
+    let active = true
+    let createdUrl: string | null = null
+
+    const fetchPreview = async () => {
+      setLoadingPreview(true)
+      setPreviewError(null)
+      try {
+        const response = await fetch(fullDocUrl)
+        if (!response.ok) {
+          throw new Error(`Failed to load document (${response.status})`)
+        }
+        const blob = await response.blob()
+        if (active) {
+          const blobUrl = URL.createObjectURL(blob)
+          createdUrl = blobUrl
+          setPreviewBlobUrl(blobUrl)
+        }
+      } catch (err: any) {
+        console.error('Error fetching preview blob:', err)
+        if (active) {
+          setPreviewError(err.message || 'Failed to generate preview')
+        }
+      } finally {
+        if (active) {
+          setLoadingPreview(false)
+        }
+      }
+    }
+
+    fetchPreview()
+
+    return () => {
+      active = false
+      if (createdUrl) {
+        URL.revokeObjectURL(createdUrl)
+      }
+    }
+  }, [open, doc, isPdf, isImage, fullDocUrl])
+
+  if (!doc) return null
 
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={document.projectTitle}
-      size="lg"
-      className="max-w-3xl bg-white "
+      title={doc.projectName || t('documentsApprovals.documentName') || 'Document Details'}
+      size="xl"
+      className="max-w-4xl bg-white"
       footer={
-        <Button
-          type="button"
-          className="w-full h-11 rounded-lg bg-primary hover:bg-primary/90 text-white gap-2"
-          onClick={handleDownloadReport}
-        >
-          <Download className="h-4 w-4" />
-          {t('documentsApprovals.fullReport')}
-        </Button>
+        <div className="flex w-full justify-end gap-3">
+          <Button type="button" variant="outline" onClick={onClose} className="rounded-lg">
+            {t('common.close')}
+          </Button>
+          <a
+            href={fullDocUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            download
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-lg bg-primary hover:bg-primary/90 text-white gap-2"
+          >
+            <Download className="h-4 w-4" />
+            {t('documentsApprovals.fullReport') || 'Download'}
+          </a>
+        </div>
       }
     >
-      <div className="space-y-6 -mt-1">
-        <p className="text-sm text-muted-foreground">{document.modalSubtitle}</p>
-
-        <div className="rounded-xl border border-gray-100 bg-muted/15 px-4 py-3">
-          <DetailRow label={t('documentsApprovals.uploadedBy')} value={document.uploadedBy} />
-        </div>
-
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <Calendar className="h-4 w-4 text-primary" />
-            </div>
-            <h3 className="text-sm font-semibold text-foreground">
-              {t('documentsApprovals.projectInformation')}
-            </h3>
+      <div className="space-y-6">
+        {/* Info summary */}
+        <div className="bg-muted/10 p-4 rounded-xl border border-gray-100 space-y-2">
+          <div className="flex justify-between text-sm py-1 border-b border-gray-100">
+            <span className="text-muted-foreground">{t('documentsApprovals.projectName') || 'Name'}:</span>
+            <span className="font-semibold text-slate-800">{doc.projectName}</span>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-muted/20 px-4">
-            <DetailRow label={t('documentsApprovals.projectName')} value={document.projectName} />
-            <DetailRow label={t('documentsApprovals.startDate')} value={document.startDate} />
-            <DetailRow label={t('documentsApprovals.budget')} value={document.budgetAmount} />
-            <DetailRow label={t('documentsApprovals.version')} value={document.version} />
-            <DetailRow label={t('common.timeline')} value={document.timeline} />
-            <DetailRow
-              label={t('documentsApprovals.statusLabel')}
-              value={statusLabel}
-              valueClassName={statusValueClass}
-            />
+          <div className="flex justify-between text-sm py-1">
+            <span className="text-muted-foreground">{t('documentsApprovals.documentType') || 'Type'}:</span>
+            <span className="font-semibold text-slate-800">{doc.documentType || docType}</span>
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <Clock className="h-4 w-4 text-primary" />
-            </div>
-            <h3 className="text-sm font-semibold text-foreground">
-              {t('documentsApprovals.auditTrailHistory')}
-            </h3>
-          </div>
-          <div className="space-y-4 pl-1">
-            {document.auditTrail.map((entry, i) => (
-              <div key={`${entry.title}-${i}`} className="rounded-xl border border-gray-100 bg-white px-4 py-3">
-                <p className="text-sm font-medium text-foreground">{entry.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('documentsApprovals.auditByDate', { name: entry.by, date: entry.date })}
-                </p>
+        {/* Document Preview Area */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-slate-700">Document Preview</h3>
+          <div className="w-full flex items-center justify-center bg-slate-50 border rounded-xl overflow-hidden min-h-[300px]">
+            {isPdf ? (
+              loadingPreview ? (
+                <div className="flex flex-col items-center justify-center p-8 space-y-3 min-h-[300px]">
+                  <Spinner />
+                  <p className="text-sm text-muted-foreground">Loading PDF Preview...</p>
+                </div>
+              ) : previewError ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center space-y-3">
+                  <div className="p-4 rounded-full bg-yellow-50 text-yellow-600 border border-yellow-100">
+                    <FileText className="h-12 w-12" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">Preview Not Available (Network Policy)</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                      The PDF server is configured to prevent embedded loading in browser pages. Please click the **Download** button below to view the file.
+                    </p>
+                  </div>
+                </div>
+              ) : previewBlobUrl ? (
+                <iframe
+                  src={`${previewBlobUrl}#toolbar=0`}
+                  title={doc.projectName}
+                  className="w-full h-[500px] border-0"
+                />
+              ) : (
+                <iframe
+                  src={`${fullDocUrl}#toolbar=0`}
+                  title={doc.projectName}
+                  className="w-full h-[500px] border-0"
+                />
+              )
+            ) : isImage ? (
+              loadingPreview ? (
+                <div className="flex flex-col items-center justify-center p-8 space-y-3 min-h-[300px]">
+                  <Spinner />
+                  <p className="text-sm text-muted-foreground">Loading Image Preview...</p>
+                </div>
+              ) : previewError ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center space-y-3">
+                  <div className="p-4 rounded-full bg-yellow-50 text-yellow-600 border border-yellow-100">
+                    <FileText className="h-12 w-12" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">Preview Not Available (Network Policy)</p>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                      The image server is configured to prevent cross-origin loading. Please click the **Download** button below to view the file.
+                    </p>
+                  </div>
+                </div>
+              ) : previewBlobUrl ? (
+                <img
+                  src={previewBlobUrl}
+                  alt={doc.projectName}
+                  className="max-w-full max-h-[500px] object-contain p-2 rounded-lg"
+                />
+              ) : (
+                <img
+                  src={fullDocUrl}
+                  alt={doc.projectName}
+                  className="max-w-full max-h-[500px] object-contain p-2 rounded-lg"
+                />
+              )
+            ) : (
+              <div className="flex flex-col items-center justify-center p-8 text-center space-y-3">
+                <div className="p-4 rounded-full bg-slate-100">
+                  <FileText className="h-12 w-12 text-slate-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-700">
+                    Preview not available for document type {doc.documentType || 'DOCS'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Please use the download button below to view the file contents.
+                  </p>
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
     </ModalWrapper>
   )
 }
+

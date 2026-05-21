@@ -34,7 +34,7 @@ export function AttendanceDetailTable({
             <th className="px-4 py-4 text-left text-sm font-semibold">Work hour</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">Attendance</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
-            <th className="px-4 py-4 text-right text-sm font-semibold">Action</th>
+            {/* <th className="px-4 py-4 text-right text-sm font-semibold">Action</th> */}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
@@ -100,7 +100,7 @@ export function AttendanceDetailTable({
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  {/* <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <Button
                         variant="ghost"
@@ -137,7 +137,7 @@ export function AttendanceDetailTable({
                         <Trash2 className="h-5 w-5" />
                       </Button>
                     </div>
-                  </td>
+                  </td> */}
                 </motion.tr>
               )
             })
