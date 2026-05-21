@@ -49,8 +49,29 @@ const documentsApprovalApi = baseApi.injectEndpoints({
                 }
             },
         }),
+        getProjects: builder.query<any, { page: number, limit: number }>({
+            query: ({ page = 1, limit = 10 }) => {
+                return {
+                    url: `/project/private`,
+                    method: 'GET',
+                    params: {
+                        page, limit
+                    }
+                }
+            },
+        }),
+        requestDocument: builder.mutation<any, any>({
+            query: (data) => {
+                return {
+                    url: `/requested-document`,
+                    method: 'POST',
+                    body: data,
+
+                }
+            },
+        })
 
     })
 })
 
-export const { useGetDocumentsApprovalsQuery, useGetDocumentsOverviewQuery, useUploadDocumentMutation, useUpdateDocumentMutation, useDeleteDocumentMutation } = documentsApprovalApi;
+export const { useGetDocumentsApprovalsQuery, useGetDocumentsOverviewQuery, useUploadDocumentMutation, useUpdateDocumentMutation, useDeleteDocumentMutation, useGetProjectsQuery, useRequestDocumentMutation } = documentsApprovalApi;

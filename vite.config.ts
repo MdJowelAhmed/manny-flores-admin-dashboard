@@ -20,18 +20,7 @@ export default defineConfig({
     host: true,
     open: true,
     port: 5173,
+    strictPort: true
   },
 })
-
-
-
-
-
-
-
-
-
-
-
-
 

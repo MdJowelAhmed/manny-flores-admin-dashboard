@@ -10,7 +10,7 @@ import { ViewDocumentDetailsModal } from './components/ViewDocumentDetailsModal.
 import { EditDocumentModal } from './components/EditDocumentModal.tsx'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Pagination } from '@/components/common/Pagination'
-import { useDeleteDocumentMutation, useGetDocumentsApprovalsQuery, useGetDocumentsOverviewQuery } from '@/redux/slices/super-admin/documentsApprovalApi.ts'
+import { useDeleteDocumentMutation, useGetDocumentsApprovalsQuery, useGetDocumentsOverviewQuery, useGetProjectsQuery } from '@/redux/slices/super-admin/documentsApprovalApi.ts'
 import { useDebounce } from '@/hooks/useDebounce.ts'
 import Spinner from '@/components/common/Spinner.tsx'
 import { imageUrl } from '@/redux/baseApi'
@@ -37,6 +37,13 @@ export default function DocumentsApprovals() {
   const { data: overviewData, isLoading: overviewLoading } = useGetDocumentsOverviewQuery()
   const { data: documentsData, isLoading: documentsLoading, refetch: documentsRefetch } = useGetDocumentsApprovalsQuery({ limit, page, search: debouncedSearch })
 
+  const [projectPage, setProjectPage] = useState(1)
+  const [projects, setProjects] = useState<any[]>([])
+
+  const { data: getProjectsApi, isLoading: projectLoading, isFetching: projectFetching, refetch: projectRefetch } = useGetProjectsQuery(
+    { page: projectPage, limit: 20 }
+  )
+  // console.log(getProjectsApi)
   const [deleteDocument, { isLoading: isDeleting }] = useDeleteDocumentMutation()
 
   const documents = documentsData?.data || []
@@ -53,7 +60,7 @@ export default function DocumentsApprovals() {
     const promise = deleteDocument(selectedDoc.id).unwrap()
 
     try {
-      await sonnerToast.promise(promise, {
+      sonnerToast.promise(promise, {
         loading: t('common.processing') || 'Deleting document...',
         success: t('common.deleted') || 'Document deleted successfully!',
         error: (err: any) => err?.data?.message || 'Failed to delete document.',
@@ -274,7 +281,17 @@ export default function DocumentsApprovals() {
 
       <UploadDocumentModal open={isUploadOpen} onClose={() => setIsUploadOpen(false)} onCreated={handleCreated} />
 
-      <SendDocumentRequestModal open={isRequestOpen} onClose={() => setIsRequestOpen(false)} />
+      <SendDocumentRequestModal open={isRequestOpen} onClose={() => setIsRequestOpen(false)}
+        projects={projects}
+        projectLoading={projectLoading}
+        projectFetching={projectFetching}
+        projectRefetch={projectRefetch}
+        projectPage={projectPage}
+        setProjectPage={setProjectPage}
+        setProjects={setProjects}
+        getProjectsApi={getProjectsApi}
+
+      />
 
       <ViewDocumentDetailsModal
         open={isDetailModalOpen}

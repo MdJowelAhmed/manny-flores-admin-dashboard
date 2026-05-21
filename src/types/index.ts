@@ -263,15 +263,15 @@ export interface PaginatedResponse<T> {
 }
 
 // ==================== Modal Types ====================
-export type ModalType = 
-  | 'addUser' 
-  | 'editUser' 
+export type ModalType =
+  | 'addUser'
+  | 'editUser'
   | 'deleteUser'
-  | 'addProduct' 
-  | 'editProduct' 
+  | 'addProduct'
+  | 'editProduct'
   | 'deleteProduct'
-  | 'addCategory' 
-  | 'editCategory' 
+  | 'addCategory'
+  | 'editCategory'
   | 'deleteCategory'
   | 'addCar'
   | 'editCar'
@@ -362,7 +362,7 @@ export interface Booking {
   plan: string
   payment: string
   carImage?: string
-  carName?: string, 
+  carName?: string,
   paymentStatus: 'Paid' | 'Pending'
   status: BookingStatus
   businessId?: string // For role-based filtering
@@ -735,7 +735,9 @@ export interface Employee {
   joiningDate: string
   role: string
   workSchedule: string
+  contact?: string
   projects?: EmployeeProject[]
+  isBanned: boolean
 }
 
 // ==================== Vehicle Maintenance Types ====================
@@ -798,18 +800,14 @@ export interface Equipment {
 // ==================== Review Types ====================
 export type ReviewStatus = 'Pending' | 'Approved' | 'Rejected'
 
-export interface Review {
+export interface ReviewUI {
   id: string
   customerName: string
-  projectName: string
-  /** e.g. PRJ-371 */
-  projectId?: string
-  /** e.g. REV-001 — shown in follow-up modal */
-  caseId?: string
+  avatarUrl?: string
   rating: number
   feedback: string
-  status: ReviewStatus
-  /** Display date e.g. March 25, 2026 */
   reviewDate?: string
-  avatarUrl?: string
+  status: 'APPROVED' | 'PENDING' | 'REJECTED'
+  projectId?: string
+  projectName?: string
 }

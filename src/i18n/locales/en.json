@@ -600,6 +600,9 @@
     "scheduleAdded": "Schedule added successfully."
   },
   "documentsApprovals": {
+    "selectProjectPlaceholder": "Select a project",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter a description for your request...",
     "title": "Documents & Approvals",
     "pageTitle": "Project Status & Document Trail",
     "titleCol": "Title",
