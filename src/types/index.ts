@@ -263,15 +263,15 @@ export interface PaginatedResponse<T> {
 }
 
 // ==================== Modal Types ====================
-export type ModalType = 
-  | 'addUser' 
-  | 'editUser' 
+export type ModalType =
+  | 'addUser'
+  | 'editUser'
   | 'deleteUser'
-  | 'addProduct' 
-  | 'editProduct' 
+  | 'addProduct'
+  | 'editProduct'
   | 'deleteProduct'
-  | 'addCategory' 
-  | 'editCategory' 
+  | 'addCategory'
+  | 'editCategory'
   | 'deleteCategory'
   | 'addCar'
   | 'editCar'
@@ -362,7 +362,7 @@ export interface Booking {
   plan: string
   payment: string
   carImage?: string
-  carName?: string, 
+  carName?: string,
   paymentStatus: 'Paid' | 'Pending'
   status: BookingStatus
   businessId?: string // For role-based filtering
@@ -735,6 +735,7 @@ export interface Employee {
   joiningDate: string
   role: string
   workSchedule: string
+  contact?: string
   projects?: EmployeeProject[]
 }
 

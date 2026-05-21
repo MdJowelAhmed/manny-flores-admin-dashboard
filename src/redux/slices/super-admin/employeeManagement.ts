@@ -2,7 +2,7 @@ import { baseApi } from "@/redux/baseApi";
 
 const employeeManageApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        allEmployeeManage: builder.query<any, { limit?: number; page?: number,name?: string,search?: string } | void>({
+        allEmployeeManage: builder.query<any, { limit?: number; page?: number, name?: string, search?: string } | void>({
             query: (params) => {
                 return {
                     url: '/admin/users',
@@ -18,15 +18,15 @@ const employeeManageApi = baseApi.injectEndpoints({
                     method: 'GET',
                 }
             },
-        }), 
+        }),
         singleEmployeeManage: builder.query<any, { id: string }>({
             query: ({ id }) => {
-                return { 
+                return {
                     url: `/admin/users/${id}`,
-                    method: 'GET', 
+                    method: 'GET',
                 }
-            }, 
-        }), 
+            },
+        }),
 
         addEmployeeManage: builder.mutation<any, { name: string; email: string; password: string; confirmPassword: string; contact: string; role: string }>({
             query: (data) => {
@@ -37,7 +37,26 @@ const employeeManageApi = baseApi.injectEndpoints({
                 }
             },
         }),
+
+        updateEmployeeManage: builder.mutation<any, { id: string; data: { name: string; email: string; password: string; confirmPassword: string; contact: string; role: string } }>({
+            query: ({ id, data }) => {
+                return {
+                    url: `/admin/users/${id}`,
+                    method: 'PATCH',
+                    body: data,
+                }
+            },
+        }),
+
+        deleteEmployeeManage: builder.mutation<any, string>({
+            query: (id) => {
+                return {
+                    url: `/admin/users/${id}`,
+                    method: 'DELETE',
+                }
+            },
+        }),
     }),
 })
 
-export const { useAllEmployeeManageQuery, useEmployeeManageOverviewQuery, useSingleEmployeeManageQuery, useAddEmployeeManageMutation } = employeeManageApi
+export const { useAllEmployeeManageQuery, useEmployeeManageOverviewQuery, useSingleEmployeeManageQuery, useAddEmployeeManageMutation, useUpdateEmployeeManageMutation, useDeleteEmployeeManageMutation } = employeeManageApi
