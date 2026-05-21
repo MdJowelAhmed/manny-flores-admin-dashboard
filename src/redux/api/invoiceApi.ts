@@ -78,10 +78,11 @@ function mapLineItems(doc: InvoiceApiDoc): InvoiceLineItem[] {
   }))
 
   const vehicles = (doc.vehicles ?? []).map((item) => {
-    const quantity = item.vehicleQuantity ?? item.vehicleUnits ?? 1
+    const quantity = item.vehicleQuantity ?? 1
+    const vehicleUnits = Number(item.vehicleUnits) || 0
     const total = item.totalPrice != null ? Number(item.totalPrice) : 0
     const unitPrice =
-      quantity > 0 && total > 0 ? total / quantity : item.vehicleUnits > 0 ? total / item.vehicleUnits : 0
+      quantity > 0 && total > 0 ? total / quantity : vehicleUnits
 
     return {
       id: item.id,

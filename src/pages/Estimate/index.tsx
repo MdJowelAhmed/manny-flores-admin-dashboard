@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Info, Plus, Trash2 } from 'lucide-react'
+import { Info, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,8 @@ import {
   useAddEstimateMutation,
   useDeleteEstimateMutation,
   useGetEstimatesQuery,
-  type EstimatePayload,
+  useUpdateEstimateMutation,
+  buildEstimatePayload,
   mapEstimateFromApi,
 } from '@/redux/api/estimateApi'
 import { EstimateItemModal } from './components/EstimateItemModal'
@@ -36,6 +37,7 @@ export default function EstimatePage() {
     limit: itemsPerPage,
   })
   const [addEstimate] = useAddEstimateMutation()
+  const [updateEstimate] = useUpdateEstimateMutation()
   const [deleteEstimate] = useDeleteEstimateMutation()
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export default function EstimatePage() {
   const [selectedItem, setSelectedItem] = useState<EstimateRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<EstimateRecord | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [editEstimate, setEditEstimate] = useState<EstimateRecord | null>(null)
 
   const { user } = useAppSelector((s) => s.auth)
   const userRole = (user?.role as UserRole) ?? UserRole.SUPER_ADMIN
@@ -113,56 +116,20 @@ export default function EstimatePage() {
       .finally(() => setDeleteTarget(null))
   }
 
-  const buildPayload = (item: EstimateRecord): EstimatePayload => {
-    const materials = item.lineItems
-      .filter((x) => x.lineType === 'material' && x.materialId)
-      .map((x) => ({
-        materialId: x.materialId as string,
-        quantity: Number(x.quantity) || 0,
-        unitPrice: Number(x.unitPrice) || 0,
-        totalPrice: (Number(x.quantity) || 0) * (Number(x.unitPrice) || 0),
-      }))
-
-    const equipment = item.lineItems
-      .filter((x) => x.lineType === 'equipment' && x.equipmentId)
-      .map((x) => ({
-        equipmentId: x.equipmentId as string,
-        equipmentUnits: Number(x.quantity) || 0,
-        unitPrice: Number(x.unitPrice) || 0,
-      }))
-
-    const vehicles = item.lineItems
-      .filter((x) => x.lineType === 'vehicle' && x.vehicleId)
-      .map((x) => {
-        const vehicleUnits = Number(x.quantity) || 1
-        const unitPrice = Number(x.unitPrice) || 0
-        return {
-          vehicleId: x.vehicleId as string,
-          vehicleUnits,
-          totalPrice: vehicleUnits * unitPrice,
-        }
-      })
-
-    return {
-      projectName: item.title,
-      customerName: item.customerName,
-      customerEmail: item.customerEmail,
-      customerAddress: item.customerAddress,
-      estimateStartDate: item.rawEstimateStartDate ?? new Date().toISOString(),
-      estimateEndDate: item.rawEstimateEndDate ?? new Date().toISOString(),
-      description: item.description,
-      taxNumber: Number(item.taxPercent) || 0,
-      materials,
-      equipment,
-      vehicles,
-    }
+  const handleCreateEstimate = async (item: EstimateRecord) => {
+    const payload = buildEstimatePayload(item)
+    const res = await addEstimate(payload).unwrap()
+    const mapped = mapEstimateFromApi(res.data)
+    setItems((prev) => [mapped, ...prev])
+    setPage(1)
   }
 
-  const handleCreateEstimate = async (item: EstimateRecord) => {
-    const payload = buildPayload(item)
-    await addEstimate(payload).unwrap()
-    setItems((prev) => [item, ...prev])
-    setPage(1)
+  const handleUpdateEstimate = async (item: EstimateRecord) => {
+    const payload = buildEstimatePayload(item)
+    const res = await updateEstimate({ id: item.id, ...payload }).unwrap()
+    const mapped = mapEstimateFromApi(res.data)
+    setItems((prev) => prev.map((row) => (row.id === item.id ? mapped : row)))
+    setEditEstimate(null)
   }
 
   const handleSignEstimate = (estimate: EstimateRecord, signatureDataUrl: string) => {
@@ -273,6 +240,22 @@ export default function EstimatePage() {
                         <TooltipContent>{t('estimate.actions.details')}</TooltipContent>
                       </Tooltip>
                     
+                      {canCreate && row.projectStatus === 'PENDING' && row.status !== 'signed' && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 text-gray-600 hover:text-gray-900"
+                              onClick={() => setEditEstimate(row)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t('common.edit')}</TooltipContent>
+                        </Tooltip>
+                      )}
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -325,6 +308,14 @@ export default function EstimatePage() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onCreate={handleCreateEstimate}
+      />
+
+      <AddEstimateModal
+        open={editEstimate !== null}
+        onClose={() => setEditEstimate(null)}
+        editEstimate={editEstimate}
+        onCreate={handleCreateEstimate}
+        onUpdate={handleUpdateEstimate}
       />
 
       <ConfirmDialog

@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common/ModalWrapper'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/utils/formatters'
-import {
-  ESTIMATE_COMPANY,
-  computeEstimateTotals,
-  type EstimateRecord,
-} from '../estimateData'
+import { ESTIMATE_COMPANY, type EstimateLineItem, type EstimateRecord } from '../estimateData'
+
+function lineItemTotal(row: EstimateLineItem): number {
+  if (row.lineTotal != null && !Number.isNaN(row.lineTotal)) return row.lineTotal
+  return row.quantity * row.unitPrice
+}
 import { EstimateSignaturePad } from './EstimateSignaturePad'
 
 interface EstimatePreviewModalProps {
@@ -30,8 +31,12 @@ export function EstimatePreviewModal({
 
   if (!estimate) return null
 
-  const { subtotal, discountAmount, taxAmount, balanceDue } = computeEstimateTotals(estimate)
   const canSign = !readOnly && estimate.status === 'pending' && !!onSign
+  const apiTotalCost = estimate.grandTotal
+  const hasApiTotal =
+    estimate.grandTotal !== undefined &&
+    estimate.grandTotal !== null &&
+    !Number.isNaN(Number(apiTotalCost))
 
   const handleSigned = (dataUrl: string) => {
     onSign?.(estimate, dataUrl)
@@ -125,7 +130,7 @@ export function EstimatePreviewModal({
                       {formatCurrency(row.unitPrice)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums font-medium">
-                      {formatCurrency(row.quantity * row.unitPrice)}
+                      {formatCurrency(lineItemTotal(row))}
                     </td>
                   </tr>
                 ))}
@@ -135,28 +140,30 @@ export function EstimatePreviewModal({
 
           <div className="flex justify-end">
             <div className="w-full max-w-xs space-y-2 text-sm">
-              <div className="flex justify-between text-gray-600">
-                <span>{t('estimate.preview.subtotal')}</span>
-                <span className="tabular-nums font-medium">{formatCurrency(subtotal)}</span>
-              </div>
-              {estimate.discount && discountAmount > 0 && (
-                <div className="flex justify-between text-emerald-700">
-                  <span>
-                    {estimate.discount.label} ({estimate.discount.percent}%)
+              {hasApiTotal ? (
+                <div className="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-gray-900">
+                  <span>{t('estimate.preview.totalCost', 'Total cost')}</span>
+                  <span className="tabular-nums text-primary">
+                    {formatCurrency(Number(apiTotalCost))}
                   </span>
-                  <span className="tabular-nums">−{formatCurrency(discountAmount)}</span>
+                </div>
+              ) : (
+                <div className="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-gray-900">
+                  <span>{t('estimate.preview.balanceDue')}</span>
+                  <span className="tabular-nums text-primary">
+                    {formatCurrency(
+                      estimate.lineItems.reduce((sum, row) => sum + lineItemTotal(row), 0)
+                    )}
+                  </span>
                 </div>
               )}
-              <div className="flex justify-between text-gray-600">
-                <span>
-                  {t('estimate.preview.tax')} ({estimate.taxPercent}%)
-                </span>
-                <span className="tabular-nums">{formatCurrency(taxAmount)}</span>
-              </div>
-              <div className="flex justify-between border-t border-gray-200 pt-2 text-base font-bold text-gray-900">
-                <span>{t('estimate.preview.balanceDue')}</span>
-                <span className="tabular-nums text-primary">{formatCurrency(balanceDue)}</span>
-              </div>
+              {estimate.taxPercent > 0 && hasApiTotal && (
+                <p className="text-xs text-gray-500 text-right">
+                  {t('estimate.preview.taxIncludedNote', 'Tax {{percent}}% included in total', {
+                    percent: estimate.taxPercent,
+                  })}
+                </p>
+              )}
             </div>
           </div>
 

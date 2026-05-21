@@ -64,6 +64,8 @@ export interface EstimateLineItem {
   vehicleId?: string
   quantity: number
   unitPrice: number
+  /** Line total from API (`totalPrice`) when available */
+  lineTotal?: number
 }
 
 /** Default day rate when equipment has no project rate in admin */

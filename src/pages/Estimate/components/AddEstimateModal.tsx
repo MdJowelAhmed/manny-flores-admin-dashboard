@@ -27,7 +27,9 @@ import { EstimatePreviewModal } from './EstimatePreviewModal'
 interface AddEstimateModalProps {
   open: boolean
   onClose: () => void
+  editEstimate?: EstimateRecord | null
   onCreate: (item: EstimateRecord) => Promise<void>
+  onUpdate?: (item: EstimateRecord) => Promise<void>
 }
 
 type MaterialRow = {
@@ -78,7 +80,30 @@ function pickCatalog(catalogId: string, catalog: EstimateCatalogOption[]) {
   return { catalogId, name: item.name, unitPrice: String(item.unitPrice || '') }
 }
 
-export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalProps) {
+function parseIsoDate(iso?: string): Date | undefined {
+  if (!iso?.trim()) return undefined
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? undefined : d
+}
+
+function lineToMaterialRow(line: EstimateLineItem): MaterialRow {
+  return {
+    id: line.id,
+    catalogId: line.materialId ?? line.equipmentId ?? line.vehicleId ?? '',
+    name: line.name,
+    quantity: String(line.quantity),
+    unitPrice: String(line.unitPrice),
+  }
+}
+
+export function AddEstimateModal({
+  open,
+  onClose,
+  editEstimate = null,
+  onCreate,
+  onUpdate,
+}: AddEstimateModalProps) {
+  const isEdit = !!editEstimate
   const { t } = useTranslation()
   const { data: materialsResponse } = useGetMaterialsQuery({ page: 1, limit: 500 })
   const { data: equipmentResponse } = useGetEquipmentQuery({ page: 1, limit: 500 })
@@ -152,10 +177,41 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
     setPreviewOpen(false)
   }
 
+  const populateFromEstimate = (estimate: EstimateRecord) => {
+    setTitle(estimate.title)
+    setCustomerName(estimate.customerName)
+    setCustomerEmail(estimate.customerEmail)
+    setCustomerAddress(estimate.customerAddress)
+    setStartDate(parseIsoDate(estimate.rawEstimateStartDate))
+    setEndDate(parseIsoDate(estimate.rawEstimateEndDate))
+    setDescription(estimate.description)
+    setTaxPercent(String(estimate.taxPercent))
+    setDiscountEnabled(!!estimate.discount)
+    setDiscountLabel(estimate.discount?.label ?? 'First Responder Discount')
+    setDiscountPercent(String(estimate.discount?.percent ?? 5))
+
+    const matRows = estimate.lineItems
+      .filter((l) => l.lineType === 'material')
+      .map(lineToMaterialRow)
+    const eqRows = estimate.lineItems
+      .filter((l) => l.lineType === 'equipment')
+      .map(lineToMaterialRow)
+    const vehRows = estimate.lineItems
+      .filter((l) => l.lineType === 'vehicle')
+      .map(lineToMaterialRow)
+
+    setMaterials(matRows.length > 0 ? matRows : [emptyMaterialRow()])
+    setEquipment(eqRows.length > 0 ? eqRows : [emptyEquipmentRow()])
+    setVehicles(vehRows.length > 0 ? vehRows : [emptyVehicleRow()])
+    setPreviewDraft(null)
+    setPreviewOpen(false)
+  }
+
   useEffect(() => {
     if (!open) return
-    reset()
-  }, [open])
+    if (editEstimate) populateFromEstimate(editEstimate)
+    else reset()
+  }, [open, editEstimate])
 
   const lineItemsForCalc = useMemo((): EstimateLineItem[] => {
     const items: EstimateLineItem[] = []
@@ -228,7 +284,7 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
   const buildRecord = (): EstimateRecord | null => {
     if (!title.trim() || !customerName.trim() || lineItemsForCalc.length === 0) return null
     return {
-      id: makeId('est'),
+      id: editEstimate?.id ?? makeId('est'),
       title: title.trim(),
       customerName: customerName.trim(),
       customerEmail: customerEmail.trim(),
@@ -293,12 +349,21 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
     const record = buildRecord()
     if (!record) return
     try {
-      await onCreate(record)
-      toast({
-        title: t('estimate.createdSuccess'),
-        description: t('estimate.grandTotalHint', { amount: formatCurrency(totals.balanceDue) }),
-        variant: 'success',
-      })
+      if (isEdit && onUpdate) {
+        await onUpdate(record)
+        toast({
+          title: t('estimate.updatedSuccess', 'Estimate updated'),
+          description: t('estimate.grandTotalHint', { amount: formatCurrency(totals.balanceDue) }),
+          variant: 'success',
+        })
+      } else {
+        await onCreate(record)
+        toast({
+          title: t('estimate.createdSuccess'),
+          description: t('estimate.grandTotalHint', { amount: formatCurrency(totals.balanceDue) }),
+          variant: 'success',
+        })
+      }
       reset()
       onClose()
     } catch (error) {
@@ -316,8 +381,10 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
           reset()
           onClose()
         }}
-        title={t('estimate.addModalTitle')}
-        description={t('estimate.addModalDescription')}
+        title={isEdit ? t('estimate.editModalTitle', 'Edit estimate') : t('estimate.addModalTitle')}
+        description={
+          isEdit ? t('estimate.editModalDescription', 'Update estimate details.') : t('estimate.addModalDescription')
+        }
         size="full"
         className="max-w-4xl bg-white"
         footer={
@@ -340,7 +407,7 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
                 className="bg-primary text-white hover:bg-primary/90"
                 onClick={handleSave}
               >
-                {t('estimate.addSubmit')}
+                {isEdit ? t('common.save', 'Save') : t('estimate.addSubmit')}
               </Button>
             </div>
           </div>
