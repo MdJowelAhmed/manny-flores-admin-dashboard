@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Info, Lock, Plus, Trash2 } from 'lucide-react'
+import { Info, Plus, Trash2 } from 'lucide-react'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { Button } from '@/components/ui/button'
@@ -10,10 +10,18 @@ import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
+import {
+  useAddEstimateMutation,
+  useDeleteEstimateMutation,
+  useGetEstimatesQuery,
+  type EstimatePayload,
+  mapEstimateFromApi,
+} from '@/redux/api/estimateApi'
 import { EstimateItemModal } from './components/EstimateItemModal'
 import { AddEstimateModal } from './components/AddEstimateModal'
-import { MOCK_ESTIMATE_ITEMS, type EstimateRecord } from './estimateData'
+import { getProjectStatusClasses, type EstimateRecord } from './estimateData'
 import { runEstimateSignedWorkflow } from './estimateWorkflow'
+import { formatCurrency } from '@/utils/formatters'
 
 export default function EstimatePage() {
   const { t } = useTranslation()
@@ -21,8 +29,20 @@ export default function EstimatePage() {
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = parseInt(searchParams.get('limit') || '10', 10) || 10
 
-  const [items, setItems] = useState<EstimateRecord[]>(MOCK_ESTIMATE_ITEMS)
+  const [items, setItems] = useState<EstimateRecord[]>([])
   const [modalOpen, setModalOpen] = useState(false)
+  const { data: estimateData, isLoading } = useGetEstimatesQuery({
+    page: currentPage,
+    limit: itemsPerPage,
+  })
+  const [addEstimate] = useAddEstimateMutation()
+  const [deleteEstimate] = useDeleteEstimateMutation()
+
+  useEffect(() => {
+    if (!estimateData?.data) return
+    setItems(estimateData.data.map(mapEstimateFromApi))
+  }, [estimateData])
+
   const [selectedItem, setSelectedItem] = useState<EstimateRecord | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<EstimateRecord | null>(null)
   const [addOpen, setAddOpen] = useState(false)
@@ -31,25 +51,34 @@ export default function EstimatePage() {
   const userRole = (user?.role as UserRole) ?? UserRole.SUPER_ADMIN
   const canCreate = userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN
 
-  const setPage = (p: number) => {
-    const next = new URLSearchParams(searchParams)
-    p > 1 ? next.set('page', String(p)) : next.delete('page')
-    setSearchParams(next, { replace: true })
-  }
+  const setPage = useCallback(
+    (p: number) => {
+      const next = new URLSearchParams(searchParams)
+      p > 1 ? next.set('page', String(p)) : next.delete('page')
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
 
-  const setLimit = (l: number) => {
-    const next = new URLSearchParams(searchParams)
-    l !== 10 ? next.set('limit', String(l)) : next.delete('limit')
-    next.delete('page')
-    setSearchParams(next, { replace: true })
-  }
+  const setLimit = useCallback(
+    (l: number) => {
+      const next = new URLSearchParams(searchParams)
+      l !== 10 ? next.set('limit', String(l)) : next.delete('limit')
+      next.delete('page')
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
 
-  const totalItems = items.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage))
+  const totalItems = estimateData?.pagination?.total ?? 0
+  const totalPages = Math.max(
+    1,
+    estimateData?.pagination?.totalPage ?? Math.ceil(Math.max(totalItems, 1) / itemsPerPage)
+  )
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
-  }, [totalPages, currentPage])
+  }, [totalPages, currentPage, setPage])
 
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
@@ -66,18 +95,74 @@ export default function EstimatePage() {
     setSelectedItem(null)
   }
 
-  const handleLock = () => {
-    toast({
-      title: t('estimate.lockNotice'),
-      variant: 'info',
-    })
-  }
+
 
   const confirmDelete = () => {
     if (!deleteTarget) return
-    setItems((prev) => prev.filter((row) => row.id !== deleteTarget.id))
-    setDeleteTarget(null)
-    toast({ title: t('estimate.deletedSuccess'), variant: 'success' })
+    deleteEstimate(deleteTarget.id)
+      .unwrap()
+      .then(() => {
+        setItems((prev) => prev.filter((row) => row.id !== deleteTarget.id))
+        toast({ title: t('estimate.deletedSuccess'), variant: 'success' })
+      })
+      .catch((err: unknown) => {
+        const message =
+          (err as { data?: { message?: string } })?.data?.message ?? t('common.somethingWentWrong')
+        toast({ title: t('common.error'), description: message, variant: 'destructive' })
+      })
+      .finally(() => setDeleteTarget(null))
+  }
+
+  const buildPayload = (item: EstimateRecord): EstimatePayload => {
+    const materials = item.lineItems
+      .filter((x) => x.lineType === 'material' && x.materialId)
+      .map((x) => ({
+        materialId: x.materialId as string,
+        quantity: Number(x.quantity) || 0,
+        unitPrice: Number(x.unitPrice) || 0,
+        totalPrice: (Number(x.quantity) || 0) * (Number(x.unitPrice) || 0),
+      }))
+
+    const equipment = item.lineItems
+      .filter((x) => x.lineType === 'equipment' && x.equipmentId)
+      .map((x) => ({
+        equipmentId: x.equipmentId as string,
+        equipmentUnits: Number(x.quantity) || 0,
+        unitPrice: Number(x.unitPrice) || 0,
+      }))
+
+    const vehicles = item.lineItems
+      .filter((x) => x.lineType === 'vehicle' && x.vehicleId)
+      .map((x) => {
+        const vehicleUnits = Number(x.quantity) || 1
+        const unitPrice = Number(x.unitPrice) || 0
+        return {
+          vehicleId: x.vehicleId as string,
+          vehicleUnits,
+          totalPrice: vehicleUnits * unitPrice,
+        }
+      })
+
+    return {
+      projectName: item.title,
+      customerName: item.customerName,
+      customerEmail: item.customerEmail,
+      customerAddress: item.customerAddress,
+      estimateStartDate: item.rawEstimateStartDate ?? new Date().toISOString(),
+      estimateEndDate: item.rawEstimateEndDate ?? new Date().toISOString(),
+      description: item.description,
+      taxNumber: Number(item.taxPercent) || 0,
+      materials,
+      equipment,
+      vehicles,
+    }
+  }
+
+  const handleCreateEstimate = async (item: EstimateRecord) => {
+    const payload = buildPayload(item)
+    await addEstimate(payload).unwrap()
+    setItems((prev) => [item, ...prev])
+    setPage(1)
   }
 
   const handleSignEstimate = (estimate: EstimateRecord, signatureDataUrl: string) => {
@@ -127,10 +212,13 @@ export default function EstimatePage() {
                 <th className="px-5 py-4 font-bold text-gray-800">
                   {t('estimate.table.projectName')}
                 </th>
+                
+                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.clientName')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.location')}</th>
+                
+                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.totalCost')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.startDate')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.endDate')}</th>
-                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.payment')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.status')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800 text-right w-[140px]">
                   {t('estimate.table.action')}
@@ -138,46 +226,34 @@ export default function EstimatePage() {
               </tr>
             </thead>
             <tbody>
-              {paginatedItems.map((row) => (
+              {paginatedItems.map((row) => {
+                const statusStyle = getProjectStatusClasses(row.projectStatus)
+                return (
                 <tr
                   key={row.id}
                   className="border-t border-gray-200 bg-white hover:bg-gray-50/60 transition-colors"
                 >
-                  <td className="px-5 py-4 text-gray-900 align-middle">{row.title}</td>
+                  <td className="px-5 py-4 text-gray-900 align-middle">{row.title.slice(0, 30)}...</td>
+                  
+                  <td className="px-5 py-4 text-gray-700 align-middle">{row.customerName}</td>
                   <td className="px-5 py-4 text-gray-700 align-middle">{row.location}</td>
+                  <td className="px-5 py-4 text-gray-700 align-middle">{formatCurrency(row.grandTotal ?? 0)}</td>
                   <td className="px-5 py-4 text-gray-700 align-middle whitespace-nowrap">
                     {row.deadlineFrom}
                   </td>
                   <td className="px-5 py-4 text-gray-700 align-middle whitespace-nowrap">
                     {row.deadlineTo}
                   </td>
-                  <td className="px-5 py-4 text-gray-700 align-middle">{row.paymentMethod}</td>
+          
                   <td className="px-5 py-4 align-middle">
                     <span
                       className={cn(
                         'inline-flex items-center gap-2 font-medium',
-                        row.status === 'signed'
-                          ? 'text-blue-600'
-                          : row.status === 'reviewed'
-                            ? 'text-emerald-600'
-                            : 'text-orange-500'
+                        statusStyle.text
                       )}
                     >
-                      <span
-                        className={cn(
-                          'h-2 w-2 shrink-0 rounded-full',
-                          row.status === 'signed'
-                            ? 'bg-blue-500'
-                            : row.status === 'reviewed'
-                              ? 'bg-emerald-500'
-                              : 'bg-orange-500'
-                        )}
-                      />
-                      {row.status === 'signed'
-                        ? t('estimate.status.signed')
-                        : row.status === 'reviewed'
-                          ? t('estimate.status.reviewed')
-                          : t('estimate.status.pending')}
+                      <span className={cn('h-2 w-2 shrink-0 rounded-full', statusStyle.dot)} />
+                      {t(`estimate.projectStatus.${row.projectStatus}`)}
                     </span>
                   </td>
                   <td className="px-5 py-4 align-middle">
@@ -196,20 +272,7 @@ export default function EstimatePage() {
                         </TooltipTrigger>
                         <TooltipContent>{t('estimate.actions.details')}</TooltipContent>
                       </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9 text-gray-600 hover:text-gray-900"
-                            onClick={handleLock}
-                          >
-                            <Lock className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{t('estimate.actions.lock')}</TooltipContent>
-                      </Tooltip>
+                    
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -227,7 +290,14 @@ export default function EstimatePage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
+              {!isLoading && paginatedItems.length === 0 && (
+                <tr>
+                  <td className="px-5 py-8 text-center text-gray-500" colSpan={7}>
+                    {t('common.noDataFound')}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -254,10 +324,7 @@ export default function EstimatePage() {
       <AddEstimateModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onCreate={(item) => {
-          setItems((prev) => [item, ...prev])
-          setPage(1)
-        }}
+        onCreate={handleCreateEstimate}
       />
 
       <ConfirmDialog

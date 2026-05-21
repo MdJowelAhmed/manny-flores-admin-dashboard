@@ -45,7 +45,7 @@ export function EstimatePreviewModal({
       onClose={onClose}
       title={t('estimate.preview.title')}
       size="full"
-      className="max-w-3xl bg-white"
+      className="max-w-4xl bg-white"
       footer={
         <div className="flex flex-wrap gap-2 justify-end">
           <Button type="button" variant="outline" onClick={onClose}>

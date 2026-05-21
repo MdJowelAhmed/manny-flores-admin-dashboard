@@ -1037,9 +1037,10 @@
     "table": {
       "projectName": "Project Name",
       "location": "Location",
+      "clientName": "Client Name",
       "startDate": "Start Date",
       "endDate": "End Date",
-      "payment": "Payment",
+      "totalCost": "Total Cost",
       "status": "Status",
       "action": "Action"
     },
@@ -1047,6 +1048,13 @@
       "reviewed": "Reviewed",
       "pending": "Pending",
       "signed": "Signed"
+    },
+    "projectStatus": {
+      "PENDING": "Pending",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "SCHEDULED": "Scheduled",
+      "CANCELLED": "Cancelled"
     },
     "actions": {
       "details": "View estimate",

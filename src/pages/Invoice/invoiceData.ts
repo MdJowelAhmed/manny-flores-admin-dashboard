@@ -1,3 +1,5 @@
+import type { EstimateProjectStatus } from '@/pages/Estimate/estimateData'
+
 export type InvoiceUnitSuffix = 'sqft' | 'hr' | 'day' | 'unit'
 
 export interface InvoiceLineItem {
@@ -11,12 +13,22 @@ export interface InvoiceLineItem {
 export interface InvoiceRecord {
   id: string
   customerName: string
+  customerEmail?: string
   customerAddress: string
+  projectName?: string
   invoiceRef: string
   issuedDate: string
   dueDate: string
+  issuedDateDisplay?: string
+  dueDateDisplay?: string
   taxPercent: number
   lineItems: InvoiceLineItem[]
+  totalCost?: number | null
+  projectStatus?: EstimateProjectStatus
+  description?: string
+  isApproved?: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 export function computeInvoiceTotals(invoice: InvoiceRecord) {
@@ -25,7 +37,9 @@ export function computeInvoiceTotals(invoice: InvoiceRecord) {
     0
   )
   const taxAmount = subtotal * (invoice.taxPercent / 100)
-  const totalDue = subtotal + taxAmount
+  const calculatedTotal = subtotal + taxAmount
+  const totalDue =
+    invoice.totalCost != null && invoice.totalCost > 0 ? invoice.totalCost : calculatedTotal
   return { subtotal, taxAmount, totalDue }
 }
 

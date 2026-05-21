@@ -34,13 +34,16 @@ export function InvoiceDetailsModal({ open, onClose, invoice }: InvoiceDetailsMo
   if (!invoice) return null
 
   const { subtotal, taxAmount, totalDue } = computeInvoiceTotals(invoice)
+  const issuedLabel =
+    invoice.issuedDateDisplay ?? formatDate(invoice.issuedDate, 'MMMM d, yyyy')
+  const dueLabel = invoice.dueDateDisplay ?? formatDate(invoice.dueDate, 'MMMM d, yyyy')
 
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
       title={t('invoice.detailModalTitle')}
-      description={`${invoice.invoiceRef} · ${invoice.customerName}`}
+      description={`${invoice.invoiceRef} · ${invoice.projectName ?? invoice.customerName}`}
       size="full"
       className="bg-white text-gray-900"
       footer={
@@ -58,7 +61,13 @@ export function InvoiceDetailsModal({ open, onClose, invoice }: InvoiceDetailsMo
               {t('invoice.customerDetails')}
             </p>
             <p className="text-2xl font-bold text-gray-900">{invoice.customerName}</p>
+            {invoice.customerEmail && (
+              <p className="mt-1 text-sm text-gray-600">{invoice.customerEmail}</p>
+            )}
             <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-md">{invoice.customerAddress}</p>
+            {invoice.description?.trim() && (
+              <p className="mt-3 text-sm text-gray-600">{invoice.description}</p>
+            )}
           </div>
           <div className="lg:text-right">
             <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-2">
@@ -68,11 +77,11 @@ export function InvoiceDetailsModal({ open, onClose, invoice }: InvoiceDetailsMo
             <div className="mt-4 space-y-1 text-sm text-gray-500">
               <p>
                 {t('invoice.issued')}:{' '}
-                <span className="text-gray-700">{formatDate(invoice.issuedDate, 'MMMM d, yyyy')}</span>
+                <span className="text-gray-700">{issuedLabel}</span>
               </p>
               <p>
                 {t('invoice.dueDate')}:{' '}
-                <span className="text-gray-700">{formatDate(invoice.dueDate, 'MMMM d, yyyy')}</span>
+                <span className="text-gray-700">{dueLabel}</span>
               </p>
             </div>
           </div>

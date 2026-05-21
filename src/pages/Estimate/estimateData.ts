@@ -4,6 +4,49 @@ import { mockVehiclesData } from '@/pages/VehicleMaintenance/vehicleMaintenanceD
 
 export type EstimateStatus = 'pending' | 'reviewed' | 'signed'
 
+export type EstimateProjectStatus =
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'SCHEDULED'
+  | 'CANCELLED'
+
+export const ESTIMATE_PROJECT_STATUSES: EstimateProjectStatus[] = [
+  'PENDING',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'SCHEDULED',
+  'CANCELLED',
+]
+
+export function normalizeProjectStatus(value?: string): EstimateProjectStatus {
+  const upper = (value ?? 'PENDING').toUpperCase()
+  if (ESTIMATE_PROJECT_STATUSES.includes(upper as EstimateProjectStatus)) {
+    return upper as EstimateProjectStatus
+  }
+  return 'PENDING'
+}
+
+export function getProjectStatusClasses(status: EstimateProjectStatus): {
+  text: string
+  dot: string
+} {
+  switch (status) {
+    case 'PENDING':
+      return { text: 'text-orange-500', dot: 'bg-orange-500' }
+    case 'IN_PROGRESS':
+      return { text: 'text-blue-600', dot: 'bg-blue-500' }
+    case 'COMPLETED':
+      return { text: 'text-emerald-600', dot: 'bg-emerald-500' }
+    case 'SCHEDULED':
+      return { text: 'text-violet-600', dot: 'bg-violet-500' }
+    case 'CANCELLED':
+      return { text: 'text-red-600', dot: 'bg-red-500' }
+    default:
+      return { text: 'text-gray-500', dot: 'bg-gray-400' }
+  }
+}
+
 export type EstimateLineType = 'material' | 'equipment' | 'vehicle' | 'custom'
 
 export interface EstimateCatalogOption {
@@ -46,12 +89,16 @@ export interface EstimateRecord {
   paymentMethod: string
   description: string
   status: EstimateStatus
+  projectStatus: EstimateProjectStatus
   lineItems: EstimateLineItem[]
   taxPercent: number
   discount: EstimateDiscount | null
   signedAt?: string
   signatureDataUrl?: string
   invoiceRef?: string
+  rawEstimateStartDate?: string
+  rawEstimateEndDate?: string
+  grandTotal?: number
 }
 
 /** @deprecated Use EstimateRecord */
@@ -146,6 +193,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     description:
       'Complete lawn mowing for Section A, edge trimming along walkways, and debris removal.',
     status: 'pending',
+    projectStatus: 'PENDING',
     lineItems: [
       { id: 'li-1', name: 'Topsoil', materialId: 'mat-1', quantity: 40, unitPrice: 10 },
       { id: 'li-2', name: 'Labor — planting', quantity: 8, unitPrice: 65 },
@@ -165,6 +213,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     paymentMethod: 'Google pay',
     description: 'Artificial turf install with edging and infill.',
     status: 'signed',
+    projectStatus: 'IN_PROGRESS',
     lineItems: [
       { id: 'li-3', name: 'Artificial turf installation', quantity: 900, unitPrice: 8.5 },
       { id: 'li-4', name: 'Mulch', materialId: 'mat-2', quantity: 20, unitPrice: 8 },
@@ -186,6 +235,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     paymentMethod: 'Bank transfer',
     description: 'Soil preparation, mulching, and seasonal planting.',
     status: 'pending',
+    projectStatus: 'PENDING',
     lineItems: [{ id: 'li-5', name: 'Mulch bed preparation', quantity: 1, unitPrice: 2400 }],
     taxPercent: 8.25,
     discount: null,
@@ -202,6 +252,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     paymentMethod: 'Card',
     description: 'Inspect drip lines and controller zones.',
     status: 'reviewed',
+    projectStatus: 'IN_PROGRESS',
     lineItems: [{ id: 'li-6', name: 'Irrigation labor', quantity: 6, unitPrice: 85 }],
     taxPercent: 10,
     discount: null,
@@ -218,6 +269,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     paymentMethod: 'Paypal',
     description: 'Safety pruning and disposal of cuttings.',
     status: 'pending',
+    projectStatus: 'SCHEDULED',
     lineItems: [{ id: 'li-7', name: 'Tree pruning', quantity: 1, unitPrice: 3200 }],
     taxPercent: 8.25,
     discount: null,
@@ -234,6 +286,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     paymentMethod: 'Google pay',
     description: 'Spread organic mulch in designated beds.',
     status: 'reviewed',
+    projectStatus: 'COMPLETED',
     lineItems: [{ id: 'li-8', name: 'Mulch', materialId: 'mat-2', quantity: 60, unitPrice: 8 }],
     taxPercent: 8.25,
     discount: { label: 'HOA member discount', percent: 3 },

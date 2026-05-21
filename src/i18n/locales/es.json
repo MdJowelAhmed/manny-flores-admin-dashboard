@@ -952,9 +952,10 @@
     "table": {
       "projectName": "Nombre del proyecto",
       "location": "Ubicación",
+      "clientName": "Nombre del cliente",
       "startDate": "Fecha de inicio",
       "endDate": "Fecha de fin",
-      "payment": "Pago",
+      "totalCost": "Costo total",
       "status": "Estado",
       "action": "Acción"
     },
@@ -962,6 +963,13 @@
       "reviewed": "Revisado",
       "pending": "Pendiente",
       "signed": "Firmado"
+    },
+    "projectStatus": {
+      "PENDING": "Pendiente",
+      "IN_PROGRESS": "En progreso",
+      "COMPLETED": "Completado",
+      "SCHEDULED": "Programado",
+      "CANCELLED": "Cancelado"
     },
     "actions": {
       "details": "Ver estimación",
