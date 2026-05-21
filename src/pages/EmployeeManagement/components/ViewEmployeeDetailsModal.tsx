@@ -2,6 +2,7 @@ import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import type { Employee } from '@/types'
 import { cn } from '@/utils/cn'
+import moment from 'moment'
 
 interface ViewEmployeeDetailsModalProps {
   open: boolean
@@ -85,10 +86,10 @@ export function ViewEmployeeDetailsModal({
         {/* Organizational Details */}
         <div className="p-4 bg-white rounded-lg space-y-2">
           <h3 className="text-sm font-bold text-foreground mb-3">Organizational Details</h3>
-          <DetailRow label="Joining Date" value={employee.joiningDate} />
+          <DetailRow label="Joining Date" value={employee.joiningDate ? moment(employee.joiningDate).format('DD MMM, YYYY') : '-'} />
           <DetailRow label="Department" value={employee.department} />
           <DetailRow label="Role" value={employee.role} />
-          <DetailRow label="Work Schedule" value={employee.workSchedule} />
+          <DetailRow label="Work Schedule" value={employee.workSchedule ? moment(employee.workSchedule).format('DD MMM, YYYY') : 'N/A'} />
         </div>
 
         {/* Project Details */}
