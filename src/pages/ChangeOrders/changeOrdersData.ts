@@ -2,34 +2,53 @@ import { FileText, Info, DollarSign } from 'lucide-react'
 
 export type ChangeOrderStatus = 'Pending' | 'Approved'
 
-export interface ChangeOrderAttachment {
-  name: string
-}
-
 export interface ChangeOrder {
   id: string
-  orderId: string
-  customerName: string
-  /** Shown under customer name on card (e.g. Lawn Care Package) */
-  serviceType: string
-  projectName: string
   projectId: string
-  siteAddress: string
-  company: string
-  contactNumber: string
+  userId: string
+  reasonForChange: string
+  description: string
   originalCost: number
   additionalCost: number
-  newTotal: number
-  requestDate: string
-  status: ChangeOrderStatus
-  projectStartDate: string
-  amountSpent: number
-  totalBudget: number
-  duration: string
-  remaining: number
-  email: string
-  reasonForChange: string
-  attachments: ChangeOrderAttachment[]
+  totalCost: number
+  documentation: string[]
+  createdAt: string
+  updatedAt: string
+  project?: {
+    id: string
+    estimateId: string
+    invoiceWithSignaturesId?: string
+    status: string
+    clientId: string
+    createdAt: string
+    updatedAt: string
+    estimates?: {
+      projectName?: string
+      clientName?: string
+      phone?: string
+      email?: string
+      company?: string
+      siteAddress?: string
+    }
+  }
+  // Legacy / derived properties for backward compatibility during transition
+  orderId?: string
+  customerName?: string
+  serviceType?: string
+  projectName?: string
+  siteAddress?: string
+  company?: string
+  contactNumber?: string
+  newTotal?: number
+  requestDate?: string
+  status?: string
+  projectStartDate?: string
+  amountSpent?: number
+  totalBudget?: number
+  duration?: string
+  remaining?: number
+  email?: string
+  attachments?: { name: string }[]
 }
 
 export const changeOrderStats = [
@@ -80,55 +99,3 @@ export const changeReasonOptions = [
   { value: 'client_request', labelKey: 'changeOrders.reasonClientRequest' as const },
 ]
 
-export const mockChangeOrders: ChangeOrder[] = [
-  {
-    id: 'co-1',
-    orderId: 'CO-2026-012',
-    customerName: 'Mike Johnson',
-    serviceType: 'Lawn Care Package',
-    projectName: 'Residential Backyard Renovation',
-    projectId: 'PRJ-8821',
-    siteAddress: '23 Maple Ave, Springfield',
-    company: 'Johnson Outdoor Services',
-    contactNumber: '+1 (555) 014-2201',
-    originalCost: 45000,
-    additionalCost: 8500,
-    newTotal: 53500,
-    requestDate: 'Feb 18, 2026',
-    status: 'Pending',
-    projectStartDate: 'January 15, 2026',
-    amountSpent: 28500,
-    totalBudget: 45000,
-    duration: '8 weeks',
-    remaining: 16500,
-    email: 'mike.johnson@email.com',
-    reasonForChange:
-      'Customer requested to expand patio area during site visit on Feb 16, 2026. Additional space needed for outdoor dining furniture and built-in grill station.',
-    attachments: [{ name: 'patio_sketch.png' }, { name: 'site_photo_1.jpg' }],
-  },
-  {
-    id: 'co-2',
-    orderId: 'CO-2026-011',
-    customerName: 'John Smith',
-    serviceType: 'Lawn Care Package',
-    projectName: 'Residential Backyard Renovation',
-    projectId: 'PRJ-8820',
-    siteAddress: '45 Oak St, Springfield',
-    company: 'Smith Home Improvements',
-    contactNumber: '+1 (555) 014-8890',
-    originalCost: 45000,
-    additionalCost: 8500,
-    newTotal: 53500,
-    requestDate: 'Feb 18, 2026',
-    status: 'Approved',
-    projectStartDate: 'January 15, 2026',
-    amountSpent: 28500,
-    totalBudget: 45000,
-    duration: '8 weeks',
-    remaining: 16500,
-    email: 'john.smith@email.com',
-    reasonForChange:
-      'Customer requested to expand patio area during site visit on Feb 16, 2026. Additional space needed for outdoor dining furniture and built-in grill station.',
-    attachments: [{ name: 'patio_sketch.png' }],
-  },
-]
