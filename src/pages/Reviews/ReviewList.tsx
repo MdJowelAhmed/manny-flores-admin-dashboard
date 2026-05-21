@@ -5,14 +5,21 @@ import { RefreshCw, Smartphone, Bell, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { ReviewCard } from './components/ReviewCard'
-import { FollowUpModal } from './components/FollowUpModal'
-import { mockReviewsData, reviewPlatformStats } from './reviewData'
-import type { Review } from '@/types'
 import { toast } from '@/utils/toast'
 import { cn } from '@/utils/cn'
 
+import {
+  useAllReviewsQuery,
+  useUpdateReviewsMutation,
+  useReviewOverviewQuery,
+} from '@/redux/slices/super-admin/reviewApi'
+
+/* =========================
+   Automation Banner
+========================= */
 function AutomationBanner() {
   const { t } = useTranslation()
+
   return (
     <div
       className={cn(
@@ -25,10 +32,15 @@ function AutomationBanner() {
           <RefreshCw className="h-5 w-5 text-primary" />
         </div>
         <div className="min-w-0">
-          <p className="font-semibold text-foreground">{t('reviews.automationTriggerActive')}</p>
-          <p className="text-sm text-muted-foreground mt-0.5">{t('reviews.automationTriggerDesc')}</p>
+          <p className="font-semibold text-foreground">
+            {t('reviews.automationTriggerActive')}
+          </p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {t('reviews.automationTriggerDesc')}
+          </p>
         </div>
       </div>
+
       <Button
         type="button"
         variant="outline"
@@ -41,60 +53,110 @@ function AutomationBanner() {
   )
 }
 
+/* =========================
+   MAIN PAGE
+========================= */
 export default function ReviewList() {
   const { t } = useTranslation()
-  const [reviews, setReviews] = useState<Review[]>(mockReviewsData)
+
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null)
+  const [reviewToAction, setReviewToAction] = useState<any>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [followUpReview, setFollowUpReview] = useState<Review | null>(null)
 
-  const queueReviews = useMemo(() => reviews.filter((r) => r.status !== 'Rejected'), [reviews])
+  /* =========================
+     API CALLS
+  ========================= */
+  const { data: reviewsData, isLoading } = useAllReviewsQuery({
+    page: '1',
+    limit: '10',
+  })
 
-  const stats = useMemo(() => {
-    const pending = reviews.filter((r) => r.status === 'Pending').length
-    const rated = reviews.filter((r) => r.rating > 0)
-    const avg =
-      rated.length > 0
-        ? rated.reduce((s, r) => s + r.rating, 0) / rated.length
-        : 4.4
-    return {
-      pendingApproval: pending,
-      publishedGoogle: reviewPlatformStats.publishedGoogle,
-      internalOnly: reviewPlatformStats.internalOnly,
-      avgRating: Math.round(avg * 10) / 10,
-    }
+  const { data: overview } = useReviewOverviewQuery()
+
+  const [updateReviews] = useUpdateReviewsMutation()
+
+  /* =========================
+     NORMALIZE DATA
+  ========================= */
+  const reviews = useMemo(() => {
+    return reviewsData?.data || []
+  }, [reviewsData])
+
+  const queueReviews = useMemo(() => {
+    return reviews.filter((r: any) => r.reviewStatus !== 'REJECTED')
   }, [reviews])
 
-  const handleApprovePush = (review: Review) => {
-    setReviews((prev) =>
-      prev.map((r) => (r.id === review.id ? { ...r, status: 'Approved' as const } : r))
-    )
-    toast({
-      variant: 'success',
-      title: t('reviews.approvePushSuccess'),
-      description: t('reviews.approvePushDesc', { name: review.customerName }),
-    })
+  console.log(queueReviews)
+
+  /* =========================
+     STATS FROM API
+  ========================= */
+  const stats = useMemo(() => {
+    return {
+      pendingApproval: overview?.data?.pendingReviews || 0,
+      publishedGoogle: overview?.data?.approvedReviews || 0,
+      internalOnly: overview?.data?.rejectedReviews || 0,
+      avgRating: overview?.data?.averageRating || 0,
+    }
+  }, [overview])
+
+  /* =========================
+     APPROVE
+  ========================= */
+  const handleApprovePush = async (review: any) => {
+    try {
+      await updateReviews({
+        id: review.id,
+        body: { reviewStatus: 'APPROVED' },
+      }).unwrap()
+
+      toast({
+        variant: 'success',
+        title: 'Review Approved',
+        description: `${review.user?.name} approved successfully`,
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.data?.message || 'Failed to approve',
+        variant: 'destructive',
+      })
+    }
   }
 
-  const handleRejectClick = (review: Review) => {
-    setReviewToDelete(review)
+  /* =========================
+     REJECT
+  ========================= */
+  const handleRejectClick = (review: any) => {
+    setReviewToAction(review)
     setIsConfirmOpen(true)
   }
 
   const handleConfirmReject = async () => {
-    if (!reviewToDelete) return
+    if (!reviewToAction) return
+
     setIsDeleting(true)
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      setReviews((prev) => prev.filter((r) => r.id !== reviewToDelete.id))
+      await updateReviews({
+        id: reviewToAction.id,
+        body: { reviewStatus: 'REJECTED' },
+      }).unwrap()
+
       toast({
         variant: 'success',
-        title: t('reviews.rejectedInternalTitle'),
-        description: t('reviews.rejectedInternalDesc', { name: reviewToDelete.customerName }),
+        title: 'Review Rejected',
+        description: `${reviewToAction.user?.name} rejected`,
       })
+
       setIsConfirmOpen(false)
-      setReviewToDelete(null)
+      setReviewToAction(null)
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.data?.message || 'Failed to reject',
+        variant: 'destructive',
+      })
     } finally {
       setIsDeleting(false)
     }
@@ -108,133 +170,146 @@ export default function ReviewList() {
     })
   }
 
+  /* =========================
+     LOADING
+  ========================= */
+  if (isLoading) {
+    return (
+      <div className="p-10 text-center text-muted-foreground">
+        Loading reviews...
+      </div>
+    )
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6 min-h-[60vh] -mx-4 sm:mx-0"
+      className="space-y-6 min-h-[60vh]"
     >
+      {/* =========================
+          BANNER
+      ========================= */}
       <AutomationBanner />
 
+      {/* =========================
+          STATS
+      ========================= */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {(
-          [
-            { key: 'pendingApproval', value: stats.pendingApproval, isRating: false },
-            { key: 'publishedGoogle', value: stats.publishedGoogle, isRating: false },
-            { key: 'internalOnly', value: stats.internalOnly, isRating: false },
-            { key: 'avgRating', value: stats.avgRating, isRating: true },
-          ] as const
-        ).map((item, index) => (
-          <motion.div
-            key={item.key}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.04 * index }}
-            className="rounded-xl border border-gray-200/90 bg-white p-5 shadow-sm"
+        {[
+          { label: 'Pending', value: stats.pendingApproval },
+          { label: 'Approved', value: stats.publishedGoogle },
+          { label: 'Rejected', value: stats.internalOnly },
+          { label: 'Avg Rating', value: stats.avgRating.toFixed(1) },
+        ].map((item, i) => (
+          <div
+            key={i}
+            className="rounded-xl border bg-white p-5 shadow-sm"
           >
-            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              {t(`reviews.stat.${item.key}`)}
+            <p className="text-xs text-muted-foreground uppercase">
+              {item.label}
             </p>
-            <p className="text-2xl font-bold text-foreground mt-2 tabular-nums">
-              {item.isRating ? Number(item.value).toFixed(1) : item.value}
+            <p className="text-2xl font-bold mt-2">
+              {item.value}
             </p>
-          </motion.div>
+          </div>
         ))}
       </div>
 
-      {/* <AutomationBanner /> */}
-
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+      {/* =========================
+          TITLE
+      ========================= */}
+      <div className="flex items-center gap-3">
+        <h1 className="text-xl font-bold">
           {t('reviews.approvalQueueTitle')}
         </h1>
-        <span className="text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-md bg-amber-100 text-amber-800">
-          {t('reviews.actionRequired')}
-        </span>
       </div>
 
+      {/* =========================
+          REVIEWS
+      ========================= */}
       <div className="space-y-4">
         {queueReviews.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-200 bg-white/80 py-16 text-center text-muted-foreground text-sm">
-            {t('reviews.noReviewsFound')}
+          <div className="text-center py-10 text-muted-foreground">
+            No reviews found
           </div>
         ) : (
-          queueReviews.map((review, index) => (
+          queueReviews.map((review: any, index: number) => (
             <motion.div
               key={review.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.04 * index }}
+              transition={{ delay: 0.03 * index }}
             >
               <ReviewCard
-                review={review}
-                onApprovePush={() => handleApprovePush(review)}
-                onRejectInternal={() => handleRejectClick(review)}
-                onFollowUp={() => setFollowUpReview(review)}
+                review={{
+                  id: review.id,
+                  customerName: review.user?.name,
+                  avatarUrl: review.user?.profilePicture,
+                  rating: review.rating,
+                  feedback: review.feedback,
+                  reviewDate: new Date(
+                    review.createdAt
+                  ).toLocaleDateString(),
+                  status: review.reviewStatus,
+                  projectId: review.projectId,
+                }}
+                onApprovePush={() =>
+                  handleApprovePush(review)
+                }
+                onRejectInternal={() =>
+                  handleRejectClick(review)
+                }
               />
             </motion.div>
           ))
         )}
       </div>
 
+      {/* =========================
+          EXTRA SECTION
+      ========================= */}
       <div className="grid gap-4 lg:grid-cols-2 pt-2">
-        <div className="rounded-xl bg-slate-900 text-white p-5 sm:p-6 shadow-md border border-slate-800">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex gap-3 w-full">
-              <div className="h-11 w-11 rounded-lg bg-blue-500/20 flex items-center justify-center text-lg font-bold text-blue-300">
-                <Search className="h-5 w-5 text-blue-300" />
-              </div>
-              <div className="flex justify-between items-center w-full">
-                <h3 className="font-semibold text-white">{t('reviews.gmbTitle')}</h3>
-                <span className="inline-block mt-2 text-xs font-bold px-2 py-1 rounded bg-primary text-white">
-                  {t('reviews.gmbConnected')}
-                </span>
-              </div>
-            </div>
+        <div className="rounded-xl bg-slate-900 text-white p-5">
+          <div className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-blue-300" />
+            <h3 className="font-semibold">
+              Google Business Reviews
+            </h3>
           </div>
-          <p className="text-sm text-slate-300 mt-4 leading-relaxed">{t('reviews.gmbDescription')}</p>
         </div>
 
-        <div className="rounded-xl border border-gray-200/90 bg-white p-5 sm:p-6 shadow-sm">
-          <div className="flex gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-              <Bell className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">{t('reviews.notificationAlerts')}</h3>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                {t('reviews.notificationAlertsDesc')}
-              </p>
-            </div>
+        <div className="rounded-xl border bg-white p-5">
+          <div className="flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">
+              Notification Alerts
+            </h3>
           </div>
+
           <Button
-            type="button"
-            variant="outline"
-            className="w-full mt-5 rounded-lg border-primary text-primary hover:bg-primary/5"
+            className="w-full mt-4"
             onClick={handleConfigureRecipients}
           >
-            {t('reviews.configureRecipients')}
+            Configure
           </Button>
         </div>
       </div>
 
-      <FollowUpModal
-        open={!!followUpReview}
-        onClose={() => setFollowUpReview(null)}
-        review={followUpReview}
-      />
-
+      {/* =========================
+          CONFIRM
+      ========================= */}
       <ConfirmDialog
         open={isConfirmOpen}
         onClose={() => {
           setIsConfirmOpen(false)
-          setReviewToDelete(null)
+          setReviewToAction(null)
         }}
         onConfirm={handleConfirmReject}
-        title={t('reviews.rejectInternal')}
-        description={t('reviews.rejectInternalConfirm', { name: reviewToDelete?.customerName ?? '' })}
-        confirmText={t('reviews.reject')}
+        title="Reject Review"
+        description={`Are you sure you want to reject ${reviewToAction?.user?.name}?`}
+        confirmText="Reject"
         variant="danger"
         isLoading={isDeleting}
       />
