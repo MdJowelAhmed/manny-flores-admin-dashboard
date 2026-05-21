@@ -37,13 +37,10 @@ export const departmentOptions: SelectOption[] = [
   { value: 'IT', label: 'IT' },
 ]
 
-export const roleOptions: SelectOption[] = [
-  { value: 'Project Manager', label: 'Project Manager' },
-  { value: 'Worker', label: 'Worker' },
-  { value: 'Supervisor', label: 'Supervisor' },
-  { value: 'Developer', label: 'Developer' },
+export const roleOptions = [
+  { label: 'Employee', value: 'EMPLOYEE' },
+  { label: 'Super Admin', value: 'SUPER_ADMIN' },
 ]
-
 export const mockEmployeesData: Employee[] = [
   {
     id: 'emp-1',

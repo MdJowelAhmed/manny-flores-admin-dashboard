@@ -66,9 +66,9 @@ export default function AttendanceDetail() {
   }, [singleAttendance])
 
   const employeeName = records[0]?.employee || 'Employee'
-  console.log('Mapped Attendance Records:', records[0]?.profile)
+  
   const profile = getImageUrl(records[0]?.profile || '')
-
+console.log('Mapped Attendance Records:',profile)
   const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
