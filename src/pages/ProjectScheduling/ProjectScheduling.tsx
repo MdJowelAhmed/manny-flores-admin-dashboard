@@ -15,7 +15,6 @@ import { AddEditScheduleModal } from './components/AddEditScheduleModal'
 import { AddTeamModal, type TeamDraft } from './components/AddTeamModal'
 import { mockScheduledProjects, type ScheduledProject } from './projectSchedulingData'
 import { consumePendingSchedules } from '@/pages/Estimate/estimateBridge'
-import { mockEmployeesData } from '@/pages/EmployeeManagement/employeeManagementData'
 import { cn } from '@/utils/cn'
 import type { SelectOption } from '@/types'
 
@@ -354,12 +353,12 @@ export default function ProjectScheduling() {
         teamOptions={teamOptions}
       />
 
-      <AddTeamModal
+      {/* <AddTeamModal
         open={isAddTeamModalOpen}
         onClose={() => setIsAddTeamModalOpen(false)}
         employees={mockEmployeesData}
         onCreateTeam={handleCreateTeam}
-      />
+      /> */}
     </motion.div>
   )
 }
