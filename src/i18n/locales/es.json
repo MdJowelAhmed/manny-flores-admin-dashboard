@@ -611,7 +611,10 @@
     "projectCompleted": "Proyecto marcado como completado.",
     "completeProjectFailed": "No se pudo completar el proyecto. Inténtelo de nuevo.",
     "status": "Estado",
-    "loadingProjects": "Cargando proyectos..."
+    "loadingProjects": "Cargando proyectos...",
+    "customerSignature": "Firma del cliente",
+    "noEmployeesAssigned": "Aún no hay empleados asignados.",
+    "signatureLoadError": "No se pudo cargar la imagen de la firma."
   },
   "documentsApprovals": {
     "sendDocumentRequest": "Enviar Solicitud de Documento",

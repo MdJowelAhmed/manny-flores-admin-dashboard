@@ -611,7 +611,10 @@
     "projectCompleted": "Project marked as completed.",
     "completeProjectFailed": "Could not complete the project. Please try again.",
     "status": "Status",
-    "loadingProjects": "Loading projects..."
+    "loadingProjects": "Loading projects...",
+    "customerSignature": "Customer signature",
+    "noEmployeesAssigned": "No employees assigned yet.",
+    "signatureLoadError": "Signature image could not be loaded."
   },
   "documentsApprovals": {
     "selectProjectPlaceholder": "Select a project",

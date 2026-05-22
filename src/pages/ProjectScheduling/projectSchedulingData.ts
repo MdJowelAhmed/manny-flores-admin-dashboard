@@ -25,8 +25,11 @@ export interface ScheduledProject {
   email: string
   company: string
   serviceLocation: string
+  description?: string
   eta: string
   assignedAvatarUrls: string[]
   assignedEmployeeIds: string[]
   assignedEmployees: AssignedEmployee[]
+  customerSignature?: string | null
+  signedAt?: string
 }

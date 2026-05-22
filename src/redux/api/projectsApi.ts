@@ -1,4 +1,4 @@
-import { baseApi } from '../baseApi'
+import { baseApi, imageUrl } from '../baseApi'
 import { normalizeProjectStatus } from '@/pages/Estimate/estimateData'
 import type {
   AssignedEmployee,
@@ -108,6 +108,16 @@ function resolveProfileUrl(profile?: string | null): string | null {
   return getImageUrl(profile)
 }
 
+function resolveAssetUrl(raw?: string | null): string | null {
+  if (!raw?.trim()) return null
+  if (raw.startsWith('http') || raw.startsWith('data:') || raw.startsWith('blob:')) {
+    return raw
+  }
+  const base = (imageUrl ?? '').replace(/\/$/, '')
+  const path = raw.startsWith('/') ? raw : `/${raw}`
+  return `${base}${path}`
+}
+
 function mapEmployee(entry: ProjectEmployeeApiDoc): AssignedEmployee | null {
   const user = entry.user ?? entry
   const id = user?.id ?? ''
@@ -127,6 +137,9 @@ export function mapProjectFromApi(doc: ProjectApiDoc): ScheduledProject {
     .map(mapEmployee)
     .filter((e): e is AssignedEmployee => !!e)
   const startIso = estimate?.estimateStartDate ?? doc.createdAt
+  const signature = doc.invoiceWithSignatures?.customerSignature ?? null
+  const signedAt =
+    doc.invoiceWithSignatures?.updatedAt ?? doc.invoiceWithSignatures?.createdAt
 
   return {
     id: doc.id,
@@ -146,12 +159,15 @@ export function mapProjectFromApi(doc: ProjectApiDoc): ScheduledProject {
     email: estimate?.customerEmail ?? '',
     company: '',
     serviceLocation: estimate?.customerAddress ?? '',
+    description: estimate?.description ?? '',
     eta: formatTime(startIso),
     assignedEmployees,
     assignedAvatarUrls: assignedEmployees
       .map((e) => e.profileUrl)
       .filter((url): url is string => !!url),
     assignedEmployeeIds: assignedEmployees.map((e) => e.id),
+    customerSignature: resolveAssetUrl(signature),
+    signedAt: signedAt ?? undefined,
   }
 }
 
