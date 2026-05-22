@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Info, Pencil, Plus, Trash2 } from 'lucide-react'
@@ -83,10 +83,7 @@ export default function EstimatePage() {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
   }, [totalPages, currentPage, setPage])
 
-  const paginatedItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return items.slice(start, start + itemsPerPage)
-  }, [items, currentPage, itemsPerPage])
+  const paginatedItems = items
 
   const openModal = (item: EstimateRecord) => {
     setSelectedItem(item)
