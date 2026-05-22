@@ -9,9 +9,9 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { PayrollTable, type PayrollEntry } from './components/PayrollTable'
 import { AddPayrollModal } from './components/AddPayrollModal'
 import { PaymentDetailsModal } from './components/PaymentDetailsModal'
-import { toast } from '@/utils/toast'
+import { sonnerToast, toast } from '@/utils/toast'
 import { SearchInput } from '@/components/common'
-import { useChangePayrollStatusMutation, useGetPayrollManagementQuery } from '@/redux/slices/super-admin/payrollApi'
+import { useChangePayrollStatusMutation, useGetAllCustomersQuery, useGetPayrollManagementQuery } from '@/redux/slices/super-admin/payrollApi'
 import Spinner from '@/components/common/Spinner'
 
 export default function PayrollManagement() {
@@ -30,9 +30,20 @@ export default function PayrollManagement() {
 
 
   // API CALLS
-  const { data: payrollData, isLoading: payrollLoading } = useGetPayrollManagementQuery({ search: query, page: currentPage, limit: itemsPerPage })
+  const { data: payrollData, isLoading: payrollLoading, refetch } = useGetPayrollManagementQuery({ search: query, page: currentPage, limit: itemsPerPage })
 
   const [changePayrollStatus] = useChangePayrollStatusMutation()
+
+  // ── Employee infinite-scroll state ─────────────────────────────────────────
+  const [empSearch, setEmpSearch] = useState('')
+  const [empPage, setEmpPage] = useState(1)
+  const [empOptions, setEmpOptions] = useState<{ value: string; label: string }[]>([])
+
+  const { data: customersData, isFetching: empLoading } = useGetAllCustomersQuery({
+    search: empSearch,
+    page: empPage,
+  })
+
 
   // console.log('customersData', customersData)
   console.log('payrollData', payrollData)
@@ -65,15 +76,18 @@ export default function PayrollManagement() {
     e?.stopPropagation?.()
     if (r.paymentTypeStatus === 'PAID') return
     try {
-      await changePayrollStatus({ id: r.id, body: { paymentTypeStatus: "PAID" } }).unwrap()
-      toast({
-        variant: 'success',
-        title: 'Success',
-        description: 'Status changed to PAID',
+      sonnerToast.promise(changePayrollStatus({ id: r.id, body: { paymentTypeStatus: "PAID" } }).unwrap(), {
+        loading: 'Updating status...',
+        success: (res) => {
+          refetch()
+          if (isDetailsModalOpen) {
+            setIsDetailsModalOpen(false)
+          }
+          return res?.message || 'Status updated successfully'
+        },
+        error: 'Failed to update status',
       })
-      if (isDetailsModalOpen) {
-        setIsDetailsModalOpen(false)
-      }
+
     } catch (err) {
       toast({ title: 'Error', description: 'Failed to update status', variant: 'destructive' })
     }
@@ -206,7 +220,14 @@ export default function PayrollManagement() {
       <AddPayrollModal
         open={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-      // customersData={customersData}
+        customersData={customersData}
+        empPage={empPage}
+        empOptions={empOptions}
+        setEmpOptions={setEmpOptions}
+        setEmpPage={setEmpPage}
+        setEmpSearch={setEmpSearch}
+        empLoading={empLoading}
+        refetch={refetch}
       />
 
       <ConfirmDialog

@@ -4,10 +4,14 @@ import { Info, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
+import { PiUserCircleCheck } from 'react-icons/pi'
 
 export interface PayrollEntry {
   id: string
-  employeeId: string
+  employee: {
+    name: string,
+    id: string
+  }
   salary: number
   payType: string
   paymentTypeStatus: string
@@ -45,8 +49,7 @@ export function PayrollTable({
             <th className="px-6 py-4 text-left text-sm font-semibold rounded-tl-lg">{t('dashboard.id')}</th>
             <th className="px-6 py-4 text-left text-sm font-semibold">{t('common.name')}</th>
             <th className="px-6 py-4 text-left text-sm font-semibold">{t('payrollManagement.payType')}</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">{t('companyProjects.project')}</th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">{t('payrollManagement.overtime')}</th>
+
             <th className="px-6 py-4 text-left text-sm font-semibold">{t('common.amount')}</th>
             <th className="px-6 py-4 text-left text-sm font-semibold">{t('common.status')}</th>
             <th className="px-6 py-4 text-right text-sm font-semibold rounded-tr-lg">{t('common.actions')}</th>
@@ -74,7 +77,7 @@ export function PayrollTable({
                     {r.id.slice(0, 8)}...
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-700">
-                    {r.employeeId}
+                    {r?.employee?.name}
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -85,10 +88,7 @@ export function PayrollTable({
                       {r.payType}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{r.projectId || 'N/A'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">
-                    {formatCurrency(r.overTimeAmount)}
-                  </td>
+
                   <td className="px-4 py-3 text-sm text-slate-700 font-medium">
                     {formatCurrency(r.finalSalary)}
                   </td>
@@ -107,13 +107,19 @@ export function PayrollTable({
                     <div className="flex items-center justify-end gap-1">
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         disabled={r.paymentTypeStatus === 'PAID'}
                         onClick={(e) => onMarkPaid(r, e)}
-                        className="h-8 px-3 text-xs font-medium border-emerald-500 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+                        className={cn(
+                          "h-7 px-2.5 text-xs font-medium gap-1.5 border border-input",
+                          r.paymentTypeStatus === 'PAID'
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 cursor-default"
+                            : "text-muted-foreground hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50"
+                        )}
                       >
-                        Mark as Paid
+                        <PiUserCircleCheck className="w-3.5 h-3.5" />
+                        {r.paymentTypeStatus === 'PAID' ? 'Paid' : 'Mark as paid'}
                       </Button>
                       <Button
                         variant="ghost"
@@ -139,6 +145,7 @@ export function PayrollTable({
           )}
         </tbody>
       </table>
+
     </div>
   )
 }
