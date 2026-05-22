@@ -17,19 +17,19 @@ import { DatePicker } from '@/components/common/Form'
 import { cn } from '@/utils/cn'
 import { formatCurrency, formatDateDayMonth } from '@/utils/formatters'
 import { toast } from '@/utils/toast'
+import { useGetMaterialsQuery } from '@/redux/api/materialsApi'
+import { useGetEquipmentQuery, toApiDateIso } from '@/redux/api/equipmentApi'
+import { useGetVehiclesQuery } from '@/redux/api/vehiclesApi'
 import type { EstimateCatalogOption, EstimateLineItem, EstimateRecord } from '../estimateData'
-import {
-  computeEstimateTotals,
-  getEstimateEquipmentCatalog,
-  getEstimateMaterialCatalog,
-  getEstimateVehicleCatalog,
-} from '../estimateData'
+import { computeEstimateTotals } from '../estimateData'
 import { EstimatePreviewModal } from './EstimatePreviewModal'
 
 interface AddEstimateModalProps {
   open: boolean
   onClose: () => void
-  onCreate: (item: EstimateRecord) => void
+  editEstimate?: EstimateRecord | null
+  onCreate: (item: EstimateRecord) => Promise<void>
+  onUpdate?: (item: EstimateRecord) => Promise<void>
 }
 
 type MaterialRow = {
@@ -46,6 +46,7 @@ type VehicleRow = {
   id: string
   catalogId: string
   name: string
+  quantity: string
   unitPrice: string
 }
 
@@ -70,7 +71,7 @@ function emptyEquipmentRow(): EquipmentRow {
 }
 
 function emptyVehicleRow(): VehicleRow {
-  return { id: makeId('veh'), catalogId: '', name: '', unitPrice: '' }
+  return { id: makeId('veh'), catalogId: '', name: '', quantity: '', unitPrice: '' }
 }
 
 function pickCatalog(catalogId: string, catalog: EstimateCatalogOption[]) {
@@ -79,11 +80,64 @@ function pickCatalog(catalogId: string, catalog: EstimateCatalogOption[]) {
   return { catalogId, name: item.name, unitPrice: String(item.unitPrice || '') }
 }
 
-export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalProps) {
+function parseIsoDate(iso?: string): Date | undefined {
+  if (!iso?.trim()) return undefined
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? undefined : d
+}
+
+function lineToMaterialRow(line: EstimateLineItem): MaterialRow {
+  return {
+    id: line.id,
+    catalogId: line.materialId ?? line.equipmentId ?? line.vehicleId ?? '',
+    name: line.name,
+    quantity: String(line.quantity),
+    unitPrice: String(line.unitPrice),
+  }
+}
+
+export function AddEstimateModal({
+  open,
+  onClose,
+  editEstimate = null,
+  onCreate,
+  onUpdate,
+}: AddEstimateModalProps) {
+  const isEdit = !!editEstimate
   const { t } = useTranslation()
-  const materialCatalog = useMemo(() => getEstimateMaterialCatalog(), [])
-  const equipmentCatalog = useMemo(() => getEstimateEquipmentCatalog(), [])
-  const vehicleCatalog = useMemo(() => getEstimateVehicleCatalog(), [])
+  const { data: materialsResponse } = useGetMaterialsQuery({ page: 1, limit: 500 })
+  const { data: equipmentResponse } = useGetEquipmentQuery({ page: 1, limit: 500 })
+  const { data: vehiclesResponse } = useGetVehiclesQuery({ page: 1, limit: 500 })
+
+  const materialCatalog = useMemo(
+    () =>
+      (materialsResponse?.data ?? []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        unitPrice: Number(item.unitPrice) || 0,
+      })),
+    [materialsResponse]
+  )
+
+  const equipmentCatalog = useMemo(
+    () =>
+      (equipmentResponse?.data ?? []).map((item) => ({
+        id: item.id,
+        name: item.equipmentName,
+        unitPrice: Number(item.purchaseCost) || 0,
+      })),
+    [equipmentResponse]
+  )
+
+  const vehicleCatalog = useMemo(
+    () =>
+      (vehiclesResponse?.data ?? []).map((item) => ({
+        id: item.id,
+        name: `${item.model} (${item.year})`,
+        unitPrice: Number(item.purchaseCost) || 0,
+      })),
+    [vehiclesResponse]
+  )
 
   const [title, setTitle] = useState('')
   const [customerName, setCustomerName] = useState('')
@@ -123,10 +177,41 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
     setPreviewOpen(false)
   }
 
+  const populateFromEstimate = (estimate: EstimateRecord) => {
+    setTitle(estimate.title)
+    setCustomerName(estimate.customerName)
+    setCustomerEmail(estimate.customerEmail)
+    setCustomerAddress(estimate.customerAddress)
+    setStartDate(parseIsoDate(estimate.rawEstimateStartDate))
+    setEndDate(parseIsoDate(estimate.rawEstimateEndDate))
+    setDescription(estimate.description)
+    setTaxPercent(String(estimate.taxPercent))
+    setDiscountEnabled(!!estimate.discount)
+    setDiscountLabel(estimate.discount?.label ?? 'First Responder Discount')
+    setDiscountPercent(String(estimate.discount?.percent ?? 5))
+
+    const matRows = estimate.lineItems
+      .filter((l) => l.lineType === 'material')
+      .map(lineToMaterialRow)
+    const eqRows = estimate.lineItems
+      .filter((l) => l.lineType === 'equipment')
+      .map(lineToMaterialRow)
+    const vehRows = estimate.lineItems
+      .filter((l) => l.lineType === 'vehicle')
+      .map(lineToMaterialRow)
+
+    setMaterials(matRows.length > 0 ? matRows : [emptyMaterialRow()])
+    setEquipment(eqRows.length > 0 ? eqRows : [emptyEquipmentRow()])
+    setVehicles(vehRows.length > 0 ? vehRows : [emptyVehicleRow()])
+    setPreviewDraft(null)
+    setPreviewOpen(false)
+  }
+
   useEffect(() => {
     if (!open) return
-    reset()
-  }, [open])
+    if (editEstimate) populateFromEstimate(editEstimate)
+    else reset()
+  }, [open, editEstimate])
 
   const lineItemsForCalc = useMemo((): EstimateLineItem[] => {
     const items: EstimateLineItem[] = []
@@ -163,14 +248,15 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
 
     for (const row of vehicles) {
       if (!row.name.trim()) continue
+      const quantity = toNum(row.quantity)
       const unitPrice = toNum(row.unitPrice)
-      if (unitPrice <= 0) continue
+      if (quantity <= 0 || unitPrice <= 0) continue
       items.push({
         id: row.id,
         name: row.name.trim(),
         lineType: 'vehicle',
         vehicleId: row.catalogId || undefined,
-        quantity: 1,
+        quantity,
         unitPrice,
       })
     }
@@ -198,7 +284,7 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
   const buildRecord = (): EstimateRecord | null => {
     if (!title.trim() || !customerName.trim() || lineItemsForCalc.length === 0) return null
     return {
-      id: makeId('est'),
+      id: editEstimate?.id ?? makeId('est'),
       title: title.trim(),
       customerName: customerName.trim(),
       customerEmail: customerEmail.trim(),
@@ -209,9 +295,12 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
       paymentMethod: '—',
       description: description.trim(),
       status: 'pending',
+      projectStatus: 'PENDING',
       lineItems: lineItemsForCalc,
       taxPercent: toNum(taxPercent),
       discount,
+      rawEstimateStartDate: startDate ? toApiDateIso(startDate) : undefined,
+      rawEstimateEndDate: endDate ? toApiDateIso(endDate) : undefined,
     }
   }
 
@@ -251,7 +340,7 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
     setPreviewOpen(true)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const err = validate()
     if (err) {
       toast({ title: t('common.error'), description: err, variant: 'destructive' })
@@ -259,14 +348,29 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
     }
     const record = buildRecord()
     if (!record) return
-    onCreate(record)
-    toast({
-      title: t('estimate.createdSuccess'),
-      description: t('estimate.grandTotalHint', { amount: formatCurrency(totals.balanceDue) }),
-      variant: 'success',
-    })
-    reset()
-    onClose()
+    try {
+      if (isEdit && onUpdate) {
+        await onUpdate(record)
+        toast({
+          title: t('estimate.updatedSuccess', 'Estimate updated'),
+          description: t('estimate.grandTotalHint', { amount: formatCurrency(totals.balanceDue) }),
+          variant: 'success',
+        })
+      } else {
+        await onCreate(record)
+        toast({
+          title: t('estimate.createdSuccess'),
+          description: t('estimate.grandTotalHint', { amount: formatCurrency(totals.balanceDue) }),
+          variant: 'success',
+        })
+      }
+      reset()
+      onClose()
+    } catch (error) {
+      const message =
+        (error as { data?: { message?: string } })?.data?.message ?? t('common.somethingWentWrong')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
+    }
   }
 
   return (
@@ -277,8 +381,10 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
           reset()
           onClose()
         }}
-        title={t('estimate.addModalTitle')}
-        description={t('estimate.addModalDescription')}
+        title={isEdit ? t('estimate.editModalTitle', 'Edit estimate') : t('estimate.addModalTitle')}
+        description={
+          isEdit ? t('estimate.editModalDescription', 'Update estimate details.') : t('estimate.addModalDescription')
+        }
         size="full"
         className="max-w-4xl bg-white"
         footer={
@@ -301,7 +407,7 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
                 className="bg-primary text-white hover:bg-primary/90"
                 onClick={handleSave}
               >
-                {t('estimate.addSubmit')}
+                {isEdit ? t('common.save', 'Save') : t('estimate.addSubmit')}
               </Button>
             </div>
           </div>
@@ -477,6 +583,9 @@ export function AddEstimateModal({ open, onClose, onCreate }: AddEstimateModalPr
               setVehicles((rows) =>
                 rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, vehicleCatalog) } : r))
               )
+            }
+            onQuantityChange={(id, quantity) =>
+              setVehicles((rows) => rows.map((r) => (r.id === id ? { ...r, quantity } : r)))
             }
             onUnitPriceChange={(id, unitPrice) =>
               setVehicles((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
@@ -688,6 +797,7 @@ function VehicleSection({
   catalog,
   onRemove,
   onCatalogChange,
+  onQuantityChange,
   onUnitPriceChange,
   sectionAddButton,
   t,
@@ -699,14 +809,19 @@ function VehicleSection({
   catalog: EstimateCatalogOption[]
   onRemove: (id: string) => void
   onCatalogChange: (id: string, catalogId: string) => void
+  onQuantityChange: (id: string, quantity: string) => void
   onUnitPriceChange: (id: string, unitPrice: string) => void
   sectionAddButton: SectionAddButton
   t: (key: string) => string
 }) {
   const headerCols =
-    rows.length > 1 ? 'md:grid-cols-[1.2fr_1fr_1fr_44px]' : 'md:grid-cols-[1.2fr_1fr_1fr]'
+    rows.length > 1
+      ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+      : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
   const rowCols =
-    rows.length > 1 ? 'md:grid-cols-[1.2fr_1fr_1fr_44px]' : 'md:grid-cols-[1.2fr_1fr_1fr]'
+    rows.length > 1
+      ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+      : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
 
   return (
     <div className="space-y-3">
@@ -716,13 +831,14 @@ function VehicleSection({
       </div>
       <div className={cn('hidden md:grid gap-2 text-xs font-medium text-muted-foreground px-1', headerCols)}>
         <span>{t('estimate.name')}</span>
+        <span>{t('estimate.quantity')}</span>
         <span>{t('estimate.unitPriceDay')}</span>
         <span>{t('estimate.totalPrice')}</span>
         {rows.length > 1 && <span className="sr-only">{t('estimate.removeRow')}</span>}
       </div>
       <div className="space-y-3">
         {rows.map((row) => {
-          const lineTotal = toNum(row.unitPrice)
+          const lineTotal = toNum(row.quantity) * toNum(row.unitPrice)
           return (
             <div key={row.id} className={cn('grid gap-3 md:items-end', rowCols)}>
               <div className="space-y-1.5 md:space-y-0">
@@ -742,6 +858,16 @@ function VehicleSection({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="md:hidden text-xs">{t('estimate.quantity')}</Label>
+                <Input
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={row.quantity}
+                  onChange={(e) => onQuantityChange(row.id, e.target.value)}
+                  className="rounded-lg"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="md:hidden text-xs">{t('estimate.unitPriceDay')}</Label>

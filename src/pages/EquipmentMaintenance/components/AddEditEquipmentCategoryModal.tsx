@@ -2,13 +2,13 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper, FormInput } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import { useAppDispatch } from '@/redux/hooks'
 import {
-  addEquipmentCategory,
-  updateEquipmentCategory,
-} from '@/redux/slices/equipmentCategorySlice'
+  useAddCategoryMutation,
+  useUpdateCategoryMutation,
+} from '@/redux/api/categoryApi'
 import type { EquipmentCategory } from '@/types'
 import { toast } from '@/utils/toast'
 
@@ -17,6 +17,8 @@ const schema = z.object({
 })
 
 type FormData = z.infer<typeof schema>
+
+const EQUIPMENT_CATEGORY_TYPE = 'EQUIPMENT' as const
 
 interface AddEditEquipmentCategoryModalProps {
   open: boolean
@@ -31,8 +33,10 @@ export function AddEditEquipmentCategoryModal({
   editingId,
   category,
 }: AddEditEquipmentCategoryModalProps) {
-  const dispatch = useAppDispatch()
+  const { t } = useTranslation()
   const isEdit = !!editingId
+  const [addCategory, { isLoading: isAdding }] = useAddCategoryMutation()
+  const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation()
 
   const {
     register,
@@ -53,38 +57,49 @@ export function AddEditEquipmentCategoryModal({
     }
   }, [open, isEdit, category, reset])
 
-  const onSubmit = (data: FormData) => {
-    const ts = new Date().toISOString()
-    const payload: EquipmentCategory = {
-      id: isEdit && category ? category.id : `ec-${Date.now()}`,
-      name: data.name.trim(),
-      createdAt: isEdit && category ? category.createdAt : ts,
-      updatedAt: ts,
-    }
+  const onSubmit = async (data: FormData) => {
+    const name = data.name.trim()
+    const body = { name, type: EQUIPMENT_CATEGORY_TYPE }
 
-    if (isEdit) {
-      dispatch(updateEquipmentCategory(payload))
-      toast({
-        title: 'Updated',
-        description: 'Equipment category updated successfully.',
-        variant: 'success',
-      })
-    } else {
-      dispatch(addEquipmentCategory(payload))
-      toast({
-        title: 'Added',
-        description: 'Equipment category added successfully.',
-        variant: 'success',
-      })
+    try {
+      if (isEdit && category) {
+        await updateCategory({ id: category.id, ...body }).unwrap()
+        toast({
+          title: t('equipmentMaintenance.categoryUpdated'),
+          description: t('equipmentMaintenance.categoryUpdatedDesc'),
+          variant: 'success',
+        })
+      } else {
+        await addCategory(body).unwrap()
+        toast({
+          title: t('equipmentMaintenance.categoryCreated'),
+          description: t('equipmentMaintenance.categoryCreatedDesc'),
+          variant: 'success',
+        })
+      }
+      onClose()
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('common.error')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
     }
-    onClose()
   }
+
+  const isLoading = isAdding || isUpdating || isSubmitting
 
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Edit Equipment Category' : 'Add Equipment Category'}
+      title={isEdit ? t('equipmentMaintenance.editCategory') : t('equipmentMaintenance.addCategory')}
       size="md"
       className="bg-white"
       footer={
@@ -93,9 +108,10 @@ export function AddEditEquipmentCategoryModal({
             type="submit"
             form="equipment-category-form"
             className="min-w-[100px] bg-[#00AB41] hover:bg-[#009638] text-white font-semibold"
-            disabled={isSubmitting}
+            disabled={isLoading}
+            isLoading={isLoading}
           >
-            {isEdit ? 'Save' : 'Add Category'}
+            {isEdit ? t('common.save') : t('equipmentMaintenance.addCategory')}
           </Button>
         </div>
       }
@@ -106,8 +122,8 @@ export function AddEditEquipmentCategoryModal({
         className="space-y-4"
       >
         <FormInput
-          label="Category Name"
-          placeholder="e.g. Heavy Machinery"
+          label={t('equipmentMaintenance.categoryName')}
+          placeholder={t('equipmentMaintenance.categoryNamePlaceholder')}
           error={errors.name?.message}
           required
           {...register('name')}
@@ -116,4 +132,3 @@ export function AddEditEquipmentCategoryModal({
     </ModalWrapper>
   )
 }
-

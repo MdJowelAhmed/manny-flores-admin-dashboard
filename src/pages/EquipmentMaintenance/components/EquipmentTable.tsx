@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { Info, Pencil, Trash2, Wrench } from 'lucide-react'
+import { Info, Pencil, Trash2, UserPlus, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'
 import type { Equipment, EquipmentStatus } from '@/types'
@@ -11,6 +11,7 @@ interface EquipmentTableProps {
   onView: (equipment: Equipment) => void
   onEdit: (equipment: Equipment, e: React.MouseEvent) => void
   onDelete: (equipment: Equipment) => void
+  onAssign: (equipment: Equipment) => void
 }
 
 export function EquipmentTable({
@@ -18,6 +19,7 @@ export function EquipmentTable({
   onView,
   onEdit,
   onDelete,
+  onAssign,
 }: EquipmentTableProps) {
   const { t } = useTranslation()
   return (
@@ -60,21 +62,21 @@ export function EquipmentTable({
                     <div className="flex items-center gap-2">
                       <Wrench className="h-5 w-5 text-gray-500" />
                       <span className="text-sm font-medium text-slate-800">
-                        {item.equipmentName}
+                        {item.equipmentName || 'N/A'}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{item.type}</span>
+                    <span className="text-sm text-slate-600">{item.type || 'N/A'}</span>
                   </td>
                   <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{item.assignedTo}</span>
+                    <span className="text-sm text-slate-600">{item.assignedTo || 'N/A'}</span>
                   </td>
                   <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{item.usage}</span>
+                    <span className="text-sm text-slate-600">{item.usage || 'N/A'}</span>
                   </td>
                   <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{item.nextService}</span>
+                    <span className="text-sm text-slate-600">{item.nextService || 'N/A'}</span>
                   </td>
                   <td className="px-6 py-3">
                     <span
@@ -95,6 +97,15 @@ export function EquipmentTable({
                         className="h-8 w-8 border-none text-blue-500 hover:bg-blue-50"
                       >
                         <Info className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => onAssign(item)}
+                        className="h-8 w-8 border-none text-violet-500 hover:bg-violet-50"
+                        title={t('equipmentMaintenance.assignEmployee')}
+                      >
+                        <UserPlus className="h-5 w-5" />
                       </Button>
                       <Button
                         variant="outline"
