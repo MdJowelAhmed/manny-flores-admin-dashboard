@@ -61,7 +61,7 @@ export function ModalWrapper({
         }}
       >
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="text-gray-900">{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto pr-2 -mr-2 scrollbar-thin">

@@ -5,7 +5,7 @@
 @layer base {
   :root {
     --background: #FFFFFF;
-    --foreground: #F0F8FF;
+    --foreground: #41454E;
     --card: 0 0% 100%;
     --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
@@ -15,7 +15,7 @@
     --secondary: #195ABE;
     --secondary-foreground: #F8F1F1;
     --muted: #F76212;
-    --muted-foreground: #364355;
+    --muted-foreground: #41454E;
     --accent: #2A2A2A;
     --accent-foreground: #364355;
     --destructive: #C22C27;

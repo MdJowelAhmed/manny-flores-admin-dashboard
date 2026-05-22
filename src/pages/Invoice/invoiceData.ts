@@ -2,12 +2,19 @@ import type { EstimateProjectStatus } from '@/pages/Estimate/estimateData'
 
 export type InvoiceUnitSuffix = 'sqft' | 'hr' | 'day' | 'unit'
 
+export type InvoiceLineType = 'material' | 'equipment' | 'vehicle' | 'custom'
+
 export interface InvoiceLineItem {
   id: string
   category: string
   quantity: number
   unitPrice: number
   unitSuffix: InvoiceUnitSuffix
+  lineType?: InvoiceLineType
+  materialId?: string
+  equipmentId?: string
+  vehicleId?: string
+  lineTotal?: number
 }
 
 export interface InvoiceRecord {
@@ -29,6 +36,15 @@ export interface InvoiceRecord {
   isApproved?: boolean
   createdAt?: string
   updatedAt?: string
+  customerSignature?: string | null
+  providerSignature?: string | null
+  isProvideSignature?: boolean
+  signedAt?: string
+}
+
+export interface InvoiceSignatures {
+  customerSignature: string
+  providerSignature: string
 }
 
 export function computeInvoiceTotals(invoice: InvoiceRecord) {
