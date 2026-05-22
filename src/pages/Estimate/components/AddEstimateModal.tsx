@@ -23,6 +23,7 @@ import { useGetVehiclesQuery } from '@/redux/api/vehiclesApi'
 import type { EstimateCatalogOption, EstimateLineItem, EstimateRecord } from '../estimateData'
 import { computeEstimateTotals } from '../estimateData'
 import { EstimatePreviewModal } from './EstimatePreviewModal'
+import { CustomerNameAutocomplete } from './CustomerNameAutocomplete'
 
 interface AddEstimateModalProps {
   open: boolean
@@ -408,12 +409,16 @@ export function AddEstimateModal({
             </div>
             <div className="space-y-2">
               <Label htmlFor="est-customer">{t('estimate.form.customerName')}</Label>
-              <Input
+              <CustomerNameAutocomplete
                 id="est-customer"
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
+                onChange={setCustomerName}
+                onSelect={(customer) => {
+                  setCustomerName(customer.name)
+                  setCustomerEmail(customer.email)
+                  setCustomerAddress(customer.address)
+                }}
                 placeholder={t('estimate.form.customerNamePlaceholder')}
-                className="rounded-lg"
               />
             </div>
             <div className="space-y-2">
