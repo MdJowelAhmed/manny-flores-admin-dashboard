@@ -19,7 +19,7 @@ interface AddEditScheduleModalProps {
   open: boolean
   onClose: () => void
   schedule: ScheduledProject | null
-  onReschedule: (projectId: string, values: RescheduleFormValues) => Promise<void>
+  onReschedule: (estimateId: string, values: RescheduleFormValues) => Promise<void>
   isSaving?: boolean
 }
 
@@ -64,7 +64,7 @@ export function AddEditScheduleModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!schedule?.id) return
+    if (!schedule?.estimateId) return
     if (!startDate || !endDate) {
       toast({
         title: t('common.error'),
@@ -83,7 +83,7 @@ export function AddEditScheduleModal({
     }
 
     try {
-      await onReschedule(schedule.id, {
+      await onReschedule(schedule.estimateId, {
         note: note.trim(),
         estimateStartDate: toIsoDate(startDate),
         estimateEndDate: toIsoDate(endDate),
