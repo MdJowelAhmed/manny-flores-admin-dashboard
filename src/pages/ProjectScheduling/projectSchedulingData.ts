@@ -1,5 +1,12 @@
 import type { EstimateProjectStatus } from '@/pages/Estimate/estimateData'
 
+export interface AssignedEmployee {
+  id: string
+  name: string
+  email?: string
+  profileUrl: string | null
+}
+
 export interface ScheduledProject {
   id: string
   estimateId: string
@@ -21,4 +28,5 @@ export interface ScheduledProject {
   eta: string
   assignedAvatarUrls: string[]
   assignedEmployeeIds: string[]
+  assignedEmployees: AssignedEmployee[]
 }

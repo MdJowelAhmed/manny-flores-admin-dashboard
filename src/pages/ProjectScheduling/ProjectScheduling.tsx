@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ViewScheduleDetailsModal } from './components/ViewScheduleDetailsModal'
 import {
   AddEditScheduleModal,
@@ -32,6 +33,7 @@ import {
 } from '@/redux/api/projectsApi'
 import { useAllEmployeeManageQuery } from '@/redux/slices/super-admin/employeeManagement'
 import { getProjectStatusClasses } from '@/pages/Estimate/estimateData'
+import { formatDateDisplay } from '@/utils/formatters'
 
 function teamBadgeLabel(team: string) {
   const raw = team.trim()
@@ -39,6 +41,13 @@ function teamBadgeLabel(team: string) {
   if (/^\d+$/.test(raw)) return `CREW ${raw}`
   const u = raw.toUpperCase()
   return u.startsWith('TEAM') ? u : `TEAM ${u}`
+}
+
+function formatIsoDate(iso?: string): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '—'
+  return formatDateDisplay(d)
 }
 
 function isProjectCompleted(schedule: ScheduledProject): boolean {
@@ -277,13 +286,29 @@ export default function ProjectScheduling() {
                             </span>
                           </div>
 
-                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4">
+                          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-4">
                             <div>
                               <span className="text-xs text-muted-foreground block mb-1">
                                 {t('projectScheduling.project')}
                               </span>
                               <span className="text-sm font-medium text-gray-900">
                                 {schedule.project}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-xs text-muted-foreground block mb-1">
+                                {t('projectScheduling.startDate')}
+                              </span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {formatIsoDate(schedule.estimateStartDate)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-xs text-muted-foreground block mb-1">
+                                {t('projectScheduling.endDate')}
+                              </span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {formatIsoDate(schedule.estimateEndDate)}
                               </span>
                             </div>
                             <div>
@@ -330,18 +355,38 @@ export default function ProjectScheduling() {
                             ) : null}
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-2 mb-3">
-                            {schedule.assignedAvatarUrls.map((url, i) => (
-                              <Avatar
-                                key={`${schedule.id}-av-${i}`}
-                                className="h-9 w-9 border-2 border-white shadow-sm"
-                              >
-                                <AvatarImage src={url} alt="" />
-                                <AvatarFallback className="text-xs">
-                                  {schedule.uploadedBy.slice(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                            ))}
+                          <div className="flex flex-wrap items-center -mx-1 mb-3">
+                            {schedule.assignedEmployees.map((emp) => {
+                              const initials = (emp.name || '—')
+                                .split(' ')
+                                .map((part) => part[0])
+                                .filter(Boolean)
+                                .slice(0, 2)
+                                .join('')
+                                .toUpperCase()
+                              return (
+                                <Tooltip key={`${schedule.id}-emp-${emp.id}`}>
+                                  <TooltipTrigger asChild>
+                                    <Avatar className="h-9 w-9 border-2 border-white shadow-sm cursor-pointer">
+                                      {emp.profileUrl ? (
+                                        <AvatarImage src={emp.profileUrl} alt={emp.name} />
+                                      ) : null}
+                                      <AvatarFallback className="text-xs">
+                                        {initials || '?'}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <div className="text-xs font-medium">{emp.name}</div>
+                                    {emp.email && (
+                                      <div className="text-[10px] text-muted-foreground">
+                                        {emp.email}
+                                      </div>
+                                    )}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )
+                            })}
                             {!completed && (
                               <button
                                 type="button"

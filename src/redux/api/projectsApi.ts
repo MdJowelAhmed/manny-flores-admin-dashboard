@@ -1,7 +1,11 @@
-import { baseApi, imageUrl } from '../baseApi'
+import { baseApi } from '../baseApi'
 import { normalizeProjectStatus } from '@/pages/Estimate/estimateData'
-import type { ScheduledProject } from '@/pages/ProjectScheduling/projectSchedulingData'
+import type {
+  AssignedEmployee,
+  ScheduledProject,
+} from '@/pages/ProjectScheduling/projectSchedulingData'
 import { formatDateDisplay, formatTime } from '@/utils/formatters'
+import { getImageUrl } from '@/utils/getImageUrl'
 
 export interface ProjectsPagination {
   total: number
@@ -38,11 +42,19 @@ export interface ProjectInvoiceSignatureApiDoc {
   userId: string
 }
 
-export interface ProjectEmployeeApiDoc {
+export interface ProjectEmployeeUserApiDoc {
   id: string
+  name?: string
+  email?: string
+  profile?: string | null
+}
+
+export interface ProjectEmployeeApiDoc {
+  id?: string
   name?: string
   profile?: string | null
   email?: string
+  user?: ProjectEmployeeUserApiDoc
 }
 
 export interface ProjectApiDoc {
@@ -91,17 +103,29 @@ function formatScheduledDate(iso: string): string {
   return formatDateDisplay(parsed)
 }
 
-function employeeAvatarUrl(profile?: string | null): string | null {
+function resolveProfileUrl(profile?: string | null): string | null {
   if (!profile?.trim()) return null
-  if (profile.startsWith('http')) return profile
-  const base = imageUrl?.replace(/\/$/, '') ?? ''
-  const path = profile.startsWith('/') ? profile : `/${profile}`
-  return `${base}${path}`
+  return getImageUrl(profile)
+}
+
+function mapEmployee(entry: ProjectEmployeeApiDoc): AssignedEmployee | null {
+  const user = entry.user ?? entry
+  const id = user?.id ?? ''
+  if (!id) return null
+  return {
+    id,
+    name: user?.name?.trim() || '—',
+    email: user?.email ?? undefined,
+    profileUrl: resolveProfileUrl(user?.profile ?? null),
+  }
 }
 
 export function mapProjectFromApi(doc: ProjectApiDoc): ScheduledProject {
   const estimate = doc.estimates
-  const employees = doc.employees ?? []
+  const rawEmployees = doc.employees ?? []
+  const assignedEmployees = rawEmployees
+    .map(mapEmployee)
+    .filter((e): e is AssignedEmployee => !!e)
   const startIso = estimate?.estimateStartDate ?? doc.createdAt
 
   return {
@@ -117,16 +141,17 @@ export function mapProjectFromApi(doc: ProjectApiDoc): ScheduledProject {
     project: estimate?.projectName ?? '—',
     uploadDate: formatScheduledDate(doc.createdAt),
     uploadedBy: estimate?.customerName ?? '—',
-    team: employees.length > 0 ? String(employees.length) : '',
+    team: assignedEmployees.length > 0 ? String(assignedEmployees.length) : '',
     customer: estimate?.customerName ?? '—',
     email: estimate?.customerEmail ?? '',
     company: '',
     serviceLocation: estimate?.customerAddress ?? '',
     eta: formatTime(startIso),
-    assignedAvatarUrls: employees
-      .map((e) => employeeAvatarUrl(e.profile))
+    assignedEmployees,
+    assignedAvatarUrls: assignedEmployees
+      .map((e) => e.profileUrl)
       .filter((url): url is string => !!url),
-    assignedEmployeeIds: employees.map((e) => e.id),
+    assignedEmployeeIds: assignedEmployees.map((e) => e.id),
   }
 }
 

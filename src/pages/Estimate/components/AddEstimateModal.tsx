@@ -146,10 +146,6 @@ export function AddEstimateModal({
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [description, setDescription] = useState('')
-  const [taxPercent, setTaxPercent] = useState('8.25')
-  const [discountEnabled, setDiscountEnabled] = useState(false)
-  const [discountLabel, setDiscountLabel] = useState('First Responder Discount')
-  const [discountPercent, setDiscountPercent] = useState('5')
 
   const [materials, setMaterials] = useState<MaterialRow[]>(() => [emptyMaterialRow()])
   const [equipment, setEquipment] = useState<EquipmentRow[]>(() => [emptyEquipmentRow()])
@@ -166,10 +162,6 @@ export function AddEstimateModal({
     setStartDate(undefined)
     setEndDate(undefined)
     setDescription('')
-    setTaxPercent('8.25')
-    setDiscountEnabled(false)
-    setDiscountLabel('First Responder Discount')
-    setDiscountPercent('5')
     setMaterials([emptyMaterialRow()])
     setEquipment([emptyEquipmentRow()])
     setVehicles([emptyVehicleRow()])
@@ -185,10 +177,6 @@ export function AddEstimateModal({
     setStartDate(parseIsoDate(estimate.rawEstimateStartDate))
     setEndDate(parseIsoDate(estimate.rawEstimateEndDate))
     setDescription(estimate.description)
-    setTaxPercent(String(estimate.taxPercent))
-    setDiscountEnabled(!!estimate.discount)
-    setDiscountLabel(estimate.discount?.label ?? 'First Responder Discount')
-    setDiscountPercent(String(estimate.discount?.percent ?? 5))
 
     const matRows = estimate.lineItems
       .filter((l) => l.lineType === 'material')
@@ -264,21 +252,14 @@ export function AddEstimateModal({
     return items
   }, [materials, equipment, vehicles])
 
-  const discount = useMemo(() => {
-    if (!discountEnabled) return null
-    const pct = toNum(discountPercent)
-    if (pct <= 0) return null
-    return { label: discountLabel.trim() || t('estimate.discount.defaultLabel'), percent: pct }
-  }, [discountEnabled, discountLabel, discountPercent, t])
-
   const totals = useMemo(
     () =>
       computeEstimateTotals({
         lineItems: lineItemsForCalc,
-        taxPercent: toNum(taxPercent),
-        discount,
+        taxPercent: 0,
+        discount: null,
       }),
-    [lineItemsForCalc, taxPercent, discount]
+    [lineItemsForCalc]
   )
 
   const buildRecord = (): EstimateRecord | null => {
@@ -297,8 +278,8 @@ export function AddEstimateModal({
       status: 'pending',
       projectStatus: 'PENDING',
       lineItems: lineItemsForCalc,
-      taxPercent: toNum(taxPercent),
-      discount,
+      taxPercent: 0,
+      discount: null,
       rawEstimateStartDate: startDate ? toApiDateIso(startDate) : undefined,
       rawEstimateEndDate: endDate ? toApiDateIso(endDate) : undefined,
     }
@@ -594,63 +575,13 @@ export function AddEstimateModal({
             t={t}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
-            <div className="space-y-3 sm:col-span-2">
-              <div className="flex items-center gap-2">
-                <input
-                  id="est-discount-toggle"
-                  type="checkbox"
-                  checked={discountEnabled}
-                  onChange={(e) => setDiscountEnabled(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-primary"
-                />
-                <Label htmlFor="est-discount-toggle" className="font-medium cursor-pointer">
-                  {t('estimate.discount.enable')}
-                </Label>
-              </div>
-              {discountEnabled && (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>{t('estimate.discount.label')}</Label>
-                    <Input
-                      value={discountLabel}
-                      onChange={(e) => setDiscountLabel(e.target.value)}
-                      placeholder={t('estimate.discount.labelPlaceholder')}
-                      className="rounded-lg bg-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('estimate.discount.percent')}</Label>
-                    <Input
-                      inputMode="decimal"
-                      value={discountPercent}
-                      onChange={(e) => setDiscountPercent(e.target.value)}
-                      placeholder="5"
-                      className="rounded-lg bg-white"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="est-tax">{t('estimate.taxOptional')}</Label>
-              <Input
-                id="est-tax"
-                inputMode="decimal"
-                value={taxPercent}
-                onChange={(e) => setTaxPercent(e.target.value)}
-                placeholder="8.25"
-                className="rounded-lg bg-white"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('estimate.preview.subtotal')}</Label>
-              <Input
-                readOnly
-                value={formatCurrency(totals.subtotal)}
-                className="rounded-lg bg-white font-medium"
-              />
-            </div>
+          <div className="flex items-center justify-end gap-3 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+            <Label className="text-sm font-semibold text-gray-700">
+              {t('estimate.preview.subtotal')}
+            </Label>
+            <span className="text-base font-bold tabular-nums text-primary">
+              {formatCurrency(totals.subtotal)}
+            </span>
           </div>
         </div>
       </ModalWrapper>

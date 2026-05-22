@@ -68,6 +68,7 @@ export function createScheduleFromEstimate(estimate: EstimateRecord): ScheduledP
     eta: '09:00 AM',
     assignedAvatarUrls: [],
     assignedEmployeeIds: [],
+    assignedEmployees: [],
   }
 }
 

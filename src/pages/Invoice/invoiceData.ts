@@ -2,12 +2,19 @@ import type { EstimateProjectStatus } from '@/pages/Estimate/estimateData'
 
 export type InvoiceUnitSuffix = 'sqft' | 'hr' | 'day' | 'unit'
 
+export type InvoiceLineType = 'material' | 'equipment' | 'vehicle' | 'custom'
+
 export interface InvoiceLineItem {
   id: string
   category: string
   quantity: number
   unitPrice: number
   unitSuffix: InvoiceUnitSuffix
+  lineType?: InvoiceLineType
+  materialId?: string
+  equipmentId?: string
+  vehicleId?: string
+  lineTotal?: number
 }
 
 export interface InvoiceRecord {

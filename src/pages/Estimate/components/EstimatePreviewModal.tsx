@@ -163,13 +163,6 @@ export function EstimatePreviewModal({
                   </span>
                 </div>
               )}
-              {estimate.taxPercent > 0 && hasApiTotal && (
-                <p className="text-xs text-gray-500 text-right">
-                  {t('estimate.preview.taxIncludedNote', 'Tax {{percent}}% included in total', {
-                    percent: estimate.taxPercent,
-                  })}
-                </p>
-              )}
             </div>
           </div>
 
