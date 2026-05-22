@@ -37,11 +37,6 @@ function toNumberOrZero(v: string) {
   return Number.isFinite(n) ? n : 0
 }
 
-function clampTaxPercent(n: number) {
-  if (!Number.isFinite(n)) return 0
-  return Math.min(100, Math.max(0, n))
-}
-
 export function CreateInvoiceModal({ open, onClose, onCreate }: CreateInvoiceModalProps) {
   const { t } = useTranslation()
 
@@ -49,7 +44,6 @@ export function CreateInvoiceModal({ open, onClose, onCreate }: CreateInvoiceMod
   const [customerAddress, setCustomerAddress] = useState('')
   const [issuedDate, setIssuedDate] = useState<Date | undefined>(undefined)
   const [dueDate, setDueDate] = useState<Date | undefined>(undefined)
-  const [taxPercent, setTaxPercent] = useState('8.25')
   const [rows, setRows] = useState<DraftLineItem[]>(() => [
     { id: makeId('line'), category: '', quantity: '1', unitPrice: '', unitSuffix: 'unit' },
   ])
@@ -68,7 +62,6 @@ export function CreateInvoiceModal({ open, onClose, onCreate }: CreateInvoiceMod
     setCustomerAddress('')
     setIssuedDate(undefined)
     setDueDate(undefined)
-    setTaxPercent('8.25')
     setRows([{ id: makeId('line'), category: '', quantity: '1', unitPrice: '', unitSuffix: 'unit' }])
     onClose()
   }
@@ -80,12 +73,12 @@ export function CreateInvoiceModal({ open, onClose, onCreate }: CreateInvoiceMod
   }, [open])
 
   const previewTotals = useMemo(() => {
-    const subtotal = rows.reduce((sum, r) => sum + toNumberOrZero(r.quantity) * toNumberOrZero(r.unitPrice), 0)
-    const taxPct = clampTaxPercent(toNumberOrZero(taxPercent))
-    const taxAmount = subtotal * (taxPct / 100)
-    const totalDue = subtotal + taxAmount
-    return { subtotal, taxAmount, totalDue }
-  }, [rows, taxPercent])
+    const subtotal = rows.reduce(
+      (sum, r) => sum + toNumberOrZero(r.quantity) * toNumberOrZero(r.unitPrice),
+      0
+    )
+    return { subtotal, totalDue: subtotal }
+  }, [rows])
 
   const addRow = () => {
     setRows((prev) => [...prev, { id: makeId('line'), category: '', quantity: '1', unitPrice: '', unitSuffix: 'unit' }])
@@ -120,7 +113,6 @@ export function CreateInvoiceModal({ open, onClose, onCreate }: CreateInvoiceMod
 
     setIsSubmitting(true)
     try {
-      const taxPct = clampTaxPercent(toNumberOrZero(taxPercent))
       const lineItems: InvoiceLineItem[] = rows
         .filter((r) => r.category.trim())
         .map((r) => ({
@@ -142,7 +134,7 @@ export function CreateInvoiceModal({ open, onClose, onCreate }: CreateInvoiceMod
         invoiceRef: `#INV-${year}-${short}`,
         issuedDate: formatDateISO(issuedDate!),
         dueDate: formatDateISO(dueDate!),
-        taxPercent: taxPct,
+        taxPercent: 0,
         lineItems,
       }
 
@@ -193,24 +185,13 @@ export function CreateInvoiceModal({ open, onClose, onCreate }: CreateInvoiceMod
     >
       <div className="space-y-6 pb-2">
         <div className="grid gap-5 lg:grid-cols-2">
-          <div className="space-y-2">
+          <div className="space-y-2 lg:col-span-2">
             <Label htmlFor="invoice-customer">{t('invoice.create.customerName')}</Label>
             <Input
               id="invoice-customer"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder={t('invoice.create.customerNamePlaceholder')}
-              className="rounded-md border border-primary/30 focus-visible:ring-2 focus-visible:ring-primary"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="invoice-tax">{t('invoice.create.taxPercent')}</Label>
-            <Input
-              id="invoice-tax"
-              inputMode="decimal"
-              value={taxPercent}
-              onChange={(e) => setTaxPercent(e.target.value)}
-              placeholder="8.25"
               className="rounded-md border border-primary/30 focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>

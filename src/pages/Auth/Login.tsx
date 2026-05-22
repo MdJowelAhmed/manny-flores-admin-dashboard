@@ -91,7 +91,7 @@ export default function Login() {
       </motion.div>
 
       <div className="space-y-2 text-center lg:text-left">
-        <h1 className="text-2xl font-bold tracking-tight">{t("auth.login.welcomeBack")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-700">{t("auth.login.welcomeBack")}</h1>
         <p className="text-muted-foreground">{t("auth.login.enterCredentials")}</p>
       </div>
 
@@ -149,8 +149,8 @@ export default function Login() {
           )}
         </motion.div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end">
+          {/* <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="remember"
@@ -160,7 +160,7 @@ export default function Login() {
             <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
               {t("auth.login.rememberMe")}
             </Label>
-          </div>
+          </div> */}
           <Link to="/auth/forgot-password" className="text-sm text-primary hover:underline">
             {t("auth.login.forgotPassword")}
           </Link>
@@ -176,23 +176,8 @@ export default function Login() {
         </Button>
       </form>
 
-      <div className="relative">
-        <Separator />
-        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-          {t("auth.login.demoCredentials")}
-        </span>
-      </div>
 
-      <div className="p-4 rounded-lg bg-muted/50 border text-sm space-y-3">
-        <p className="font-semibold text-foreground">{t("auth.login.demoCredentials")}:</p>
-        <div className="space-y-2">
-          <div>
-            <p className="font-medium">{t("auth.login.superAdmin")}:</p>
-            <p className="text-muted-foreground">{t("auth.login.email")}: admin@gmail.com</p>
-            <p className="text-muted-foreground">{t("auth.login.password")}: 12345678</p>
-          </div>
-        </div>
-      </div>
+ 
     </div>
   );
 }

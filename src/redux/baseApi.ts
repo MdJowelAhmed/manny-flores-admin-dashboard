@@ -20,7 +20,8 @@ export const baseApi = createApi({
             return headers
         },
     }),
-    tagTypes: ['Auth', 'Category', 'Materials', 'Equipment', 'Vehicles', 'Estimate', 'Invoice',"Attendance","PayrollManagement","ResourceRequestsReport","ChangeOrders","VehicleMaintenance","EquipmentMaintenance","Review","DailySafetyReports","chats"],
+    tagTypes: ['Auth', 'Category', 'Materials', 'Equipment', 'Vehicles', 'Estimate', 'Invoice', 'Projects', 'Attendance', 'PayrollManagement', 'ResourceRequestsReport', 'ChangeOrders', 'VehicleMaintenance', 'EquipmentMaintenance', 'Review', 'DailySafetyReports'],
+  
    
     endpoints: () => ({}),
 })
