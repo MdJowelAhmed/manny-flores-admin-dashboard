@@ -14,12 +14,12 @@ const payrollApi = baseApi.injectEndpoints({
                 }
             },
         }),
-        changePayrollStatus: build.mutation<any, { id: string, status: string }>({
-            query: ({ id, status }) => {
+        changePayrollStatus: build.mutation<any, { id: string, body: any }>({
+            query: ({ id, body }) => {
                 return {
                     url: `/payroll-management/${id}`,
                     method: "PATCH",
-                    body: status
+                    body: body
                 }
             }
         }),
@@ -31,8 +31,20 @@ const payrollApi = baseApi.injectEndpoints({
                     body: data
                 }
             }
+        }),
+        getAllCustomers: build.query<any, any>({
+            query: ({ search = "", page = 1, limit = 10 }) => {
+                return {
+                    url: `/admin/users`,
+                    params: {
+                        search,
+                        page,
+                        limit,
+                    }
+                }
+            },
         })
     })
 })
 
-export const { useGetPayrollManagementQuery, useChangePayrollStatusMutation, useCreatePayrollMutation } = payrollApi
+export const { useGetPayrollManagementQuery, useChangePayrollStatusMutation, useCreatePayrollMutation, useGetAllCustomersQuery } = payrollApi

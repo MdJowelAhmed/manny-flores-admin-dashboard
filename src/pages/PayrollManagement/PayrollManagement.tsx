@@ -6,17 +6,13 @@ import { SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
-import { PayrollTable } from './components/PayrollTable'
-import { CreateEditPaymentModal } from './components/CreateEditPaymentModal'
+import { PayrollTable, type PayrollEntry } from './components/PayrollTable'
+import { AddPayrollModal } from './components/AddPayrollModal'
 import { PaymentDetailsModal } from './components/PaymentDetailsModal'
-import {
-  payrollStats,
-  mockPayrollData,
-  type PayrollRecord,
-} from './payrollData'
-import { toast } from '@/utils/toast'
-import { cn } from '@/utils/cn'
+import { sonnerToast, toast } from '@/utils/toast'
 import { SearchInput } from '@/components/common'
+import { useChangePayrollStatusMutation, useGetAllCustomersQuery, useGetPayrollManagementQuery } from '@/redux/slices/super-admin/payrollApi'
+import Spinner from '@/components/common/Spinner'
 
 export default function PayrollManagement() {
   const { t } = useTranslation()
@@ -24,30 +20,39 @@ export default function PayrollManagement() {
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
 
-  const [records, setRecords] = useState<PayrollRecord[]>(mockPayrollData)
   const [query, setQuery] = useState('')
-  const [selectedRecord, setSelectedRecord] = useState<PayrollRecord | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedRecord, setSelectedRecord] = useState<PayrollEntry | null>(null)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const [recordToDelete, setRecordToDelete] = useState<PayrollRecord | null>(null)
+  const [recordToDelete, setRecordToDelete] = useState<PayrollEntry | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const filteredRecords = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return records
-    return records.filter((r) => {
-      return (
-        r.payrollId.toLowerCase().includes(q) ||
-        r.name.toLowerCase().includes(q) ||
-        r.payType.toLowerCase().includes(q) ||
-        r.project.toLowerCase().includes(q) ||
-        r.status.toLowerCase().includes(q)
-      )
-    })
-  }, [records, query])
 
-  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / itemsPerPage))
+  // API CALLS
+  const { data: payrollData, isLoading: payrollLoading, refetch } = useGetPayrollManagementQuery({ search: query, page: currentPage, limit: itemsPerPage })
+
+  const [changePayrollStatus] = useChangePayrollStatusMutation()
+
+  // ── Employee infinite-scroll state ─────────────────────────────────────────
+  const [empSearch, setEmpSearch] = useState('')
+  const [empPage, setEmpPage] = useState(1)
+  const [empOptions, setEmpOptions] = useState<{ value: string; label: string }[]>([])
+
+  const { data: customersData, isFetching: empLoading } = useGetAllCustomersQuery({
+    search: empSearch,
+    page: empPage,
+  })
+
+
+  // console.log('customersData', customersData)
+  console.log('payrollData', payrollData)
+
+  const records = useMemo(() => {
+    return payrollData?.data || []
+  }, [payrollData])
+
+  const totalPages = Math.max(1, payrollData?.pagination?.totalPage || 1)
 
   const setPage = (p: number) => {
     const next = new URLSearchParams(searchParams)
@@ -65,25 +70,32 @@ export default function PayrollManagement() {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
   }, [totalPages, currentPage])
 
-  const paginatedRecords = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filteredRecords.slice(start, start + itemsPerPage)
-  }, [filteredRecords, currentPage, itemsPerPage])
+  const paginatedRecords = records
 
-  const handleEdit = (r: PayrollRecord, e: React.MouseEvent) => {
+  const handleMarkPaid = async (r: PayrollEntry, e?: React.MouseEvent) => {
     e?.stopPropagation?.()
-    setSelectedRecord(r)
-    setIsModalOpen(true)
+    if (r.paymentTypeStatus === 'PAID') return
+    try {
+      sonnerToast.promise(changePayrollStatus({ id: r.id, body: { paymentTypeStatus: "PAID" } }).unwrap(), {
+        loading: 'Updating status...',
+        success: (res) => {
+          refetch()
+          if (isDetailsModalOpen) {
+            setIsDetailsModalOpen(false)
+          }
+          return res?.message || 'Status updated successfully'
+        },
+        error: 'Failed to update status',
+      })
+
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to update status', variant: 'destructive' })
+    }
   }
 
-  const handleView = (r: PayrollRecord) => {
+  const handleView = (r: PayrollEntry) => {
     setSelectedRecord(r)
     setIsDetailsModalOpen(true)
-  }
-
-  const handleEditFromDetails = () => {
-    setIsDetailsModalOpen(false)
-    if (selectedRecord) setIsModalOpen(true)
   }
 
   const handleDeleteFromDetails = () => {
@@ -95,42 +107,7 @@ export default function PayrollManagement() {
     }
   }
 
-  const handleSave = (data: Partial<PayrollRecord>) => {
-    if (data.id) {
-      setRecords((prev) =>
-        prev.map((rec) =>
-          rec.id === data.id
-            ? {
-              ...rec,
-              ...data,
-              name: data.name ?? rec.name,
-              payType: data.payType ?? rec.payType,
-              project: data.project ?? rec.project,
-              overtime: data.overtime ?? rec.overtime,
-              amount: data.amount ?? rec.amount,
-            }
-            : rec
-        )
-      )
-    } else {
-      const nextId = String(187650 + records.length + 1)
-      const newRecord: PayrollRecord = {
-        id: `pr-${Date.now()}`,
-        payrollId: `#${nextId}`,
-        name: data.name ?? '',
-        payType: (data.payType as PayrollRecord['payType']) ?? 'Monthly',
-        project: data.project ?? '',
-        overtime: data.overtime ?? 0,
-        amount: data.amount ?? 0,
-        status: (data.status as PayrollRecord['status']) ?? 'Pending',
-      }
-      setRecords((prev) => [newRecord, ...prev])
-    }
-    setIsModalOpen(false)
-    setSelectedRecord(null)
-  }
-
-  const handleDelete = (r: PayrollRecord) => {
+  const handleDelete = (r: PayrollEntry) => {
     setRecordToDelete(r)
     setIsConfirmOpen(true)
   }
@@ -140,7 +117,7 @@ export default function PayrollManagement() {
     setIsDeleting(true)
     try {
       await new Promise((res) => setTimeout(res, 300))
-      setRecords((prev) => prev.filter((rec) => rec.id !== recordToDelete.id))
+      // setRecords((prev) => prev.filter((rec) => rec.id !== recordToDelete.id))
       toast({
         variant: 'success',
         title: t('payrollManagement.recordDeleted'),
@@ -155,6 +132,8 @@ export default function PayrollManagement() {
     }
   }
 
+  if (payrollLoading) return <Spinner />
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -162,31 +141,6 @@ export default function PayrollManagement() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {payrollStats.map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <motion.div
-              key={stat.titleKey}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="bg-white rounded-xl px-5 py-5 shadow-sm border border-gray-100"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{t(stat.titleKey)}</p>
-                  <h3 className="text-xl font-bold text-foreground mt-1">{stat.value}</h3>
-                </div>
-                <div className={cn('p-2.5 rounded-lg', stat.iconBg)}>
-                  <Icon className={cn('h-5 w-5', stat.iconColor)} />
-                </div>
-              </div>
-            </motion.div>
-          )
-        })}
-      </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-base font-semibold text-slate-900">
@@ -209,11 +163,17 @@ export default function PayrollManagement() {
             size="icon"
             className="h-11 w-11 rounded-md border-gray-200"
             onClick={() => {
-              // Placeholder for filter UI (future). Keep button for design parity.
               toast({ title: t('common.filter'), description: 'Coming soon.', variant: 'info' })
             }}
           >
             <SlidersHorizontal className="h-5 w-5 text-slate-600" />
+          </Button>
+          <Button
+            type="button"
+            className="h-11 rounded-md"
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            Add Payroll
           </Button>
         </div>
       </div>
@@ -224,15 +184,15 @@ export default function PayrollManagement() {
         <PayrollTable
           records={paginatedRecords}
           onView={handleView}
-          onEdit={handleEdit}
+          onMarkPaid={handleMarkPaid}
           onDelete={handleDelete}
         />
-        {filteredRecords.length > 0 && (
+        {records.length > 0 && (
           <div className="border-t border-gray-100 px-4 py-3">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              totalItems={filteredRecords.length}
+              totalItems={payrollData?.pagination?.total || records.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setPage}
               onItemsPerPageChange={setLimit}
@@ -249,18 +209,25 @@ export default function PayrollManagement() {
           setSelectedRecord(null)
         }}
         record={selectedRecord}
-        onEdit={handleEditFromDetails}
+        onMarkPaid={() => {
+          if (selectedRecord) {
+            handleMarkPaid(selectedRecord)
+          }
+        }}
         onDelete={handleDeleteFromDetails}
       />
 
-      <CreateEditPaymentModal
-        open={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setSelectedRecord(null)
-        }}
-        record={selectedRecord}
-        onSave={handleSave}
+      <AddPayrollModal
+        open={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        customersData={customersData}
+        empPage={empPage}
+        empOptions={empOptions}
+        setEmpOptions={setEmpOptions}
+        setEmpPage={setEmpPage}
+        setEmpSearch={setEmpSearch}
+        empLoading={empLoading}
+        refetch={refetch}
       />
 
       <ConfirmDialog
