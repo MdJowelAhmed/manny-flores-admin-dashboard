@@ -19,6 +19,7 @@ import {
 } from "@/redux/slices/super-admin/chatApi";
 
 import { UserContext } from "@/provider/UserContext";
+import { getImageUrl } from "@/utils/getImageUrl";
 
 type TUserContext = {
   socket: any;
@@ -191,10 +192,7 @@ const Communication = () => {
                   <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden bg-gray-200">
                     <img
                       src={
-                        participant?.profile?.startsWith("http")
-                          ? participant?.profile
-                          : participant?.profile
-                            ? `${imageUrl}${participant?.profile}`
+                        participant?.profile? getImageUrl(participant?.profile) 
                             : "/default-image.png"
                       }
                       alt={participant?.name}
@@ -245,12 +243,7 @@ const Communication = () => {
                   <div className="h-11 w-11 rounded-full overflow-hidden bg-white/20">
                     <img
                       src={
-                        selectedConversation?.participants?.[0]?.profile?.startsWith(
-                          "http",
-                        )
-                          ? selectedConversation?.participants?.[0]?.profile
-                          : selectedConversation?.participants?.[0]?.profile
-                            ? `${imageUrl}${selectedConversation?.participants?.[0]?.profile}`
+                        selectedConversation?.participants?.[0]?.profile ? getImageUrl(selectedConversation?.participants?.[0]?.profile)
                             : "/default-image.png"
                       }
                       alt={selectedConversation?.participants?.[0]?.name}

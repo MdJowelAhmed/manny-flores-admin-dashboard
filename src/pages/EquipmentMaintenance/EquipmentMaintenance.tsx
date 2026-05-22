@@ -1,5 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
@@ -10,84 +9,102 @@ import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { EquipmentTable } from './components/EquipmentTable'
 import { ViewEquipmentDetailsModal } from './components/ViewEquipmentDetailsModal'
-import { AddEditEquipmentModal } from './components/AddEditEquipmentModal'
-import { mockEquipmentData } from './equipmentMaintenanceData'
-import type { Equipment } from '@/types'
-import { toast } from '@/utils/toast'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
-import { deleteEquipmentCategory } from '@/redux/slices/equipmentCategorySlice'
-import type { EquipmentCategory } from '@/types'
-import { DEFAULT_PAGINATION } from '@/utils/constants'
+import {
+  AddEditEquipmentModal,
+  type EquipmentFormSavePayload,
+} from './components/AddEditEquipmentModal'
+import {
+  AssignEmployeeModal,
+  type AssignEmployeePayload,
+} from './components/AssignEmployeeModal'
 import { EquipmentCategoriesTable } from './components/EquipmentCategoriesTable'
 import { AddEditEquipmentCategoryModal } from './components/AddEditEquipmentCategoryModal'
+import type { Equipment, EquipmentCategory } from '@/types'
+import { toast } from '@/utils/toast'
+import { DEFAULT_PAGINATION } from '@/utils/constants'
+import {
+  useGetCategoriesQuery,
+  useDeleteCategoryMutation,
+  mapCategoryFromApi,
+} from '@/redux/api/categoryApi'
+import {
+  useGetEquipmentQuery,
+  useAddEquipmentMutation,
+  useUpdateEquipmentMutation,
+  useDeleteEquipmentMutation,
+  mapEquipmentFromApi,
+} from '@/redux/api/equipmentApi'
 
 export default function EquipmentMaintenance() {
   const { t } = useTranslation()
-  const dispatch = useAppDispatch()
-  const equipmentCategories = useAppSelector((s) => s.equipmentCategories.list)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const searchQuery = searchParams.get('search') ?? ''
-  const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-  const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
 
-  const setSearch = (v: string) => {
-    const next = new URLSearchParams(searchParams)
-    v ? next.set('search', v) : next.delete('search')
-    next.delete('page')
-    setSearchParams(next, { replace: true })
-  }
-  const setPage = (p: number) => {
-    const next = new URLSearchParams(searchParams)
-    p > 1 ? next.set('page', String(p)) : next.delete('page')
-    setSearchParams(next, { replace: true })
-  }
-  const setLimit = (l: number) => {
-    const next = new URLSearchParams(searchParams)
-    l !== 10 ? next.set('limit', String(l)) : next.delete('limit')
-    next.delete('page')
-    setSearchParams(next, { replace: true })
-  }
+  const [searchQuery, setSearchQuery] = useState('')
+  const [equipmentPage, setEquipmentPage] = useState(DEFAULT_PAGINATION.page)
+  const [equipmentLimit, setEquipmentLimit] = useState(DEFAULT_PAGINATION.limit)
 
-  const [equipment, setEquipment] = useState<Equipment[]>(mockEquipmentData)
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null)
   const [equipmentToDelete, setEquipmentToDelete] = useState<Equipment | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [localOverrides, setLocalOverrides] = useState<Record<string, Partial<Equipment>>>({})
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
   const [categoryToDelete, setCategoryToDelete] = useState<EquipmentCategory | null>(null)
-  const [isDeletingCategory, setIsDeletingCategory] = useState(false)
   const [categoryPage, setCategoryPage] = useState(DEFAULT_PAGINATION.page)
   const [categoryLimit, setCategoryLimit] = useState(DEFAULT_PAGINATION.limit)
 
-  const selectedCategory =
-    equipmentCategories.find((c) => c.id === editingCategoryId) ?? null
+  const {
+    data: equipmentResponse,
+    isLoading: isEquipmentLoading,
+    isFetching: isEquipmentFetching,
+  } = useGetEquipmentQuery({ page: equipmentPage, limit: equipmentLimit })
+
+  const { data: categoriesResponse, isLoading: isCategoriesLoading } =
+    useGetCategoriesQuery({ type: 'EQUIPMENT' })
+
+  const [addEquipment, { isLoading: isAdding }] = useAddEquipmentMutation()
+  const [updateEquipment, { isLoading: isUpdating }] = useUpdateEquipmentMutation()
+  const [deleteEquipment, { isLoading: isDeleting }] = useDeleteEquipmentMutation()
+  const [deleteCategory, { isLoading: isDeletingCategory }] = useDeleteCategoryMutation()
+
+  const equipmentCategories = useMemo(
+    () => (categoriesResponse?.data ?? []).map(mapCategoryFromApi),
+    [categoriesResponse]
+  )
+
+  const categoryNameById = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const c of equipmentCategories) map[c.id] = c.name
+    return map
+  }, [equipmentCategories])
+
+  const equipment = useMemo(() => {
+    const list = (equipmentResponse?.data ?? []).map((doc) =>
+      mapEquipmentFromApi(doc, categoryNameById)
+    )
+    return list.map((item) => ({ ...item, ...localOverrides[item.id] }))
+  }, [equipmentResponse, categoryNameById, localOverrides])
 
   const filteredEquipment = useMemo(() => {
-    return equipment.filter((e) => {
-      const matchesSearch =
-        !searchQuery ||
-        e.equipmentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.assignedTo.toLowerCase().includes(searchQuery.toLowerCase())
-      return matchesSearch
-    })
+    if (!searchQuery.trim()) return equipment
+    const q = searchQuery.toLowerCase()
+    return equipment.filter(
+      (e) =>
+        e.equipmentName.toLowerCase().includes(q) ||
+        e.category.toLowerCase().includes(q) ||
+        e.assignedTo.toLowerCase().includes(q)
+    )
   }, [equipment, searchQuery])
 
-  const totalPages = Math.max(1, Math.ceil(filteredEquipment.length / itemsPerPage))
+  const equipmentPagination = equipmentResponse?.pagination
+  const equipmentTotalPages = equipmentPagination?.totalPage ?? 1
+  const equipmentTotalItems = equipmentPagination?.total ?? equipment.length
 
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages >= 1) setPage(1)
-  }, [totalPages, currentPage])
-
-  const paginatedEquipment = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filteredEquipment.slice(start, start + itemsPerPage)
-  }, [filteredEquipment, currentPage, itemsPerPage])
+  const selectedCategory =
+    equipmentCategories.find((c) => c.id === editingCategoryId) ?? null
 
   const paginatedCategories = useMemo(() => {
     const start = (categoryPage - 1) * categoryLimit
@@ -98,6 +115,12 @@ export default function EquipmentMaintenance() {
     1,
     Math.ceil(equipmentCategories.length / categoryLimit)
   )
+
+  const handleEquipmentPageChange = (newPage: number) => setEquipmentPage(newPage)
+  const handleEquipmentLimitChange = (newLimit: number) => {
+    setEquipmentLimit(newLimit)
+    setEquipmentPage(1)
+  }
 
   const handleCategoryPageChange = (newPage: number) => setCategoryPage(newPage)
   const handleCategoryLimitChange = (newLimit: number) => {
@@ -117,6 +140,17 @@ export default function EquipmentMaintenance() {
     setIsAddEditModalOpen(true)
   }
 
+  const handleAssign = (item: Equipment) => {
+    setSelectedEquipment(item)
+    setIsAssignModalOpen(true)
+  }
+
+  const handleAdd = () => {
+    setSelectedEquipment(null)
+    setIsAddEditModalOpen(true)
+    setEquipmentPage(1)
+  }
+
   const handleOpenEditFromView = () => {
     if (selectedEquipment) {
       setIsViewModalOpen(false)
@@ -124,83 +158,65 @@ export default function EquipmentMaintenance() {
     }
   }
 
-  const handleAdd = () => {
-    setSelectedEquipment(null)
-    setIsAddEditModalOpen(true)
-  }
-
-  const handleAddCategory = () => {
-    setEditingCategoryId(null)
-    setCategoryModalOpen(true)
-    setCategoryPage(1)
-  }
-
-  const handleEditCategory = (c: EquipmentCategory) => {
-    setEditingCategoryId(c.id)
-    setCategoryModalOpen(true)
-  }
-
-  const handleDeleteCategory = (c: EquipmentCategory) => {
-    const inUse = equipment.some((e) => e.category === c.name)
-    if (inUse) {
-      toast({
-        title: t('common.error'),
-        description: `Category "${c.name}" is in use by existing equipment.`,
-        variant: 'destructive',
-      })
-      return
+  const handleSave = async (data: EquipmentFormSavePayload) => {
+    const body = {
+      equipmentName: data.equipmentName,
+      category: data.categoryId,
+      purchaseDate: data.purchaseDate,
+      purchaseCost: data.purchaseCost,
+      warrantyExpiryDate: data.warrantyExpiryDate,
     }
-    setCategoryToDelete(c)
-  }
 
-  const handleConfirmDeleteCategory = async () => {
-    if (!categoryToDelete) return
-    setIsDeletingCategory(true)
     try {
-      await new Promise((r) => setTimeout(r, 300))
-      dispatch(deleteEquipmentCategory(categoryToDelete.id))
-      toast({
-        variant: 'success',
-        title: 'Category deleted',
-        description: `Category "${categoryToDelete.name}" removed successfully.`,
-      })
-      setCategoryToDelete(null)
-      const nextTotalPages = Math.max(
-        1,
-        Math.ceil((equipmentCategories.length - 1) / categoryLimit)
-      )
-      if (categoryPage > nextTotalPages) setCategoryPage(nextTotalPages)
-    } finally {
-      setIsDeletingCategory(false)
+      if (data.id) {
+        await updateEquipment({ id: data.id, ...body }).unwrap()
+        toast({
+          title: t('common.success'),
+          description: t('equipmentMaintenance.equipmentUpdated'),
+          variant: 'success',
+        })
+      } else {
+        await addEquipment(body).unwrap()
+        toast({
+          title: t('common.success'),
+          description: t('equipmentMaintenance.equipmentCreated'),
+          variant: 'success',
+        })
+        setEquipmentPage(1)
+      }
+      setIsAddEditModalOpen(false)
+      setSelectedEquipment(null)
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('common.error')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
     }
   }
 
-  const handleSave = (data: Partial<Equipment>) => {
-    if (selectedEquipment) {
-      setEquipment((prev) =>
-        prev.map((e) => (e.id === selectedEquipment.id ? { ...e, ...data } : e))
-      )
-    } else {
-      const newItem: Equipment = {
-        id: data.id ?? `eq-${Date.now()}`,
-        equipmentName: data.equipmentName ?? '',
-        type: data.type ?? '',
-        assignedTo: data.assignedTo ?? '',
-        usage: (data as Equipment).usage ?? '0 hrs',
-        nextService: data.nextService ?? '',
-        status: (data as Equipment).status ?? 'Available',
-        model: data.model ?? '',
-        category: data.category ?? '',
-        purchaseDate: data.purchaseDate ?? '',
-        purchaseCost: data.purchaseCost ?? '',
-        warrantyExpiry: data.warrantyExpiry ?? '',
-        assignedEmployee: data.assignedEmployee,
-        lastService: data.lastService ?? '',
-      }
-      setEquipment((prev) => [newItem, ...prev])
+  const handleAssignSave = (data: AssignEmployeePayload) => {
+    const patch = {
+      assignedTo: data.assignedTo,
+      assignedEmployee: data.assignedEmployee,
+      lastService: data.lastService || '—',
+      nextService: data.nextService || '—',
+      status: (data.assignedTo ? 'In Use' : 'Available') as Equipment['status'],
     }
-    setIsAddEditModalOpen(false)
-    setSelectedEquipment(null)
+    setLocalOverrides((prev) => ({
+      ...prev,
+      [data.equipmentId]: patch,
+    }))
+    setIsAssignModalOpen(false)
+    setSelectedEquipment((prev) =>
+      prev?.id === data.equipmentId ? { ...prev, ...patch } : prev
+    )
   }
 
   const handleDelete = (item: Equipment) => {
@@ -218,21 +234,28 @@ export default function EquipmentMaintenance() {
 
   const handleConfirmDelete = async () => {
     if (!equipmentToDelete) return
-    setIsDeleting(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300))
-      setEquipment((prev) => prev.filter((e) => e.id !== equipmentToDelete.id))
+      await deleteEquipment(equipmentToDelete.id).unwrap()
       toast({
         variant: 'success',
         title: t('equipmentMaintenance.equipmentDeleted'),
-        description: t('equipmentMaintenance.equipmentRemoved', { name: equipmentToDelete.equipmentName }),
+        description: t('equipmentMaintenance.equipmentRemoved', {
+          name: equipmentToDelete.equipmentName,
+        }),
       })
       setIsConfirmOpen(false)
       setEquipmentToDelete(null)
+      setLocalOverrides((prev) => {
+        const next = { ...prev }
+        delete next[equipmentToDelete.id]
+        return next
+      })
       if (selectedEquipment?.id === equipmentToDelete.id) {
         setSelectedEquipment(null)
         setIsViewModalOpen(false)
-        setIsAddEditModalOpen(false)
+      }
+      if (equipment.length === 1 && equipmentPage > 1) {
+        setEquipmentPage(equipmentPage - 1)
       }
     } catch {
       toast({
@@ -240,10 +263,62 @@ export default function EquipmentMaintenance() {
         description: t('equipmentMaintenance.failedToDelete'),
         variant: 'destructive',
       })
-    } finally {
-      setIsDeleting(false)
     }
   }
+
+  const handleAddCategory = () => {
+    setEditingCategoryId(null)
+    setCategoryModalOpen(true)
+    setCategoryPage(1)
+  }
+
+  const handleEditCategory = (c: EquipmentCategory) => {
+    setEditingCategoryId(c.id)
+    setCategoryModalOpen(true)
+  }
+
+  const handleDeleteCategory = (c: EquipmentCategory) => {
+    const inUse = equipment.some((e) => e.categoryId === c.id)
+    if (inUse) {
+      toast({
+        title: t('common.error'),
+        description: t('equipmentMaintenance.categoryInUse', { name: c.name }),
+        variant: 'destructive',
+      })
+      return
+    }
+    setCategoryToDelete(c)
+  }
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!categoryToDelete) return
+    try {
+      await deleteCategory(categoryToDelete.id).unwrap()
+      toast({
+        variant: 'success',
+        title: t('equipmentMaintenance.categoryDeleted'),
+        description: t('equipmentMaintenance.categoryRemoved', { name: categoryToDelete.name }),
+      })
+      setCategoryToDelete(null)
+      if (paginatedCategories.length === 1 && categoryPage > 1) {
+        setCategoryPage(categoryPage - 1)
+      }
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('common.error')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
+    }
+  }
+
+  const isSavingEquipment = isAdding || isUpdating
 
   return (
     <motion.div
@@ -258,11 +333,17 @@ export default function EquipmentMaintenance() {
 
       <Tabs defaultValue="equipments" className="w-full space-y-4">
         <TabsList className="grid w-full max-w-md grid-cols-2 bg-muted/60 p-1 h-auto rounded-lg">
-          <TabsTrigger value="equipments" className="data-[state=active]:rounded-l-md data-[state=inactive]:rounded-l-md data-[state=inactive]:border">
-            Equipments
+          <TabsTrigger
+            value="equipments"
+            className="data-[state=active]:rounded-l-md data-[state=inactive]:rounded-l-md data-[state=inactive]:border"
+          >
+            {t('equipmentMaintenance.tabEquipments')}
           </TabsTrigger>
-          <TabsTrigger value="categories" className="data-[state=active]:rounded-r-md  data-[state=inactive]:rounded-r-md data-[state=inactive]:border">
-            Equipment Categories
+          <TabsTrigger
+            value="categories"
+            className="data-[state=active]:rounded-r-md data-[state=inactive]:rounded-r-md data-[state=inactive]:border"
+          >
+            {t('equipmentMaintenance.tabCategories')}
           </TabsTrigger>
         </TabsList>
 
@@ -270,7 +351,7 @@ export default function EquipmentMaintenance() {
           <div className="flex items-center justify-end gap-3">
             <SearchInput
               value={searchQuery}
-              onChange={setSearch}
+              onChange={setSearchQuery}
               placeholder={t('equipmentMaintenance.searchEquipment')}
               className="w-[280px] bg-white"
               debounceMs={150}
@@ -282,25 +363,27 @@ export default function EquipmentMaintenance() {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <EquipmentTable
-              equipment={paginatedEquipment}
-              onView={handleView}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-
-            {filteredEquipment.length > 0 && (
-              <div className="border-t border-gray-100 px-6 py-4">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={filteredEquipment.length}
-                  itemsPerPage={itemsPerPage}
-                  onPageChange={setPage}
-                  onItemsPerPageChange={setLimit}
-                />
+            {isEquipmentLoading || isEquipmentFetching ? (
+              <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+                {t('common.loading')}
               </div>
+            ) : (
+              <EquipmentTable
+                equipment={filteredEquipment}
+                onView={handleView}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onAssign={handleAssign}
+              />
             )}
+            <Pagination
+              currentPage={equipmentPage}
+              totalPages={equipmentTotalPages}
+              totalItems={equipmentTotalItems}
+              itemsPerPage={equipmentLimit}
+              onPageChange={handleEquipmentPageChange}
+              onItemsPerPageChange={handleEquipmentLimitChange}
+            />
           </div>
         </TabsContent>
 
@@ -311,16 +394,21 @@ export default function EquipmentMaintenance() {
               className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Category
+              {t('equipmentMaintenance.addCategory')}
             </Button>
           </div>
-
           <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-            <EquipmentCategoriesTable
-              categories={paginatedCategories}
-              onEdit={handleEditCategory}
-              onDelete={handleDeleteCategory}
-            />
+            {isCategoriesLoading ? (
+              <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+                {t('common.loading')}
+              </div>
+            ) : (
+              <EquipmentCategoriesTable
+                categories={paginatedCategories}
+                onEdit={handleEditCategory}
+                onDelete={handleDeleteCategory}
+              />
+            )}
             <Pagination
               currentPage={categoryPage}
               totalPages={categoryTotalPages}
@@ -342,6 +430,7 @@ export default function EquipmentMaintenance() {
         equipment={selectedEquipment}
         onEdit={handleOpenEditFromView}
         onDelete={handleDeleteFromView}
+        onAssign={() => selectedEquipment && handleAssign(selectedEquipment)}
       />
 
       <AddEditEquipmentModal
@@ -352,6 +441,16 @@ export default function EquipmentMaintenance() {
         }}
         equipment={selectedEquipment}
         onSave={handleSave}
+        isSaving={isSavingEquipment}
+      />
+
+      <AssignEmployeeModal
+        open={isAssignModalOpen}
+        onClose={() => {
+          setIsAssignModalOpen(false)
+        }}
+        equipment={selectedEquipment}
+        onSave={handleAssignSave}
       />
 
       <AddEditEquipmentCategoryModal
@@ -372,7 +471,9 @@ export default function EquipmentMaintenance() {
         }}
         onConfirm={handleConfirmDelete}
         title={t('equipmentMaintenance.deleteEquipment')}
-        description={t('equipmentMaintenance.deleteEquipmentConfirm', { name: equipmentToDelete?.equipmentName ?? '' })}
+        description={t('equipmentMaintenance.deleteEquipmentConfirm', {
+          name: equipmentToDelete?.equipmentName ?? '',
+        })}
         confirmText={t('common.delete')}
         cancelText={t('common.cancel')}
         variant="danger"
@@ -383,9 +484,11 @@ export default function EquipmentMaintenance() {
         open={!!categoryToDelete}
         onClose={() => !isDeletingCategory && setCategoryToDelete(null)}
         onConfirm={handleConfirmDeleteCategory}
-        title="Delete Category"
-        description={`Are you sure you want to delete "${categoryToDelete?.name ?? ''}"?`}
-        confirmText="Delete"
+        title={t('equipmentMaintenance.deleteCategory')}
+        description={t('equipmentMaintenance.deleteCategoryConfirm', {
+          name: categoryToDelete?.name ?? '',
+        })}
+        confirmText={t('common.delete')}
         cancelText={t('common.cancel')}
         variant="danger"
         isLoading={isDeletingCategory}

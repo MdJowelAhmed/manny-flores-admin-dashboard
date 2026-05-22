@@ -14,67 +14,112 @@ import {
 import { ViewChangeOrderDetailsModal } from './components/ViewChangeOrderDetailsModal'
 import { NewChangeOrderModal } from './components/NewChangeOrderModal'
 import {
-  mockChangeOrders,
   statusFilterOptions,
   type ChangeOrder,
 } from './changeOrdersData'
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
+import { useGetChangeOrdersQuery, useLazyGetOrderPdfByIdQuery } from '@/redux/slices/super-admin/changeOrdersApi'
+import { useGetProjectsQuery } from '@/redux/slices/super-admin/documentsApprovalApi'
+import Spinner from '@/components/common/Spinner'
+import { useDebounce } from '@/hooks/useDebounce'
+import { imageUrl } from '@/redux/baseApi'
+import { Pagination } from '@/components/common/Pagination'
 
 export default function ChangeOrders() {
   const { t } = useTranslation()
-  const [orders, setOrders] = useState<ChangeOrder[]>(mockChangeOrders)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [selectedOrder, setSelectedOrder] = useState<ChangeOrder | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const debouncedSearch = useDebounce(searchQuery, 500)
+
+  // API CALLS - Change Orders
+  const { data: changeOrdersData, isLoading: isChangeOrdersLoading, refetch: refetchChangeOrders } = useGetChangeOrdersQuery({
+    search: debouncedSearch,
+    page: currentPage,
+    limit: 10,
+  })
+
+  // API CALLS - Lazy PDF Fetching
+  const [triggerGetPdf, { isFetching: isPdfDownloading }] = useLazyGetOrderPdfByIdQuery()
+
+  // API CALLS - Project Selection state passed down to modal
+  const [projectPage, setProjectPage] = useState(1)
+  const [projects, setProjects] = useState<any[]>([])
+
+  const { data: getProjectsApi, isLoading: projectLoading, isFetching: projectFetching, refetch: projectRefetch } = useGetProjectsQuery(
+    { page: projectPage, limit: 40 }
+  )
+
+  const getNormalizedStatus = (status: string | undefined) => {
+    if (!status) return 'Pending'
+    const s = status.toUpperCase()
+    if (s === 'PENDING') return 'Pending'
+    if (s === 'APPROVED') return 'Approved'
+    return status
+  }
 
   const filteredOrders = useMemo(() => {
-    return orders.filter((o) => {
-      const matchesSearch =
-        !searchQuery ||
-        o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.serviceType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        o.orderId.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesStatus = statusFilter === 'all' || o.status === statusFilter
-      return matchesSearch && matchesStatus
+    const rawData = changeOrdersData?.data || []
+    return rawData.filter((o: ChangeOrder) => {
+      const statusValue = getNormalizedStatus(o.project?.status)
+      const matchesStatus = statusFilter === 'all' || statusValue.toLowerCase() === statusFilter.toLowerCase()
+      return matchesStatus
     })
-  }, [orders, searchQuery, statusFilter])
+  }, [changeOrdersData?.data, statusFilter])
 
   const handleViewDetails = (o: ChangeOrder) => {
     setSelectedOrder(o)
     setIsViewModalOpen(true)
   }
 
-  const handleDownloadPdf = (o: ChangeOrder) => {
-    const text = [
-      o.orderId,
-      o.customerName,
-      `${t('changeOrders.originalCost')}: ${formatCurrency(o.originalCost)}`,
-      `${t('changeOrders.additionalCost')}: +${formatCurrency(o.additionalCost)}`,
-      `${t('changeOrders.newTotal')}: ${formatCurrency(o.newTotal)}`,
-    ].join('\n')
-    const blob = new Blob([text], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${o.orderId}-summary.txt`
-    a.click()
-    URL.revokeObjectURL(url)
-    toast({
-      title: t('common.success'),
-      description: t('changeOrders.pdfDownloadStarted'),
-      variant: 'success',
-    })
+  const handleDownloadPdf = async (o: ChangeOrder) => {
+    try {
+      const response = await triggerGetPdf(o.id).unwrap()
+      const downloadUrl = response?.data?.downloadUrl || response?.downloadUrl
+      if (downloadUrl) {
+        const fullUrl = downloadUrl.startsWith('http') ? downloadUrl : `${imageUrl}${downloadUrl}`
+        const a = document.createElement('a')
+        a.href = fullUrl
+        a.target = '_blank'
+        a.download = `change-order-${o.id}.pdf`
+        a.click()
+        toast({
+          title: t('common.success'),
+          description: t('changeOrders.pdfDownloadStarted'),
+          variant: 'success',
+        })
+      } else {
+        toast({
+          title: t('common.error'),
+          description: 'Download URL not found in response',
+          variant: 'destructive',
+        })
+      }
+    } catch (err: any) {
+      console.error('PDF Download Error:', err)
+      toast({
+        title: t('common.error'),
+        description: err?.data?.message || 'Failed to fetch/generate PDF',
+        variant: 'destructive',
+      })
+    }
   }
 
-  const handleCreateOrder = (order: ChangeOrder) => {
-    setOrders((prev) => [order, ...prev])
+  const handleCreateOrder = () => {
+    refetchChangeOrders()
   }
+
+  const totalItems = changeOrdersData?.pagination?.total || 0
+  const totalPages = changeOrdersData?.pagination?.totalPage || 1
+  const limit = changeOrdersData?.pagination?.limit || 10
+
+  if (isChangeOrdersLoading) return <Spinner />
 
   return (
     <motion.div
@@ -90,7 +135,10 @@ export default function ChangeOrders() {
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
           <SearchInput
             value={searchQuery}
-            onChange={setSearchQuery}
+            onChange={(val) => {
+              setSearchQuery(val)
+              setCurrentPage(1)
+            }}
             placeholder={t('changeOrders.searchDocuments')}
             className="w-full sm:w-[280px] bg-white rounded-lg border-gray-200"
             debounceMs={150}
@@ -127,83 +175,118 @@ export default function ChangeOrders() {
             {t('changeOrders.noOrdersFound')}
           </div>
         ) : (
-          filteredOrders.map((o, index) => (
-            <motion.div
-              key={o.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.02 * index }}
-              className="rounded-xl border border-gray-200/90 bg-white p-4 sm:p-5 shadow-sm"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                <div>
-                  <h2 className="font-bold text-foreground text-base">{o.customerName}</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">{o.serviceType}</p>
-                </div>
-                <span
-                  className={cn(
-                    'px-3 py-1 rounded-md text-xs font-semibold shrink-0',
-                    o.status === 'Approved'
-                      ? 'bg-primary/15 text-primary'
-                      : 'bg-orange-100 text-orange-700'
-                  )}
-                >
-                  {o.status}
-                </span>
-              </div>
+          filteredOrders.map((o: ChangeOrder, index: number) => {
+            const formattedDate = o.createdAt
+              ? new Date(o.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })
+              : '—'
+            const currentStatus = getNormalizedStatus(o.project?.status)
 
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-                <div>
-                  <span className="text-xs text-muted-foreground block mb-1">
-                    {t('changeOrders.originalCost')}
+            return (
+              <motion.div
+                key={o.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.02 * index }}
+                className="rounded-xl border border-gray-200/90 bg-white p-4 sm:p-5 shadow-sm"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                  <div>
+                    <h2 className="font-bold text-foreground text-base">
+                      {o.project?.estimates?.clientName ?? "Client ID: " + (o.project?.clientId?.slice(0, 8) || "—")}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {o.project?.estimates?.projectName ?? "Project ID: " + (o.project?.id?.slice(0, 8) || "—")}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      'px-3 py-1 rounded-md text-xs font-semibold shrink-0',
+                      currentStatus === 'Approved'
+                        ? 'bg-primary/15 text-primary'
+                        : 'bg-orange-100 text-orange-700'
+                    )}
+                  >
+                    {currentStatus}
                   </span>
-                  <span className="text-sm font-bold text-foreground">{formatCurrency(o.originalCost)}</span>
                 </div>
-                <div>
-                  <span className="text-xs text-muted-foreground block mb-1">
-                    {t('changeOrders.additionalCost')}
-                  </span>
-                  <span className="text-sm font-bold text-orange-600">+{formatCurrency(o.additionalCost)}</span>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground block mb-1">
-                    {t('changeOrders.newTotal')}
-                  </span>
-                  <span className="text-sm font-bold text-primary">{formatCurrency(o.newTotal)}</span>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground block mb-1">
-                    {t('changeOrders.requestDate')}
-                  </span>
-                  <span className="text-sm font-bold text-foreground">{o.requestDate}</span>
-                </div>
-              </div>
 
-              <div className="flex flex-wrap justify-end gap-2 pt-1">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleDownloadPdf(o)}
-                  className="rounded-lg border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                >
-                  <FileDown className="h-4 w-4 mr-1" />
-                  {t('changeOrders.downloadPdf')}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleViewDetails(o)}
-                  className="rounded-lg border-gray-200 text-muted-foreground hover:bg-muted/50"
-                >
-                  {t('changeOrders.viewDetails')}
-                </Button>
-              </div>
-            </motion.div>
-          ))
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+                  <div>
+                    <span className="text-xs text-muted-foreground block mb-1">
+                      {t('changeOrders.originalCost')}
+                    </span>
+                    <span className="text-sm font-bold text-foreground">
+                      {formatCurrency(o.originalCost ?? 0)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground block mb-1">
+                      {t('changeOrders.additionalCost')}
+                    </span>
+                    <span className="text-sm font-bold text-orange-600">
+                      +{formatCurrency(o.additionalCost ?? 0)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground block mb-1">
+                      {t('changeOrders.newTotal')}
+                    </span>
+                    <span className="text-sm font-bold text-primary">
+                      {formatCurrency(o.totalCost ?? ((o.originalCost ?? 0) + (o.additionalCost ?? 0)))}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground block mb-1">
+                      {t('changeOrders.requestDate')}
+                    </span>
+                    <span className="text-sm font-bold text-foreground">{formattedDate}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap justify-end gap-2 pt-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={isPdfDownloading}
+                    onClick={() => handleDownloadPdf(o)}
+                    className="rounded-lg border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 disabled:opacity-50"
+                  >
+                    <FileDown className="h-4 w-4 mr-1" />
+                    {t('changeOrders.downloadPdf')}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleViewDetails(o)}
+                    className="rounded-lg border-gray-200 text-muted-foreground hover:bg-muted/50"
+                  >
+                    {t('changeOrders.viewDetails')}
+                  </Button>
+                </div>
+              </motion.div>
+            )
+          })
         )}
       </div>
+
+      {totalItems > 0 && (
+        <div className="border-t border-gray-100 px-5 py-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={limit}
+            onPageChange={setCurrentPage}
+            showItemsPerPage={false}
+          />
+        </div>
+      )}
 
       <ViewChangeOrderDetailsModal
         open={isViewModalOpen}
@@ -218,6 +301,14 @@ export default function ChangeOrders() {
         open={isNewOrderOpen}
         onClose={() => setIsNewOrderOpen(false)}
         onCreate={handleCreateOrder}
+        projectLoading={projectLoading}
+        projectFetching={projectFetching}
+        projectRefetch={projectRefetch}
+        projectPage={projectPage}
+        setProjectPage={setProjectPage}
+        projects={projects}
+        setProjects={setProjects}
+        getProjectsApi={getProjectsApi}
       />
     </motion.div>
   )

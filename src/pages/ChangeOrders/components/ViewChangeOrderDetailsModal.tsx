@@ -15,6 +15,7 @@ import type { ChangeOrder } from '../changeOrdersData'
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
+import { imageUrl } from '@/redux/baseApi'
 
 interface ViewChangeOrderDetailsModalProps {
   open: boolean
@@ -32,7 +33,7 @@ function DetailRow({
   valueClassName?: string
 }) {
   return (
-    <div className="flex justify-between items-start gap-4 py-2.5  last:border-0">
+    <div className="flex justify-between items-start gap-4 py-2.5 last:border-0 border-b border-gray-100/50">
       <span className="text-sm text-muted-foreground shrink-0">{label}:</span>
       <span className={cn('text-sm font-medium text-foreground text-right', valueClassName)}>
         {typeof value === 'number' ? formatCurrency(value) : value}
@@ -69,16 +70,14 @@ export function ViewChangeOrderDetailsModal({
     onClose()
   }
 
-  const downloadFile = (fileName: string) => {
-    const blob = new Blob([`${fileName}\n${t('changeOrders.attachmentPlaceholder')}`], {
-      type: 'text/plain',
-    })
-    const url = URL.createObjectURL(blob)
+  const downloadFile = (filePath: string) => {
+    const fullUrl = filePath.startsWith('http') ? filePath : `${imageUrl}${filePath}`
+    const fileName = filePath.split('/').pop() || 'attachment'
     const a = document.createElement('a')
-    a.href = url
+    a.href = fullUrl
+    a.target = '_blank'
     a.download = fileName
     a.click()
-    URL.revokeObjectURL(url)
     toast({
       title: t('common.success'),
       description: t('changeOrders.downloadStarted', { name: fileName }),
@@ -86,17 +85,26 @@ export function ViewChangeOrderDetailsModal({
     })
   }
 
+  const getNormalizedStatus = (status: string | undefined) => {
+    if (!status) return 'Pending'
+    const s = status.toUpperCase()
+    if (s === 'PENDING') return 'Pending'
+    if (s === 'APPROVED') return 'Approved'
+    return status
+  }
+
+  const currentStatus = getNormalizedStatus(order.project?.status)
+
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={order.orderId}
+      title={`Change Order Details`}
       description={t('changeOrders.detailsSubtitle')}
       size="xl"
       className="max-w-3xl bg-white "
       footer={
         <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full">
-       
           <Button
             type="button"
             className="rounded-lg bg-primary hover:bg-primary/90 text-white"
@@ -110,26 +118,40 @@ export function ViewChangeOrderDetailsModal({
       <div className="space-y-6 -mt-1">
         <div>
           <SectionHeader icon={CalendarDays} title={t('changeOrders.sectionProjectInfo')} />
-          <div className="rounded-xl  bg-muted/20 px-4">
-            <DetailRow label={t('changeOrders.projectName')} value={order.projectName} />
-            <DetailRow label={t('changeOrders.projectId')} value={order.projectId} />
-            <DetailRow label={t('changeOrders.siteAddress')} value={order.siteAddress} />
-            <DetailRow label={t('changeOrders.requestDate')} value={order.requestDate} />
+          <div className="rounded-xl bg-muted/20 px-4 py-1">
+            <DetailRow
+              label={t('changeOrders.projectName')}
+              value={order.project?.estimates?.projectName ?? "Project ID: " + (order.project?.id?.slice(0, 8) || "—")}
+            />
+            <DetailRow label={t('changeOrders.projectId')} value={order.project?.id ?? order.projectId ?? "—"} />
+            <DetailRow label={t('changeOrders.siteAddress')} value={order.project?.estimates?.siteAddress ?? "—"} />
+            <DetailRow
+              label={t('changeOrders.requestDate')}
+              value={
+                order.createdAt
+                  ? new Date(order.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : '—'
+              }
+            />
           </div>
         </div>
 
         <div>
           <SectionHeader icon={CircleDollarSign} title={t('changeOrders.sectionFinancialImpact')} />
-          <div className="rounded-xl  bg-muted/20 px-4">
-            <DetailRow label={t('changeOrders.originalCost')} value={order.originalCost} />
+          <div className="rounded-xl bg-muted/20 px-4 py-1">
+            <DetailRow label={t('changeOrders.originalCost')} value={order.originalCost ?? 0} />
             <DetailRow
               label={t('changeOrders.additionalCost')}
-              value={`+${formatCurrency(order.additionalCost)}`}
+              value={`+${formatCurrency(order.additionalCost ?? 0)}`}
               valueClassName="text-orange-600 font-semibold"
             />
             <DetailRow
               label={t('changeOrders.newTotal')}
-              value={order.newTotal}
+              value={order.totalCost ?? ((order.originalCost ?? 0) + (order.additionalCost ?? 0))}
               valueClassName="text-primary font-semibold"
             />
           </div>
@@ -137,48 +159,60 @@ export function ViewChangeOrderDetailsModal({
 
         <div>
           <SectionHeader icon={User} title={t('changeOrders.sectionCustomerInfo')} />
-          <div className="rounded-xl  bg-muted/20 px-4">
-            <DetailRow label={t('changeOrders.customerName')} value={order.customerName} />
-            <DetailRow label={t('changeOrders.contactNumber')} value={order.contactNumber} />
-            <DetailRow label={t('changeOrders.emailField')} value={order.email} />
-            <DetailRow label={t('changeOrders.company')} value={order.company} />
+          <div className="rounded-xl bg-muted/20 px-4 py-1">
+            <DetailRow label={t('changeOrders.customerName')} value={order.project?.estimates?.clientName ?? "—"} />
+            <DetailRow label={t('changeOrders.contactNumber')} value={order.project?.estimates?.phone ?? "—"} />
+            <DetailRow label={t('changeOrders.emailField')} value={order.project?.estimates?.email ?? "—"} />
+            <DetailRow label={t('changeOrders.company')} value={order.project?.estimates?.company ?? "—"} />
           </div>
         </div>
 
         <div>
           <SectionHeader icon={Info} title={t('changeOrders.reasonForChange')} />
-          <p className="text-sm text-muted-foreground leading-relaxed rounded-xl  bg-white px-4 py-3">
-            {order.reasonForChange}
-          </p>
+          <div className="rounded-xl bg-muted/20 px-4 py-3 space-y-2 border border-gray-100">
+            <p className="text-sm font-semibold text-foreground capitalize">
+              {order.reasonForChange ? order.reasonForChange.replace(/_/g, ' ') : '—'}
+            </p>
+            {order.description && (
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {order.description}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <SectionHeader icon={Paperclip} title={t('changeOrders.attachments')} />
-            <div className="rounded-xl  bg-white divide-y divide-gray-100">
-              {order.attachments.length === 0 ? (
+            <div className="rounded-xl bg-white border border-gray-100 divide-y divide-gray-100 overflow-hidden">
+              {!order.documentation || order.documentation.length === 0 ? (
                 <p className="text-sm text-muted-foreground px-4 py-3">{t('changeOrders.noAttachments')}</p>
               ) : (
-                order.attachments.map((a) => (
-                  <div key={a.name} className="flex items-center justify-between gap-2 px-4 py-2.5">
-                    <span className="text-sm font-medium text-foreground truncate">{a.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => downloadFile(a.name)}
-                      className="shrink-0 p-2 rounded-lg text-primary hover:bg-primary/10"
-                      aria-label={t('changeOrders.downloadFile', { name: a.name })}
-                    >
-                      <Download className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))
+                order.documentation.map((filePath) => {
+                  const fileName = filePath.split('/').pop() || 'attachment'
+                  return (
+                    <div key={filePath} className="flex items-center justify-between gap-2 px-4 py-2.5">
+                      <span className="text-sm font-medium text-foreground truncate max-w-[200px]" title={fileName}>
+                        {fileName}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => downloadFile(filePath)}
+                        className="shrink-0 p-2 rounded-lg text-primary hover:bg-primary/10"
+                        aria-label={t('changeOrders.downloadFile', { name: fileName })}
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )
+                })
               )}
             </div>
           </div>
 
           <div>
             <SectionHeader icon={BadgeCheck} title={t('changeOrders.authorization')} />
-            {order.status === 'Pending' ? (
+            {currentStatus === 'Pending' ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 flex gap-3">
                 <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>

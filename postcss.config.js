@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
@@ -22,3 +23,11 @@ export default {
 
 
 
+=======
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+>>>>>>> 615c86b4ca5066c8674ebfdb18157665dc0a05e0
