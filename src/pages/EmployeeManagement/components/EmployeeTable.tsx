@@ -27,7 +27,7 @@ export function EmployeeTable({
   const [createInitialChat] = useCreateInitialChatMutation()
 
   const handelChat = async (id: string) => {
-    await createInitialChat(id).then((res) => {
+    await createInitialChat(id).then((res) => { 
       if (res?.data?.success) {
         navigate("/communication")
       }
