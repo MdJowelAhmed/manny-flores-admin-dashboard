@@ -197,12 +197,15 @@ const projectsApi = baseApi.injectEndpoints({
     }),
     reScheduleProject: builder.mutation<
       { success?: boolean; message?: string },
-      { projectId: string; body: ReScheduleProjectPayload }
+      { estimateId: string; body: ReScheduleProjectPayload }
     >({
-      query: ({ projectId, body }) => ({
-        url: `/project/re-schedule/${projectId}`,
-        method: 'POST',
-        body,
+      query: ({ estimateId, body }) => ({
+        url: `/project/re-schedule/${estimateId}`,
+        method: 'PATCH',
+        body: {
+          estimateId,
+          ...body,
+        },
       }),
       invalidatesTags: ['Projects'],
     }),
@@ -212,7 +215,7 @@ const projectsApi = baseApi.injectEndpoints({
     >({
       query: ({ projectId, body }) => ({
         url: `/project/complete/${projectId}`,
-        method: 'POST',
+        method: 'PATCH',
         body,
       }),
       invalidatesTags: ['Projects'],

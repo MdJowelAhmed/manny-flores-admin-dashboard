@@ -148,10 +148,10 @@ export default function ProjectScheduling() {
   }
 
   const handleRescheduleSubmit = async (
-    projectId: string,
+    estimateId: string,
     values: RescheduleFormValues
   ) => {
-    await reScheduleProject({ projectId, body: values }).unwrap()
+    await reScheduleProject({ estimateId, body: values }).unwrap()
     refetch()
   }
 
