@@ -228,7 +228,7 @@ const authApi = baseApi.injectEndpoints({
 
         getMyProfile: builder.query<GetMyProfileResponse, void>({
             query: () => ({
-                url: '/users/profile',
+                url: '/user/profile',
                 method: 'GET',
             }),
             providesTags: ['Auth'],
