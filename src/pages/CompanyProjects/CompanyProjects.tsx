@@ -20,6 +20,8 @@ import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { STATUS_COLORS } from '@/utils/constants'
 import { useTranslation } from 'react-i18next'
+import { useCompanyProjectsOverviewQuery, useGetCompanyProjectsQuery } from '@/redux/slices/super-admin/company-projectsApi'
+import Spinner from '@/components/common/Spinner'
 
 export default function CompanyProjects() {
   const { t } = useTranslation()
@@ -29,6 +31,23 @@ export default function CompanyProjects() {
   const statusFilter = searchParams.get('status') ?? 'all'
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
+
+  // API CALLS
+  const { data: companyOverviewRes, isLoading: companyOverviewLoading } = useCompanyProjectsOverviewQuery()
+
+  // const { data: companyPorjectsApi, isLoading: companyProjectLoading, refetch } = useGetCompanyProjectsQuery({
+  //   status: statusFilter,
+  //   page: currentPage,
+  //   limit: itemsPerPage,
+  //   search: searchQuery
+  // })
+
+
+
+  // const projects = companyPorjectsApi?.data || []
+  // console.log(projects)
+  // console.log(companyOverviewRes)
+
 
   const setSearch = (v: string) => {
     const next = new URLSearchParams(searchParams)
@@ -60,13 +79,9 @@ export default function CompanyProjects() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null)
   const [projects, setProjects] = useState<Project[]>(mockProjectsData)
 
-  const stats = useMemo(() => {
-    const total = projects.length
-    const active = projects.filter((p) => p.status === 'Active').length
-    const pending = projects.filter((p) => p.status === 'Pending').length
-    const completed = projects.filter((p) => p.status === 'Completed').length
-    return { total, active, pending, completed }
-  }, [projects])
+
+
+
 
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
@@ -120,11 +135,11 @@ export default function CompanyProjects() {
         prev.map((p) =>
           p.id === selectedProject.id
             ? {
-                ...p,
-                ...data,
-                remaining: (data.totalBudget ?? p.totalBudget) - (data.amountSpent ?? p.amountSpent),
-                lineItems: data.lineItems ?? p.lineItems,
-              }
+              ...p,
+              ...data,
+              remaining: (data.totalBudget ?? p.totalBudget) - (data.amountSpent ?? p.amountSpent),
+              lineItems: data.lineItems ?? p.lineItems,
+            }
             : p
         )
       )
@@ -151,6 +166,10 @@ export default function CompanyProjects() {
     }
   }
 
+  // if (companyProjectLoading || companyOverviewLoading) {
+  //   return <Spinner />
+  // }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -164,12 +183,12 @@ export default function CompanyProjects() {
           const Icon = stat.icon
           const value =
             stat.titleKey === 'companyProjects.totalProject'
-              ? stats.total
+              ? companyOverviewRes?.data?.totalProjects
               : stat.titleKey === 'companyProjects.activeProject'
-                ? stats.active
+                ? companyOverviewRes?.data?.activeProjects
                 : stat.titleKey === 'companyProjects.pendingProject'
-                  ? stats.pending
-                  : stats.completed
+                  ? companyOverviewRes?.data?.cancelledProjects
+                  : companyOverviewRes?.data?.completedProjects
           return (
             <motion.div
               key={stat.titleKey}
@@ -204,7 +223,7 @@ export default function CompanyProjects() {
               className="w-[280px] bg-white"
               debounceMs={150}
             />
-          
+
             <div className="w-[120px]">
               <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-full bg-primary text-white hover:bg-primary/90">
@@ -264,7 +283,7 @@ export default function CompanyProjects() {
                     <div
                       className={cn(
                         'px-4 py-2 rounded-sm text-xs font-semibold bg-[#FF383C1A]',
-                      
+
                         statusColors.text
                       )}
                     >

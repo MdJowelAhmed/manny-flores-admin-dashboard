@@ -67,6 +67,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
@@ -97,7 +98,7 @@
   }
 
   .gradient-mesh {
-    background: 
+    background:
       radial-gradient(at 40% 20%, hsl(262 83% 58% / 0.1) 0px, transparent 50%),
       radial-gradient(at 80% 0%, hsl(189 100% 50% / 0.1) 0px, transparent 50%),
       radial-gradient(at 0% 50%, hsl(262 83% 58% / 0.05) 0px, transparent 50%),
@@ -154,10 +155,12 @@ input[type="number"] {
   width: 0.875rem;
   height: 0.875rem;
 }
+
 .rdp [data-selected] {
   background-color: var(--primary) !important;
   color: white !important;
 }
+
 .rdp [data-selected]:hover {
   background-color: var(--primary) !important;
   opacity: 0.9;
@@ -168,13 +171,9 @@ input[type="number"] {
 .rdp .rdp-button_next {
   color: var(--primary) !important;
 }
+
 .rdp .rdp-button_previous svg,
 .rdp .rdp-button_next svg {
   color: var(--primary) !important;
   fill: var(--primary) !important;
 }
-
-
-
-
-

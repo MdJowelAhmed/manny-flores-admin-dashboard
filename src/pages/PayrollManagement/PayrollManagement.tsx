@@ -101,14 +101,14 @@ export default function PayrollManagement() {
         prev.map((rec) =>
           rec.id === data.id
             ? {
-                ...rec,
-                ...data,
-                name: data.name ?? rec.name,
-                payType: data.payType ?? rec.payType,
-                project: data.project ?? rec.project,
-                overtime: data.overtime ?? rec.overtime,
-                amount: data.amount ?? rec.amount,
-              }
+              ...rec,
+              ...data,
+              name: data.name ?? rec.name,
+              payType: data.payType ?? rec.payType,
+              project: data.project ?? rec.project,
+              overtime: data.overtime ?? rec.overtime,
+              amount: data.amount ?? rec.amount,
+            }
             : rec
         )
       )
@@ -220,7 +220,7 @@ export default function PayrollManagement() {
 
       {/* Table */}
       <div className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-        
+
         <PayrollTable
           records={paginatedRecords}
           onView={handleView}
