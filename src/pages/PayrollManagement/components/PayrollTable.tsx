@@ -2,22 +2,38 @@ import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { Info, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import type { PayrollRecord,  } from '../payrollData'
-
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 
+export interface PayrollEntry {
+  id: string
+  employeeId: string
+  salary: number
+  payType: string
+  paymentTypeStatus: string
+  projectId: string | null
+  workingHour: number
+  hourlyRate: number
+  overTimeHours: number
+  overTimeAmount: number
+  month: number
+  year: number
+  finalSalary: number
+  createdAt: string
+  updatedAt: string
+}
+
 interface PayrollTableProps {
-  records: PayrollRecord[]
-  onView: (r: PayrollRecord) => void
-  onEdit: (r: PayrollRecord, e: React.MouseEvent) => void
-  onDelete: (r: PayrollRecord) => void
+  records: PayrollEntry[]
+  onView: (r: PayrollEntry) => void
+  onMarkPaid: (r: PayrollEntry, e: React.MouseEvent) => void
+  onDelete: (r: PayrollEntry) => void
 }
 
 export function PayrollTable({
   records,
   onView,
-  onEdit,
+  onMarkPaid,
   onDelete,
 }: PayrollTableProps) {
   const { t } = useTranslation()
@@ -54,35 +70,37 @@ export function PayrollTable({
                   transition={{ delay: 0.02 * index }}
                   className="hover:bg-gray-50/50 transition-colors"
                 >
-                  <td className="px-4 py-3 text-sm text-slate-700">{r.payrollId}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{r.name}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">
+                    {r.id.slice(0, 8)}...
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-700">
+                    {r.employeeId}
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className={cn(
                         'inline-flex px-3 py-1 rounded-full text-xs font-medium bg-secondary-foreground text-[#9810FA] w-28 text-center justify-center items-center',
-                       
-                      
                       )}
                     >
                       {r.payType}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{r.project}</td>
+                  <td className="px-4 py-3 text-sm text-slate-700">{r.projectId || 'N/A'}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">
-                    {formatCurrency(r.overtime)}
+                    {formatCurrency(r.overTimeAmount)}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-700 font-medium">
-                    {formatCurrency(r.amount)}
+                    {formatCurrency(r.finalSalary)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
                       <span
                         className={cn(
                           'h-2 w-2 rounded-full shrink-0',
-                          r.status === 'Paid' ? 'bg-emerald-500' : 'bg-amber-500'
+                          r.paymentTypeStatus === 'PAID' ? 'bg-emerald-500' : 'bg-amber-500'
                         )}
                       />
-                      <span className="text-sm">{r.status}</span>
+                      <span className="text-sm">{r.paymentTypeStatus}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -91,10 +109,11 @@ export function PayrollTable({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={(e) => onEdit(r, e)}
-                        className="h-8 px-3 text-xs font-medium border-blue-500 text-blue-600 hover:bg-blue-50"
+                        disabled={r.paymentTypeStatus === 'PAID'}
+                        onClick={(e) => onMarkPaid(r, e)}
+                        className="h-8 px-3 text-xs font-medium border-emerald-500 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
                       >
-                        {t('payrollManagement.paymentAction')}
+                        Mark as Paid
                       </Button>
                       <Button
                         variant="ghost"

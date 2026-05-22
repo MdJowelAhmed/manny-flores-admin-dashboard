@@ -1,13 +1,13 @@
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import type { PayrollRecord } from '../payrollData'
+import type { PayrollEntry } from './PayrollTable'
 import { formatCurrency } from '@/utils/formatters'
 
 interface PaymentDetailsModalProps {
   open: boolean
   onClose: () => void
-  record: PayrollRecord | null
-  onEdit: () => void
+  record: PayrollEntry | null
+  onMarkPaid: () => void
   onDelete: () => void
 }
 
@@ -24,12 +24,10 @@ export function PaymentDetailsModal({
   open,
   onClose,
   record,
-  onEdit,
+  onMarkPaid,
   onDelete,
 }: PaymentDetailsModalProps) {
   if (!record) return null
-
-  const totalAmount = record.amount + record.overtime
 
   return (
     <ModalWrapper
@@ -40,20 +38,27 @@ export function PaymentDetailsModal({
       className="max-w-lg bg-white rounded-xl"
     >
       <div className="space-y-1">
-        <DetailRow label="Employee Name" value={record.name} />
-        <DetailRow label="ID" value={record.payrollId} />
-        <DetailRow label="Project" value={record.project} />
+        <DetailRow label="Employee ID" value={record.employeeId} />
+        <DetailRow label="Project ID" value={record.projectId || 'N/A'} />
         <DetailRow label="Pay Type" value={record.payType} />
-        <DetailRow label="Overtime" value={formatCurrency(record.overtime)} />
-        <DetailRow label="Total Amount" value={formatCurrency(totalAmount)} />
+        <DetailRow label="Status" value={record.paymentTypeStatus} />
+        <DetailRow label="Salary" value={formatCurrency(record.salary)} />
+        <DetailRow label="Working Hours" value={String(record.workingHour)} />
+        <DetailRow label="Hourly Rate" value={formatCurrency(record.hourlyRate)} />
+        <DetailRow label="Overtime Hours" value={String(record.overTimeHours)} />
+        <DetailRow label="Overtime Amount" value={formatCurrency(record.overTimeAmount)} />
+        <DetailRow label="Month" value={String(record.month)} />
+        <DetailRow label="Year" value={String(record.year)} />
+        <DetailRow label="Final Salary" value={formatCurrency(record.finalSalary)} />
       </div>
 
       <div className="flex items-center justify-center gap-4 pt-6 mt-4 border-t border-gray-100">
         <Button
-          onClick={onEdit}
-          className="bg-primary hover:bg-primary/90 text-white px-6 rounded-lg"
+          onClick={onMarkPaid}
+          disabled={record.paymentTypeStatus === 'PAID'}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 rounded-lg disabled:opacity-50"
         >
-          Edit
+          Mark as Paid
         </Button>
         <Button
           variant="destructive"
