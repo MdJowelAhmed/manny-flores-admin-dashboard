@@ -287,6 +287,7 @@
     "activeProject": "Active Project",
     "pendingProject": "Pending Project",
     "completedProject": "Completed Project",
+    "cancelledProject": "Cancelled Project",
     "projectStatus": "Project Status",
     "allStatus": "All Status",
     "filter": "Filter",

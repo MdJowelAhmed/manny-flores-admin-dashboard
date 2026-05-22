@@ -1,4 +1,4 @@
-import { Monitor, FileText,  CheckCircle, Circle } from 'lucide-react'
+import { Monitor, FileText, CheckCircle, Circle } from 'lucide-react'
 import type { Project } from '@/types'
 
 // Stats for the top section - titleKey is used for i18n
@@ -18,7 +18,7 @@ export const projectStats = [
     iconColor: 'text-purple-600',
   },
   {
-    titleKey: 'companyProjects.pendingProject' as const,
+    titleKey: 'companyProjects.cancelledProject' as const,
     value: 6,
     icon: Circle,
     iconBgColor: 'bg-orange-100',

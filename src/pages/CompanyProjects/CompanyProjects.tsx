@@ -35,17 +35,17 @@ export default function CompanyProjects() {
   // API CALLS
   const { data: companyOverviewRes, isLoading: companyOverviewLoading } = useCompanyProjectsOverviewQuery()
 
-  // const { data: companyPorjectsApi, isLoading: companyProjectLoading, refetch } = useGetCompanyProjectsQuery({
-  //   status: statusFilter,
-  //   page: currentPage,
-  //   limit: itemsPerPage,
-  //   search: searchQuery
-  // })
+  const { data: companyPorjectsApi, isLoading: companyProjectLoading, refetch } = useGetCompanyProjectsQuery({
+    status: statusFilter,
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchQuery
+  })
 
 
 
   // const projects = companyPorjectsApi?.data || []
-  // console.log(projects)
+  console.log(companyPorjectsApi)
   // console.log(companyOverviewRes)
 
 
@@ -179,14 +179,14 @@ export default function CompanyProjects() {
     >
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {projectStats.map((stat, index) => {
+        {projectStats?.map((stat, index) => {
           const Icon = stat.icon
           const value =
             stat.titleKey === 'companyProjects.totalProject'
               ? companyOverviewRes?.data?.totalProjects
               : stat.titleKey === 'companyProjects.activeProject'
                 ? companyOverviewRes?.data?.activeProjects
-                : stat.titleKey === 'companyProjects.pendingProject'
+                : stat.titleKey === 'companyProjects.cancelledProject'
                   ? companyOverviewRes?.data?.cancelledProjects
                   : companyOverviewRes?.data?.completedProjects
           return (

@@ -39,6 +39,7 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
   const [status, setStatus] = useState<ProjectStatus | 'all'>('Active')
   const [amountDue, setAmountDue] = useState('')
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [totalBudget, setTotalBudget] = useState('')
   const [amountSpent, setAmountSpent] = useState('')
   const [email, setEmail] = useState('')
@@ -171,6 +172,11 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
               value={startDate}
               onChange={setStartDate}
             />
+            <DatePicker
+              label={t('companyProjects.endDate')}
+              value={endDate}
+              onChange={setEndDate}
+            />
             <FormInput
               label={t('companyProjects.totalBudget')}
               placeholder={t('companyProjects.totalBudgetPlaceholder')}
@@ -178,13 +184,7 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
               value={totalBudget}
               onChange={(e) => setTotalBudget(e.target.value)}
             />
-            <FormInput
-              label={t('companyProjects.amountSpent')}
-              placeholder={t('companyProjects.amountSpentPlaceholder')}
-              type="number"
-              value={amountSpent}
-              onChange={(e) => setAmountSpent(e.target.value)}
-            />
+
           </div>
         </div>
 
@@ -208,14 +208,6 @@ export function AddEditProjectModal({ open, onClose, project, onSave }: AddEditP
             />
           </div>
         </div>
-
-        <ProjectResourcePicker
-          ref={resourcePickerRef}
-          open={open}
-          resetKey={project?.id ?? 'new'}
-          initialLineItems={project?.lineItems}
-        />
-
         <div>
           <FormTextarea
             label={t('companyProjects.projectDescription')}
