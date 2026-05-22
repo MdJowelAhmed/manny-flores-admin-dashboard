@@ -504,12 +504,12 @@ export default function ProjectScheduling() {
         isSaving={isAssigning}
       />
 
-      <AddTeamModal
+      {/* <AddTeamModal
         open={isAddTeamModalOpen}
         onClose={() => setIsAddTeamModalOpen(false)}
         employees={employees}
         onCreateTeam={handleCreateTeam}
-      />
+      /> */}
     </motion.div>
   )
 }

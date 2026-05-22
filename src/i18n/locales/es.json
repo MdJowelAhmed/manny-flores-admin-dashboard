@@ -294,13 +294,11 @@
     "addProject": "Agregar Proyecto",
     "budget": "Presupuesto",
     "timeline": "Cronograma",
-    "editProject": "Editar Proyecto",
     "viewDetails": "Ver detalles",
     "noProjectsFound": "No se encontraron proyectos",
     "projectName": "Nombre del Proyecto",
     "category": "Categoría",
     "customer": "Cliente",
-    "startDate": "Fecha de Inicio",
     "totalBudget": "Presupuesto Total",
     "amountSpent": "Monto Gastado",
     "remaining": "Restante",
@@ -1245,7 +1243,6 @@
     "deleteTemplateConfirm": "¿Está seguro de que desea eliminar \"{{label}}\"? Esta acción no se puede deshacer.",
     "dateSubmitted": "Fecha de Envío",
     "viewReport": "Ver Informe",
-    "incidentType": "Tipo de Incidente",
     "dateTime": "Fecha y Hora"
   },
   "recentProjectsPage": {
