@@ -1,0 +1,323 @@
+import React, { useEffect, useState } from 'react';
+import { Modal, Button, Form, Input, Select, Spin } from 'antd';
+import { X } from 'lucide-react';
+import { useUpdateAdminMentorMutation } from '../../../redux/apiSlices/admin/adminMentorsApi';
+import { toast } from 'sonner';
+import { useGetStudentsQuery } from '../../../redux/apiSlices/admin/adminStudentApi';
+
+interface EditMentorModalProps {
+    open: boolean;
+    onCancel: () => void;
+    mentor: any;
+    refetch: () => void;
+    userTracks: any;
+    userGroups: any;
+    isUserTracksLoading: boolean;
+    isUserGroupsLoading: boolean;
+}
+
+const EditMentorModal: React.FC<EditMentorModalProps> = ({
+    open,
+    onCancel,
+    mentor,
+    refetch,
+    userGroups,
+    userTracks,
+    isUserTracksLoading,
+    isUserGroupsLoading,
+}) => {
+    const [form] = Form.useForm();
+    const [updateMentor, { isLoading }] = useUpdateAdminMentorMutation();
+
+    const [allStudents, setAllStudents] = useState<any[]>([]);
+    const [page, setPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [hasMore, setHasMore] = useState(true);
+
+    const { data: studentsApi, isFetching: isStudentsLoading } = useGetStudentsQuery({
+        page,
+        limit: 10,
+        searchTerm
+    }, { skip: !open });
+
+    const selectedGroups = Form.useWatch('userGroup', form);
+
+    // Reset state when modal opens/closes
+    useEffect(() => {
+        if (open) {
+            setPage(1);
+            setSearchTerm('');
+            if (mentor?.assignedStudents?.[0]) {
+                setAllStudents([mentor.assignedStudents[0]]);
+            } else {
+                setAllStudents([]);
+            }
+        }
+    }, [open, mentor]);
+
+    // Handle incoming data
+    useEffect(() => {
+        if (studentsApi?.data?.data) {
+            const newStudents = studentsApi.data.data;
+            setAllStudents(prev => {
+                if (page === 1) {
+                    const combined = [...newStudents];
+                    if (mentor?.assignedStudents?.[0]) {
+                        const assignedId = mentor.assignedStudents[0]._id;
+                        if (!combined.some(s => s._id === assignedId)) {
+                            combined.unshift(mentor.assignedStudents[0]);
+                        }
+                    }
+                    return combined;
+                }
+                const existingIds = new Set(prev.map(s => s._id));
+                const uniqueNew = newStudents.filter((s: any) => !existingIds.has(s._id));
+                return [...prev, ...uniqueNew];
+            });
+        }
+    }, [studentsApi, page, mentor]);
+
+    // Update hasMore separately to avoid stale closure issues
+    useEffect(() => {
+        if (studentsApi?.data?.pagination) {
+            const { total } = studentsApi.data.pagination;
+            setHasMore(allStudents.length < total);
+        }
+    }, [allStudents.length, studentsApi]);
+
+    const handleSearch = (value: string) => {
+        setSearchTerm(value);
+        setPage(1);
+    };
+
+    const handlePopupScroll = (e: any) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.target;
+        if (scrollHeight - scrollTop <= clientHeight + 10 && hasMore && !isStudentsLoading) {
+            setPage(prev => prev + 1);
+        }
+    };
+
+    const isSkillPathSelected = () => {
+        if (!selectedGroups || !userGroups) return false;
+        // Handle both single string and array (multiple mode)
+        const currentGroups = Array.isArray(selectedGroups) ? selectedGroups : [selectedGroups];
+        return currentGroups.some((groupId: string) => {
+            const group = userGroups.find((g: any) => g._id === groupId);
+            return group?.name === 'Skill Path';
+        });
+    };
+
+    useEffect(() => {
+        if (mentor) {
+            form.setFieldsValue({
+                ...mentor,
+                mobileNumber: mentor.mobileNumber || mentor.contactNumber,
+                assignedStudents: mentor.assignedStudents?.[0]?._id || undefined,
+                careerDirections: mentor.careerDirections || [],
+                userGroup: mentor.userGroup?.map((g: any) => g._id) || [],
+                userGroupTrack: mentor.userGroupTrack?._id || mentor.userGroupTrack,
+            });
+        }
+    }, [mentor, form]);
+
+    const onFinish = async (values: any) => {
+        try {
+            toast.promise(updateMentor({ id: mentor._id, data: values }).unwrap(), {
+                loading: 'Updating mentor...',
+                success: (res: any) => {
+                    if (res?.success) {
+                        form.resetFields();
+                        refetch();
+                        onCancel();
+                    }
+                    return res?.message || 'Mentor updated successfully';
+                },
+                error: (err: any) => err?.data?.message || err?.message || 'Failed to update mentor',
+            });
+        } catch (error: any) {
+            toast.error(error?.data?.message || 'Something went wrong');
+        }
+    };
+
+    return (
+        <Modal
+            title={<span className="text-xl font-semibold text-[#18212d]">Edit Mentor</span>}
+            open={open}
+            onCancel={onCancel}
+            footer={null}
+            closeIcon={<X size={20} />}
+            width={750}
+            centered
+        >
+            <Form form={form} layout="vertical" className="mt-4" onFinish={onFinish}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                    <Form.Item label={<span className="font-semibold text-gray-700">First Name</span>} name="firstName">
+                        <Input placeholder="Enter first name" className="h-11 rounded-md" />
+                    </Form.Item>
+                    <Form.Item label={<span className="font-semibold text-gray-700">Last Name</span>} name="lastName">
+                        <Input placeholder="Enter last name" className="h-11 rounded-md" />
+                    </Form.Item>
+                </div>
+
+                <Form.Item label={<span className="font-semibold text-gray-700">Email</span>} name="email">
+                    <Input disabled placeholder="Enter email" className="h-11 rounded-md" />
+                </Form.Item>
+
+                <Form.Item
+                    label={<span className="font-semibold text-gray-700">Assign Student</span>}
+                    name="assignedStudents"
+                >
+                    <Select
+                        placeholder="Select a student"
+                        className="w-full"
+                        allowClear
+                        style={{ height: '44px' }}
+                        loading={isStudentsLoading}
+                        options={allStudents?.map((student: any) => ({
+                            label: `${student.firstName} ${student.lastName} (${student.email})`,
+                            value: student._id,
+                        }))}
+                        filterOption={false} // Server-side filtering
+                        onSearch={handleSearch}
+                        onPopupScroll={handlePopupScroll}
+                        showSearch
+                        dropdownRender={(menu) => (
+                            <>
+                                {menu}
+                                {isStudentsLoading && (
+                                    <div className="flex justify-center p-2 border-t">
+                                        <Spin size="small" />
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    />
+                </Form.Item>
+
+                <div className="">
+                    <Form.Item label={<span className="font-semibold text-gray-700">Phone</span>} name="mobileNumber">
+                        <Input placeholder="Enter phone" className="h-11 rounded-md" />
+                    </Form.Item>
+                    {/* <Form.Item label={<span className="font-semibold text-gray-700">vNumber</span>} name="vNumber">
+                        <Input placeholder="Enter vNumber" className="h-11 rounded-md" />
+                    </Form.Item> */}
+
+                    <Form.Item
+                        label={<span className="font-semibold text-gray-700">Highest Education</span>}
+                        name="highestEducation"
+                    >
+                        <Input placeholder="Enter title" className="h-11 rounded-md" />
+                    </Form.Item>
+                </div>
+
+                <div className="grid grid-cols-3 gap-x-6">
+                    <Form.Item label={<span className="font-semibold text-gray-700">Gender</span>} name="gender">
+                        <Select
+                            placeholder="Select gender"
+                            className="h-11 rounded-md"
+                            options={[
+                                { label: 'Male', value: 'Male' },
+                                { label: 'Female', value: 'Female' },
+                                { label: 'Other', value: 'Other' },
+                            ]}
+                        />
+                    </Form.Item>
+                    <Form.Item label={<span className="font-medium text-gray-700">Status</span>} name="status">
+                        <Select
+                            placeholder="Select status"
+                            className="h-11 rounded-md"
+                            options={[
+                                { label: 'Pending', value: 'PENDING' },
+                                { label: 'Active', value: 'ACTIVE' },
+                                { label: 'Non-active', value: 'NON-ACTIVE' },
+                                { label: 'Reserve', value: 'RESERVE' },
+                            ]}
+                        />
+                    </Form.Item>
+                    <Form.Item label={<span className="font-medium text-gray-700">Verified</span>} name="verified">
+                        <Select
+                            placeholder="Select status"
+                            className="h-11 rounded-md"
+                            options={[
+                                { label: 'Verified', value: true },
+                                { label: 'Not Verified', value: false },
+                            ]}
+                        />
+                    </Form.Item>
+                </div>
+                <div className="grid grid-cols-2 gap-x-6">
+                    <Form.Item
+                        label={<span className="font-bold text-gray-700">Select Group</span>}
+                        name="userGroup"
+                        rules={[{ required: false, message: 'Please select at least one group' }]}
+                    >
+                        <Select
+                            placeholder="Choose groups"
+                            className="h-11 rounded-md"
+                            variant="filled"
+                            style={{ backgroundColor: '#f9f9f9' }}
+                            loading={isUserGroupsLoading}
+                            options={userGroups?.map((g: any) => ({
+                                label: g.name,
+                                value: g._id,
+                            }))}
+                            allowClear
+                        />
+                    </Form.Item>
+                    {isSkillPathSelected() && (
+                        <Form.Item
+                            label={<span className="font-bold text-gray-700">Select Track</span>}
+                            name="userGroupTrack"
+                            rules={[{ required: false, message: 'Please select a track' }]}
+                        >
+                            <Select
+                                placeholder="Choose a track"
+                                className="h-11 rounded-md"
+                                variant="filled"
+                                style={{ backgroundColor: '#f9f9f9' }}
+                                loading={isUserTracksLoading}
+                                options={userTracks?.map((t: any) => ({
+                                    label: t.name,
+                                    value: t._id,
+                                }))}
+                                allowClear
+                            />
+                        </Form.Item>
+                    )}
+                </div>
+                <div className='grid grid-cols-2 gap-6'>
+                    <Form.Item label={<span className="font-semibold text-gray-700">Job Title</span>} name="jobTitle">
+                        <Input placeholder="Enter Job Title" className="h-11 rounded-md" />
+                    </Form.Item>
+                    <Form.Item label={<span className="font-semibold text-gray-700">Company Name</span>} name="company">
+                        <Input placeholder="Enter Company Name" className="h-11 rounded-md" />
+                    </Form.Item>
+                </div>
+
+                <Form.Item label={<span className="font-semibold text-gray-700">Address</span>} name="address">
+                    <Input placeholder="Enter address" className="h-11 rounded-md" />
+                </Form.Item>
+
+                <Form.Item label={<span className="font-semibold text-gray-700">About</span>} name="about">
+                    <Input.TextArea placeholder="Enter about info" rows={4} className="rounded-md" />
+                </Form.Item>
+
+                <div className="flex justify-end gap-3 mt-6">
+                    <Button onClick={onCancel} className="px-8 h-11 border-gray-300 rounded-md">
+                        Cancel
+                    </Button>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={isLoading}
+                        className="px-8 h-11 bg-[#52c41a] border-none hover:bg-[#73d13d] rounded-md font-semibold"
+                    >
+                        Update Mentor
+                    </Button>
+                </div>
+            </Form>
+        </Modal>
+    );
+};
+
+export default EditMentorModal;

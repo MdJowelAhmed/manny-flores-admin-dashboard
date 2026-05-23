@@ -3,15 +3,15 @@ import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import type { Project } from '@/types'
-import { formatCurrency } from '@/utils/formatters'
+import { formatCurrency, formatDate } from '@/utils/formatters'
 import type { ProjectLineItem } from '@/types'
 import { cn } from '@/utils/cn'
+import { getProjectDuration, mapPaymentTypeToStatus } from '../CompanyProjects'
 
 interface ViewProjectDetailsModalProps {
   open: boolean
   onClose: () => void
-  project: Project | null
+  project: any | null
 }
 
 function DetailRow({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
@@ -26,11 +26,10 @@ function DetailRow({ label, value, highlight }: { label: string; value: string |
 function ResourceGroup({
   title,
   items,
-  t,
+
 }: {
   title: string
   items: ProjectLineItem[]
-  t: (key: string) => string
 }) {
   if (items.length === 0) return null
   return (
@@ -56,6 +55,16 @@ export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectD
   const { t } = useTranslation()
   if (!project) return null
 
+  const customerName = project.customerName || project.customer || 'N/A'
+  const customerEmail = project.customerEmail || project.email || 'N/A'
+  const companyName = project.companyName || project.company || 'N/A'
+  const startDateStr = project.startDate ? formatDate(project.startDate) : 'N/A'
+  const uiStatus = mapPaymentTypeToStatus(project.paymentType || project.status)
+
+  const budget = project.totalBudget || 0
+  const remaining = project.amountDue ?? project.remaining ?? 0
+  const spent = Math.max(0, budget - remaining)
+
   return (
     <ModalWrapper
       open={open}
@@ -65,7 +74,7 @@ export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectD
       className="max-w-xl bg-white"
     >
       <div className="space-y-6">
-        <p className="text-sm text-muted-foreground -mt-2">{project.category}</p>
+        <p className="text-sm text-muted-foreground -mt-2">{companyName}</p>
 
         {/* Project Information - Customer */}
         <div>
@@ -73,12 +82,11 @@ export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectD
             <div className="p-1.5 rounded bg-primary/10">
               <FileText className="h-4 w-4 text-primary" />
             </div>
-            <h3 className="text-sm font-semibold text-foreground">{t('companyProjects.projectInformation')}</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('companyProjects.customerContact')}</h3>
           </div>
           <div className="space-y-1 pl-8">
-            <DetailRow label={t('companyProjects.customer')} value={project.customer} />
-            <DetailRow label={t('common.email')} value={project.email} />
-            <DetailRow label={t('companyProjects.company')} value={project.company} />
+            <DetailRow label={t('companyProjects.customer')} value={customerName} />
+            <DetailRow label={t('common.email')} value={customerEmail} />
           </div>
         </div>
 
@@ -94,11 +102,13 @@ export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectD
           </div>
           <div className="space-y-1 pl-8">
             <DetailRow label={t('companyProjects.projectName')} value={project.projectName} />
-            <DetailRow label={t('companyProjects.startDate')} value={project.startDate} />
-            <DetailRow label={t('companyProjects.totalBudget')} value={formatCurrency(project.totalBudget)} />
-            <DetailRow label={t('companyProjects.amountSpent')} value={formatCurrency(project.amountSpent)} highlight />
-            <DetailRow label={t('common.duration')} value={project.duration} />
-            <DetailRow label={t('companyProjects.remaining')} value={formatCurrency(project.remaining)} />
+            <DetailRow label={t('companyProjects.company')} value={companyName} />
+            <DetailRow label={t('common.status')} value={uiStatus} />
+            <DetailRow label={t('companyProjects.startDate')} value={startDateStr} />
+            <DetailRow label={t('companyProjects.totalBudget')} value={formatCurrency(budget)} />
+            <DetailRow label={t('companyProjects.amountSpent')} value={formatCurrency(spent)} highlight />
+            <DetailRow label={t('common.duration')} value={getProjectDuration(project.startDate, project.endDate)} />
+            <DetailRow label={t('companyProjects.remaining')} value={formatCurrency(remaining)} />
           </div>
         </div>
 
@@ -116,18 +126,18 @@ export function ViewProjectDetailsModal({ open, onClose, project }: ViewProjectD
               </div>
               <ResourceGroup
                 title={t('estimate.material')}
-                items={project.lineItems.filter((i) => i.lineType === 'material')}
-                t={t}
+                items={project.lineItems.filter((i: any) => i.lineType === 'material')}
+
               />
               <ResourceGroup
                 title={t('estimate.equipment')}
-                items={project.lineItems.filter((i) => i.lineType === 'equipment')}
-                t={t}
+                items={project.lineItems.filter((i: any) => i.lineType === 'equipment')}
+
               />
               <ResourceGroup
                 title={t('estimate.vehicle')}
-                items={project.lineItems.filter((i) => i.lineType === 'vehicle')}
-                t={t}
+                items={project.lineItems.filter((i: any) => i.lineType === 'vehicle')}
+
               />
             </div>
           </>

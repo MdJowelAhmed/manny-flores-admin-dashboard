@@ -36,18 +36,18 @@ export const projectStats = [
 // Filter options for project status - labelKey is used for i18n
 export const projectStatusFilterOptions = [
   { value: 'all', labelKey: 'companyProjects.allStatus' as const },
-  { value: 'Active', labelKey: 'common.active' as const },
-  { value: 'Completed', labelKey: 'dashboard.completed' as const },
-  { value: 'Pending', labelKey: 'dashboard.pending' as const },
+  { value: 'Active', labelKey: 'companyProjects.activeProject' as const },
+  { value: 'Completed', labelKey: 'companyProjects.completedProject' as const },
+  // { value: 'Pending', labelKey: 'companyProjects.pendingProject' as const },
+  { value: 'Cancelled', labelKey: 'companyProjects.cancelledProject' as const },
 ]
 
 // Payment method options for edit form
 export const paymentMethodOptions = [
-  { value: 'Cash', label: 'Cash' },
-  { value: 'Card', label: 'Card' },
-  { value: 'Bank Transfer', label: 'Bank Transfer' },
-  { value: 'Check', label: 'Check' },
-  { value: 'Online', label: 'Online' },
+  { value: 'CASH', label: 'CASH' },
+  { value: 'CARD', label: 'CARD' },
+  { value: 'CHEQUE', label: 'CHEQUE' },
+  { value: 'ONLINE', label: 'ONLINE' },
 ]
 
 // Mock projects data

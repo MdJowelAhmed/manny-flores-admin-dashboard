@@ -26,8 +26,17 @@ const conmpanyProjectsApi = baseApi.injectEndpoints({
                 }
             },
         }),
+        updateCompanyProjects: build.mutation<any, { id: string, body: any }>({
+            query: ({ id, body }) => {
+                return {
+                    url: `/company-projects/${id}`,
+                    method: "PATCH",
+                    body: body,
+                }
+            },
+        }),
 
     }),
 });
 
-export const { useCompanyProjectsOverviewQuery, useGetCompanyProjectsQuery, useCreateCompanyProjectsMutation } = conmpanyProjectsApi;
+export const { useCompanyProjectsOverviewQuery, useGetCompanyProjectsQuery, useCreateCompanyProjectsMutation, useUpdateCompanyProjectsMutation } = conmpanyProjectsApi;

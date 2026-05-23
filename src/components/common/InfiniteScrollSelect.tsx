@@ -174,6 +174,9 @@ export function InfiniteScrollSelect({
                     <div
                         ref={listRef}
                         onScroll={handleScroll}
+                        onWheel={(e) => {
+                            e.stopPropagation()
+                        }}
                         className="max-h-52 overflow-y-auto"
                     >
                         {options.length === 0 && !loading ? (
