@@ -253,9 +253,16 @@ export default function CompanyProjects() {
                           {formatCurrency(project.totalBudget)}
                         </span>
                       </div>
+
                       <div className="flex flex-col gap-2">
                         <span className="text-sm text-muted-foreground block">{t('companyProjects.timeline')}</span>
                         <span className=" font-bold text-accent ">{getProjectDuration(project.startDate, project.endDate)}</span>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm text-muted-foreground block">{t('companyProjects.amountDue')}</span>
+                        <span className=" font-bold text-accent">
+                          {formatCurrency(project.amountDue)}
+                        </span>
                       </div>
                     </div>
                   </div>
