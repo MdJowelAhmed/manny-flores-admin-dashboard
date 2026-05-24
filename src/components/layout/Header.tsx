@@ -211,11 +211,11 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/settings/profile')}>
                 <User className="h-4 w-4 mr-2" />
-                {t('header.profileMenu')}
+                {t('header.profile')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/settings/password')}>
                 <Settings className="h-4 w-4 mr-2" />
-                {t('header.settingsMenu')}
+                {t('header.settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">

@@ -20,7 +20,7 @@ interface LoginCredentials {
 interface ChangePasswordPayload {
     currentPassword: string;
     newPassword: string;
-    confirmPassword: string;
+    confirmNewPassword: string;
 }
 
 interface ChangePasswordResponse {
@@ -42,7 +42,7 @@ interface VerifyEmailResponse {
 
 interface ResetPasswordPayload {
     newPassword: string;
-    confirmPassword: string;
+    confirmNewPassword: string;
 }
 
 interface ResetPasswordResponse {
