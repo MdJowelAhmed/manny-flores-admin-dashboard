@@ -1274,6 +1274,7 @@
     "profilePicture": "Foto de Perfil",
     "imageHint": "JPG, PNG o WebP. Tamaño máximo 5MB.",
     "personalInformation": "Información Personal",
+    "name": "Nombre",
     "firstName": "Nombre",
     "firstNamePlaceholder": "Ingrese nombre",
     "lastName": "Apellido",

@@ -1,9 +1,9 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
-import { Header } from './Header'
 import { useAppSelector } from '@/redux/hooks'
 import { cn } from '@/utils/cn'
 import { RecentProjectsProvider } from '@/contexts/RecentProjectsContext'
+import { Header } from './Header'
 
 export default function DashboardLayout() {
   const { sidebarCollapsed } = useAppSelector((state) => state.ui)

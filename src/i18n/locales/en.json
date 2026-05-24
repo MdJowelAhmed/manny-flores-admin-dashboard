@@ -1385,6 +1385,7 @@
     "profilePicture": "Profile Picture",
     "imageHint": "JPG, PNG or WebP. Max size 5MB.",
     "personalInformation": "Personal Information",
+      "name": "Name",
     "firstName": "First Name",
     "firstNamePlaceholder": "Enter first name",
     "lastName": "Last Name",
