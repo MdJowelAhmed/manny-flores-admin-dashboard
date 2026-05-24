@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ModalWrapper, type SignatureCanvasHandle } from '@/components/common'
+import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import {
@@ -39,18 +38,9 @@ export function InvoiceDetailsModal({
   open,
   onClose,
   invoice,
-  onSign,
   isSubmitting = false,
 }: InvoiceDetailsModalProps) {
   const { t } = useTranslation()
-  const providerRef = useRef<SignatureCanvasHandle>(null)
-  const [providerHas, setProviderHas] = useState(false)
-
-  useEffect(() => {
-    if (!open) {
-      setProviderHas(false)
-    }
-  }, [open])
 
   if (!invoice) return null
 
@@ -59,18 +49,9 @@ export function InvoiceDetailsModal({
     invoice.issuedDateDisplay ?? formatDate(invoice.issuedDate, 'MMMM d, yyyy')
   const dueLabel = invoice.dueDateDisplay ?? formatDate(invoice.dueDate, 'MMMM d, yyyy')
 
-  const alreadySigned = !!invoice.customerSignature || !!invoice.providerSignature
-  const canSubmit = providerHas && !isSubmitting
-
-  const handleSubmit = () => {
-    if (!onSign) return
-    const provider = providerRef.current?.getDataUrl()
-    if (!provider) return
-    onSign(invoice, {
-      customerSignature: invoice.customerSignature ?? '',
-      providerSignature: provider,
-    })
-  }
+  const hasCustomerSignature = !!invoice.customerSignature
+  const hasProviderSignature = !!invoice.providerSignature
+  const anySignature = hasCustomerSignature || hasProviderSignature
 
   return (
     <ModalWrapper
@@ -90,16 +71,6 @@ export function InvoiceDetailsModal({
           >
             {t('invoice.closeDetails')}
           </Button>
-          {onSign && !alreadySigned && (
-            <Button
-              type="button"
-              className="bg-primary text-white hover:bg-primary/90"
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-            >
-              {t('invoice.submitSignatures')}
-            </Button>
-          )}
         </div>
       }
     >
@@ -179,7 +150,7 @@ export function InvoiceDetailsModal({
           </table>
         </div>
 
-        <div className="rounded-xl bg-gray-50 border border-gray-100 px-5 py-4 w-full max-w-sm flex flex-col justify-end w-full">
+        <div className="rounded-xl bg-gray-50 border border-gray-100 px-5 py-4 w-full max-w-sm flex flex-col justify-end">
           <div className="flex justify-between gap-4 text-sm text-gray-600 py-1">
             <span>{t('invoice.subtotal')}</span>
             <span className="tabular-nums text-gray-900">{formatCurrency(subtotal)}</span>
@@ -191,23 +162,24 @@ export function InvoiceDetailsModal({
           </div>
         </div>
 
-        {/* <div className="border-t border-gray-100 pt-6">
-          <p className="text-sm font-semibold text-gray-900 mb-4">
-            {t('invoice.signaturesTitle')}
-          </p>
-
-          {alreadySigned ? (
+        {anySignature && (
+          <div className="border-t border-gray-100 pt-6">
+            <p className="text-sm font-semibold text-gray-900 mb-4">
+              {t('invoice.signaturesTitle')}
+            </p>
             <div className="grid gap-6 md:grid-cols-2">
               <SignaturePreview
                 label={t('invoice.customerSignature')}
                 src={invoice.customerSignature}
                 emptyLabel={t('invoice.noSignatureYet')}
               />
-              <SignaturePreview
-                label={t('invoice.providerSignature')}
-                src={invoice.providerSignature}
-                emptyLabel={t('invoice.noSignatureYet')}
-              />
+              {hasProviderSignature && (
+                <SignaturePreview
+                  label={t('invoice.providerSignature')}
+                  src={invoice.providerSignature}
+                  emptyLabel={t('invoice.noSignatureYet')}
+                />
+              )}
               {invoice.signedAt && (
                 <p className="md:col-span-2 text-xs text-gray-500">
                   {t('invoice.signedOn', {
@@ -216,59 +188,38 @@ export function InvoiceDetailsModal({
                 </p>
               )}
             </div>
-          ) : (
-            <div className="grid items-stretch gap-6 md:grid-cols-2">
-              {invoice.customerSignature ? (
-                <SignaturePreview
-                  label={t('invoice.customerSignature')}
-                  src={invoice.customerSignature}
-                  emptyLabel={t('invoice.customerSignaturePending')}
-                />
-              ) : (
-                <SignatureCanvas
-                  label={t('invoice.customerSignature')}
-                  disabled
-                  helperText={t('invoice.customerSignaturePending')}
-                />
-              )}
-              <SignatureCanvas
-                ref={providerRef}
-                label={t('invoice.providerSignature')}
-                onChange={setProviderHas}
-              />
-            </div>
-          )}
-        </div> */}
+          </div>
+        )}
       </div>
     </ModalWrapper>
   )
 }
 
-// function SignaturePreview({
-//   label,
-//   src,
-//   emptyLabel,
-// }: {
-//   label: string
-//   src?: string | null
-//   emptyLabel: string
-// }) {
-//   return (
-//     <div className="space-y-2">
-//       <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
-//         {label}
-//       </span>
-//       {src ? (
-//         <img
-//           src={src}
-//           alt=""
-//           className="max-h-28 w-full rounded-lg border border-gray-200 bg-white object-contain"
-//         />
-//       ) : (
-//         <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50/70 px-4 py-6 text-sm text-gray-500">
-//           {emptyLabel}
-//         </div>
-//       )}
-//     </div>
-//   )
-// }
+function SignaturePreview({
+  label,
+  src,
+  emptyLabel,
+}: {
+  label: string
+  src?: string | null
+  emptyLabel: string
+}) {
+  return (
+    <div className="space-y-2">
+      <span className="text-xs font-medium uppercase tracking-wide text-gray-500 block">
+        {label}
+      </span>
+      {src ? (
+        <img
+          src={src}
+          alt={label}
+          className="max-h-28 w-full rounded-lg border border-gray-200 bg-white object-contain p-2"
+        />
+      ) : (
+        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50/70 px-4 py-6 text-sm text-gray-500">
+          {emptyLabel}
+        </div>
+      )}
+    </div>
+  )
+}

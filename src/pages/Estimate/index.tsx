@@ -21,7 +21,6 @@ import {
 import { EstimateItemModal } from './components/EstimateItemModal'
 import { AddEstimateModal } from './components/AddEstimateModal'
 import { getProjectStatusClasses, type EstimateRecord } from './estimateData'
-import { runEstimateSignedWorkflow } from './estimateWorkflow'
 import { formatCurrency } from '@/utils/formatters'
 
 export default function EstimatePage() {
@@ -127,29 +126,6 @@ export default function EstimatePage() {
     const mapped = mapEstimateFromApi(res.data)
     setItems((prev) => prev.map((row) => (row.id === item.id ? mapped : row)))
     setEditEstimate(null)
-  }
-
-  const handleSignEstimate = (estimate: EstimateRecord, signatureDataUrl: string) => {
-    const { invoice } = runEstimateSignedWorkflow(estimate)
-    setItems((prev) =>
-      prev.map((row) =>
-        row.id === estimate.id
-          ? {
-              ...row,
-              status: 'signed',
-              signedAt: new Date().toISOString(),
-              signatureDataUrl,
-              invoiceRef: invoice.invoiceRef,
-            }
-          : row
-      )
-    )
-    toast({
-      title: t('estimate.signed.successTitle'),
-      description: t('estimate.signed.successDescription', { ref: invoice.invoiceRef }),
-      variant: 'success',
-    })
-    closeModal()
   }
 
   return (
@@ -294,12 +270,7 @@ export default function EstimatePage() {
         />
       </div>
 
-      <EstimateItemModal
-        open={modalOpen}
-        onClose={closeModal}
-        item={selectedItem}
-        onSign={handleSignEstimate}
-      />
+      <EstimateItemModal open={modalOpen} onClose={closeModal} item={selectedItem} />
 
       <AddEstimateModal
         open={addOpen}

@@ -1,4 +1,5 @@
-import { baseApi, imageUrl } from '../baseApi'
+import { baseApi } from '../baseApi'
+import { imageUrl as toImagePath } from '@/components/common/getImageUrl'
 import { normalizeProjectStatus } from '@/pages/Estimate/estimateData'
 import type { InvoiceLineItem, InvoiceRecord } from '@/pages/Invoice/invoiceData'
 import { formatDateDayMonth } from '@/utils/formatters'
@@ -40,40 +41,46 @@ export interface InvoiceEquipmentApiDoc {
   createdAt?: string
 }
 
-export interface InvoiceApiSignature {
+export interface EstimateApprovalApiDoc {
   id: string
   estimateId: string
-  customerSignature: string
-  providerSignature?: string | null
-  isProvideSignature: boolean
-  createdAt?: string
-  updatedAt?: string
-  userId?: string
+  signature: string
+  estimateStatus: string
+  customerEmail: string
+  customerName: string
+  createdAt: string
+  updatedAt: string
 }
 
-export interface InvoiceApiDoc {
+export interface InvoiceEstimateApiDoc {
   id: string
   projectName: string
+  projectStatus: string
   customerName: string
   customerEmail: string
   customerAddress: string
-  estimateStartDate: string
-  estimateEndDate: string
+  totalDate: number
   description: string
   taxNumber: number
-  userId: string
   isApproved: boolean
-  projectStatus: string
   totalCost: number | null
+  userId: string
   createdAt: string
   updatedAt: string
   materials: InvoiceMaterialApiDoc[]
   vehicles: InvoiceVehicleApiDoc[]
-  estimateEquipments?: InvoiceEquipmentApiDoc[]
   equipment?: InvoiceEquipmentApiDoc[]
-  invoiceWithSignatures?: InvoiceApiSignature | null
-  customerSignature?: string | null
-  isProvideSignature?: boolean
+  estimateEquipments?: InvoiceEquipmentApiDoc[]
+  estimateApprovals?: EstimateApprovalApiDoc[]
+}
+
+export interface InvoiceApiDoc {
+  id: string
+  estimateId: string
+  invoiceNumber: string
+  createdAt: string
+  updatedAt: string
+  estimate: InvoiceEstimateApiDoc
 }
 
 export interface InvoiceListResponse {
@@ -89,13 +96,18 @@ export interface GetInvoicesParams {
   limit?: number
 }
 
-function formatInvoiceRef(id: string): string {
-  const short = id.includes('-') ? id.split('-')[0] : id.slice(0, 8)
-  return `#INV-${short}`
+/** Resolve a signature/upload value to a relative `/uploads/...` path
+ *  using the shared `getImageUrl` helper. In dev, Vite proxies `/uploads`
+ *  to the API host so `<img>` tags can load without auth/CORS issues. */
+export function resolveSignatureUrl(raw?: string | null): string | null {
+  if (!raw || typeof raw !== 'string' || !raw.trim()) return null
+  if (raw.startsWith('data:') || raw.startsWith('blob:')) return raw
+  const path = toImagePath(raw)
+  return path || null
 }
 
-function mapLineItems(doc: InvoiceApiDoc): InvoiceLineItem[] {
-  const materials: InvoiceLineItem[] = (doc.materials ?? []).map((item) => ({
+function mapLineItems(estimate: InvoiceEstimateApiDoc): InvoiceLineItem[] {
+  const materials: InvoiceLineItem[] = (estimate.materials ?? []).map((item) => ({
     id: item.id,
     category: 'Material',
     lineType: 'material',
@@ -106,7 +118,7 @@ function mapLineItems(doc: InvoiceApiDoc): InvoiceLineItem[] {
     lineTotal: item.totalPrice,
   }))
 
-  const equipmentSource = doc.estimateEquipments ?? doc.equipment ?? []
+  const equipmentSource = estimate.estimateEquipments ?? estimate.equipment ?? []
   const equipment: InvoiceLineItem[] = equipmentSource.map((item) => {
     const units = Number(item.equipmentUnits) || 0
     const lineTotal = item.totalPrice != null ? Number(item.totalPrice) : null
@@ -129,7 +141,7 @@ function mapLineItems(doc: InvoiceApiDoc): InvoiceLineItem[] {
     }
   })
 
-  const vehicles: InvoiceLineItem[] = (doc.vehicles ?? []).map((item) => {
+  const vehicles: InvoiceLineItem[] = (estimate.vehicles ?? []).map((item) => {
     const quantity = item.vehicleQuantity ?? 1
     const vehicleUnits = Number(item.vehicleUnits) || 0
     const total = item.totalPrice != null ? Number(item.totalPrice) : 0
@@ -151,58 +163,75 @@ function mapLineItems(doc: InvoiceApiDoc): InvoiceLineItem[] {
   return [...materials, ...equipment, ...vehicles]
 }
 
-function signatureUrl(raw?: string | null): string | null {
-  if (!raw?.trim()) return null
-  if (raw.startsWith('http') || raw.startsWith('data:')) return raw
-  const base = imageUrl?.replace(/\/$/, '') ?? ''
-  const path = raw.startsWith('/') ? raw : `/${raw}`
-  return `${base}${path}`
+function addDays(iso: string, days: number): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  d.setDate(d.getDate() + (Number(days) || 0))
+  return d.toISOString()
 }
 
-export function mapInvoiceFromApi(doc: InvoiceApiDoc): InvoiceRecord {
-  const sigRaw =
-    doc.invoiceWithSignatures?.customerSignature ?? doc.customerSignature ?? null
-  const providerSigRaw = doc.invoiceWithSignatures?.providerSignature ?? null
-  const hasSig =
-    doc.invoiceWithSignatures?.isProvideSignature ?? doc.isProvideSignature ?? !!sigRaw
-
-  return {
-    id: doc.id,
-    customerName: doc.customerName,
-    customerEmail: doc.customerEmail,
-    customerAddress: doc.customerAddress,
-    projectName: doc.projectName,
-    invoiceRef: formatInvoiceRef(doc.id),
-    issuedDate: doc.estimateStartDate,
-    dueDate: doc.estimateEndDate,
-    issuedDateDisplay: formatDateForUi(doc.estimateStartDate),
-    dueDateDisplay: formatDateForUi(doc.estimateEndDate),
-    taxPercent: Number(doc.taxNumber ?? 0),
-    lineItems: mapLineItems(doc),
-    totalCost: doc.totalCost,
-    projectStatus: normalizeProjectStatus(doc.projectStatus),
-    description: doc.description,
-    isApproved: doc.isApproved,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-    customerSignature: signatureUrl(sigRaw),
-    providerSignature: signatureUrl(providerSigRaw),
-    isProvideSignature: hasSig,
-    signedAt: doc.invoiceWithSignatures?.createdAt,
-  }
-}
-
-function formatDateForUi(date: string): string {
+function formatDateForUi(date?: string): string {
+  if (!date) return '—'
   const parsed = new Date(date)
   if (Number.isNaN(parsed.getTime())) return '—'
   return formatDateDayMonth(parsed)
+}
+
+function pickLatestApproval(
+  approvals?: EstimateApprovalApiDoc[]
+): EstimateApprovalApiDoc | null {
+  if (!approvals?.length) return null
+  return [...approvals].sort((a, b) => {
+    const ta = new Date(a.createdAt).getTime() || 0
+    const tb = new Date(b.createdAt).getTime() || 0
+    return tb - ta
+  })[0]
+}
+
+export function mapInvoiceFromApi(doc: InvoiceApiDoc): InvoiceRecord {
+  const estimate = doc.estimate ?? ({} as InvoiceEstimateApiDoc)
+  const totalDate = Number(estimate.totalDate) || 0
+  const issuedDateIso = doc.createdAt ?? estimate.createdAt ?? ''
+  const dueDateIso = issuedDateIso ? addDays(issuedDateIso, totalDate) : ''
+
+  const latestApproval = pickLatestApproval(estimate.estimateApprovals)
+  const customerSignature = resolveSignatureUrl(latestApproval?.signature)
+  const isApproved =
+    estimate.isApproved ||
+    (latestApproval?.estimateStatus ?? '').toUpperCase() === 'APPROVED' ||
+    !!customerSignature
+
+  return {
+    id: doc.id,
+    customerName: estimate.customerName ?? latestApproval?.customerName ?? '',
+    customerEmail: estimate.customerEmail ?? latestApproval?.customerEmail ?? '',
+    customerAddress: estimate.customerAddress ?? '',
+    projectName: estimate.projectName,
+    invoiceRef: doc.invoiceNumber ? `#${doc.invoiceNumber}` : `#INV-${doc.id.slice(0, 8)}`,
+    issuedDate: issuedDateIso,
+    dueDate: dueDateIso,
+    issuedDateDisplay: formatDateForUi(issuedDateIso),
+    dueDateDisplay: formatDateForUi(dueDateIso),
+    taxPercent: Number(estimate.taxNumber ?? 0),
+    lineItems: mapLineItems(estimate),
+    totalCost: estimate.totalCost,
+    projectStatus: normalizeProjectStatus(estimate.projectStatus),
+    description: estimate.description,
+    isApproved,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    customerSignature,
+    providerSignature: null,
+    isProvideSignature: !!customerSignature,
+    signedAt: latestApproval?.createdAt ?? doc.createdAt,
+  }
 }
 
 const invoiceApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getInvoices: builder.query<InvoiceListResponse, GetInvoicesParams | void>({
       query: (params) => ({
-        url: '/invoice/admin',
+        url: '/estimate-invoices',
         method: 'GET',
         params: {
           page: params?.page ?? 1,

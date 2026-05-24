@@ -100,6 +100,7 @@ export interface EstimateRecord {
   invoiceRef?: string
   rawEstimateStartDate?: string
   rawEstimateEndDate?: string
+  totalDays?: number
   grandTotal?: number
 }
 

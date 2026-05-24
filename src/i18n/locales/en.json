@@ -1034,10 +1034,10 @@
       "customerNamePlaceholder": "e.g. Startech BD",
       "location": "Location",
       "locationPlaceholder": "e.g. 123 Riverside Drive",
-      "startDate": "Start date",
-      "startDatePlaceholder": "e.g. 01 Feb, 2026",
-      "endDate": "End date",
-      "endDatePlaceholder": "e.g. 12 Feb, 2026",
+      "totalDays": "Total days",
+      "totalDaysPlaceholder": "e.g. 12",
+      "taxNumber": "Tax (%)",
+      "taxNumberPlaceholder": "e.g. 9",
       "paymentMethod": "Payment method",
       "paymentMethodPlaceholder": "Select payment method",
       "status": "Status",
@@ -1124,9 +1124,7 @@
       "customerName": "Customer name is required.",
       "lineItems": "Add at least one item with quantity and unit price.",
       "lineItemFields": "Each item needs a positive quantity and unit price.",
-      "startDate": "Start date is required.",
-      "endDate": "End date is required.",
-      "endAfterStart": "End date must be on or after the start date."
+      "totalDays": "Total days must be a positive number."
     },
     "items": {
       "title": "Line items",

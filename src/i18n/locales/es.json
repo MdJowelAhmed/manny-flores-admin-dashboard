@@ -953,10 +953,10 @@
       "customerNamePlaceholder": "p. ej. Startech BD",
       "location": "Ubicación",
       "locationPlaceholder": "p. ej. 123 Riverside Drive",
-      "startDate": "Fecha de inicio",
-      "startDatePlaceholder": "p. ej. 01 Feb, 2026",
-      "endDate": "Fecha de fin",
-      "endDatePlaceholder": "p. ej. 12 Feb, 2026",
+      "totalDays": "Días totales",
+      "totalDaysPlaceholder": "p. ej. 12",
+      "taxNumber": "Impuesto (%)",
+      "taxNumberPlaceholder": "p. ej. 9",
       "paymentMethod": "Método de pago",
       "paymentMethodPlaceholder": "Seleccionar método de pago",
       "status": "Estado",
@@ -1043,9 +1043,7 @@
       "customerName": "El nombre del cliente es obligatorio.",
       "lineItems": "Agrega al menos un ítem con cantidad y precio unitario.",
       "lineItemFields": "Cada ítem necesita cantidad positiva y precio unitario.",
-      "startDate": "La fecha de inicio es obligatoria.",
-      "endDate": "La fecha de fin es obligatoria.",
-      "endAfterStart": "La fecha de fin debe ser igual o posterior a la de inicio."
+      "totalDays": "Los días totales deben ser un número positivo."
     },
     "items": {
       "title": "Partidas",

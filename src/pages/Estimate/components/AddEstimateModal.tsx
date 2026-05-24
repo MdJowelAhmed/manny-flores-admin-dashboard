@@ -13,12 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DatePicker } from '@/components/common/Form'
 import { cn } from '@/utils/cn'
-import { formatCurrency, formatDateDayMonth } from '@/utils/formatters'
+import { formatCurrency } from '@/utils/formatters'
 import { toast } from '@/utils/toast'
 import { useGetMaterialsQuery } from '@/redux/api/materialsApi'
-import { useGetEquipmentQuery, toApiDateIso } from '@/redux/api/equipmentApi'
+import { useGetEquipmentQuery } from '@/redux/api/equipmentApi'
 import { useGetVehiclesQuery } from '@/redux/api/vehiclesApi'
 import type { EstimateCatalogOption, EstimateLineItem, EstimateRecord } from '../estimateData'
 import { computeEstimateTotals } from '../estimateData'
@@ -81,12 +80,6 @@ function pickCatalog(catalogId: string, catalog: EstimateCatalogOption[]) {
   return { catalogId, name: item.name, unitPrice: String(item.unitPrice || '') }
 }
 
-function parseIsoDate(iso?: string): Date | undefined {
-  if (!iso?.trim()) return undefined
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? undefined : d
-}
-
 function lineToMaterialRow(line: EstimateLineItem): MaterialRow {
   return {
     id: line.id,
@@ -144,8 +137,8 @@ export function AddEstimateModal({
   const [customerName, setCustomerName] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
   const [customerAddress, setCustomerAddress] = useState('')
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+  const [totalDays, setTotalDays] = useState('')
+  const [taxNumber, setTaxNumber] = useState('')
   const [description, setDescription] = useState('')
 
   const [materials, setMaterials] = useState<MaterialRow[]>(() => [emptyMaterialRow()])
@@ -160,8 +153,8 @@ export function AddEstimateModal({
     setCustomerName('')
     setCustomerEmail('')
     setCustomerAddress('')
-    setStartDate(undefined)
-    setEndDate(undefined)
+    setTotalDays('')
+    setTaxNumber('')
     setDescription('')
     setMaterials([emptyMaterialRow()])
     setEquipment([emptyEquipmentRow()])
@@ -175,8 +168,12 @@ export function AddEstimateModal({
     setCustomerName(estimate.customerName)
     setCustomerEmail(estimate.customerEmail)
     setCustomerAddress(estimate.customerAddress)
-    setStartDate(parseIsoDate(estimate.rawEstimateStartDate))
-    setEndDate(parseIsoDate(estimate.rawEstimateEndDate))
+    setTotalDays(estimate.totalDays != null ? String(estimate.totalDays) : '')
+    setTaxNumber(
+      Number.isFinite(estimate.taxPercent) && estimate.taxPercent > 0
+        ? String(estimate.taxPercent)
+        : ''
+    )
     setDescription(estimate.description)
 
     const matRows = estimate.lineItems
@@ -253,36 +250,41 @@ export function AddEstimateModal({
     return items
   }, [materials, equipment, vehicles])
 
+  const taxPercentValue = useMemo(() => {
+    const n = Number(taxNumber)
+    return Number.isFinite(n) && n > 0 ? n : 0
+  }, [taxNumber])
+
   const totals = useMemo(
     () =>
       computeEstimateTotals({
         lineItems: lineItemsForCalc,
-        taxPercent: 0,
+        taxPercent: taxPercentValue,
         discount: null,
       }),
-    [lineItemsForCalc]
+    [lineItemsForCalc, taxPercentValue]
   )
 
   const buildRecord = (): EstimateRecord | null => {
     if (!title.trim() || !customerName.trim() || lineItemsForCalc.length === 0) return null
+    const days = Number(totalDays)
     return {
       id: editEstimate?.id ?? makeId('est'),
       title: title.trim(),
       customerName: customerName.trim(),
       customerEmail: customerEmail.trim(),
       customerAddress: customerAddress.trim(),
-      deadlineFrom: startDate ? formatDateDayMonth(startDate) : '—',
-      deadlineTo: endDate ? formatDateDayMonth(endDate) : '—',
+      deadlineFrom: '—',
+      deadlineTo: '—',
       location: customerAddress.trim() || '—',
       paymentMethod: '—',
       description: description.trim(),
       status: 'pending',
       projectStatus: 'PENDING',
       lineItems: lineItemsForCalc,
-      taxPercent: 0,
+      taxPercent: taxPercentValue,
       discount: null,
-      rawEstimateStartDate: startDate ? toApiDateIso(startDate) : undefined,
-      rawEstimateEndDate: endDate ? toApiDateIso(endDate) : undefined,
+      totalDays: Number.isFinite(days) && days > 0 ? days : undefined,
     }
   }
 
@@ -290,9 +292,10 @@ export function AddEstimateModal({
     if (!title.trim()) return t('estimate.validation.projectName')
     if (!customerName.trim()) return t('estimate.validation.customerName')
     if (lineItemsForCalc.length === 0) return t('estimate.validation.lineItems')
-    if (!startDate) return t('estimate.validation.startDate')
-    if (!endDate) return t('estimate.validation.endDate')
-    if (startDate && endDate && startDate > endDate) return t('estimate.validation.endAfterStart')
+    const days = Number(totalDays)
+    if (!totalDays.trim() || !Number.isFinite(days) || days <= 0) {
+      return t('estimate.validation.totalDays')
+    }
     return null
   }
 
@@ -442,22 +445,34 @@ export function AddEstimateModal({
                 className="rounded-lg"
               />
             </div>
-            <DatePicker
-              id="est-start"
-              label={t('estimate.form.startDate')}
-              value={startDate}
-              onChange={setStartDate}
-              placeholder={t('estimate.form.startDatePlaceholder')}
-              className="w-full"
-            />
-            <DatePicker
-              id="est-end"
-              label={t('estimate.form.endDate')}
-              value={endDate}
-              onChange={setEndDate}
-              placeholder={t('estimate.form.endDatePlaceholder')}
-              className="w-full"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="est-total-days">{t('estimate.form.totalDays')}</Label>
+              <Input
+                id="est-total-days"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                step={1}
+                value={totalDays}
+                onChange={(e) => setTotalDays(e.target.value)}
+                placeholder={t('estimate.form.totalDaysPlaceholder')}
+                className="rounded-lg"
+              />
+            </div>
+            {/* <div className="space-y-2">
+              <Label htmlFor="est-tax">{t('estimate.form.taxNumber')}</Label>
+              <Input
+                id="est-tax"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                value={taxNumber}
+                onChange={(e) => setTaxNumber(e.target.value)}
+                placeholder={t('estimate.form.taxNumberPlaceholder')}
+                className="rounded-lg"
+              />
+            </div> */}
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="est-desc">{t('estimate.form.description')}</Label>
               <Textarea
@@ -580,13 +595,33 @@ export function AddEstimateModal({
             t={t}
           />
 
-          <div className="flex items-center justify-end gap-3 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
-            <Label className="text-sm font-semibold text-gray-700">
-              {t('estimate.preview.subtotal')}
-            </Label>
-            <span className="text-base font-bold tabular-nums text-primary">
-              {formatCurrency(totals.subtotal)}
-            </span>
+          <div className="flex flex-col items-end gap-2 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-semibold text-gray-700">
+                {t('estimate.preview.subtotal')}
+              </Label>
+              <span className="text-base font-bold tabular-nums text-primary">
+                {formatCurrency(totals.subtotal)}
+              </span>
+            </div>
+            {taxPercentValue > 0 && (
+              <div className="flex items-center gap-3">
+                <Label className="text-sm font-semibold text-gray-700">
+                  {t('estimate.preview.tax')} ({taxPercentValue}%)
+                </Label>
+                <span className="text-sm font-semibold tabular-nums text-gray-700">
+                  {formatCurrency(totals.taxAmount)}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-semibold text-gray-700">
+                {t('estimate.preview.balanceDue')}
+              </Label>
+              <span className="text-base font-bold tabular-nums text-primary">
+                {formatCurrency(totals.balanceDue)}
+              </span>
+            </div>
           </div>
         </div>
       </ModalWrapper>
@@ -595,7 +630,6 @@ export function AddEstimateModal({
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         estimate={previewDraft}
-        readOnly
       />
     </>
   )
