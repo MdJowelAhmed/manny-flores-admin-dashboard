@@ -1071,8 +1071,8 @@
       "projectName": "Project Name",
       "location": "Location",
       "clientName": "Client Name",
-      "startDate": "Start Date",
-      "endDate": "End Date",
+      "totalDays": "Total days",
+      "created": "Created",
       "totalCost": "Total Cost",
       "status": "Status",
       "action": "Action"
@@ -1174,6 +1174,7 @@
       "title": "Estimate preview",
       "open": "Preview",
       "estimateFor": "Prepared for",
+      "updated": "Updated",
       "item": "Item",
       "unitPrice": "Unit price",
       "subtotal": "Subtotal",

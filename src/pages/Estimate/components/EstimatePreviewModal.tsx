@@ -2,7 +2,13 @@ import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common/ModalWrapper'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/utils/formatters'
-import { ESTIMATE_COMPANY, type EstimateLineItem, type EstimateRecord } from '../estimateData'
+import {
+  ESTIMATE_COMPANY,
+  getProjectStatusClasses,
+  type EstimateLineItem,
+  type EstimateRecord,
+} from '../estimateData'
+import { cn } from '@/utils/cn'
 
 function lineItemTotal(row: EstimateLineItem): number {
   if (row.lineTotal != null && !Number.isNaN(row.lineTotal)) return row.lineTotal
@@ -25,6 +31,7 @@ export function EstimatePreviewModal({ open, onClose, estimate }: EstimatePrevie
     estimate.grandTotal !== undefined &&
     estimate.grandTotal !== null &&
     !Number.isNaN(Number(apiTotalCost))
+  const statusStyle = getProjectStatusClasses(estimate.projectStatus)
 
   return (
     <ModalWrapper
@@ -71,11 +78,50 @@ export function EstimatePreviewModal({ open, onClose, estimate }: EstimatePrevie
             <p className="mt-3 text-sm text-gray-600">
               <span className="font-medium">{estimate.title}</span>
             </p>
-            <p className="text-xs text-gray-500">
-              {estimate.deadlineFrom} — {estimate.deadlineTo}
-            </p>
+            <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                  statusStyle.text,
+                  'bg-muted/60'
+                )}
+              >
+                <span className={cn('h-1.5 w-1.5 rounded-full', statusStyle.dot)} />
+                {t(`estimate.projectStatus.${estimate.projectStatus}`)}
+              </span>
+            </div>
+            <dl className="mt-3 space-y-1 text-xs text-gray-500">
+              {estimate.totalDays != null && (
+                <div className="flex justify-end gap-2">
+                  <dt>{t('estimate.form.totalDays')}:</dt>
+                  <dd className="font-medium text-gray-700">{estimate.totalDays}</dd>
+                </div>
+              )}
+              {estimate.taxPercent > 0 && (
+                <div className="flex justify-end gap-2">
+                  <dt>{t('estimate.form.taxNumber')}:</dt>
+                  <dd className="font-medium text-gray-700">{estimate.taxPercent}%</dd>
+                </div>
+              )}
+              <div className="flex justify-end gap-2">
+                <dt>{t('estimate.table.created')}:</dt>
+                <dd className="font-medium text-gray-700">
+                  {estimate.createdAtDisplay ?? '—'}
+                </dd>
+              </div>
+              <div className="flex justify-end gap-2">
+                <dt>{t('estimate.preview.updated', 'Updated')}:</dt>
+                <dd className="font-medium text-gray-700">
+                  {estimate.updatedAtDisplay ?? '—'}
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
+
+        {estimate.description?.trim() && (
+          <p className="text-sm text-gray-600 -mt-4">{estimate.description}</p>
+        )}
 
         <div className="rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">

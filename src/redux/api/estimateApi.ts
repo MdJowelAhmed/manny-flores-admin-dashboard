@@ -237,17 +237,22 @@ export function mapEstimateFromApi(doc: EstimateApiDoc): EstimateRecord {
 
   const allLines = [...materialLines, ...equipmentLines, ...vehicleLines]
 
+  const totalDays =
+    typeof doc.totalDate === 'number'
+      ? doc.totalDate
+      : typeof doc.totalDays === 'number'
+        ? doc.totalDays
+        : undefined
+
   return {
     id: doc.id,
     title: doc.projectName,
     customerName: doc.customerName,
     customerEmail: doc.customerEmail,
     customerAddress: doc.customerAddress,
-    deadlineFrom: formatDateForUi(doc.estimateStartDate),
-    deadlineTo: formatDateForUi(doc.estimateEndDate),
     location: doc.customerAddress || '—',
     paymentMethod: '—',
-    description: doc.description,
+    description: doc.description ?? '',
     status: doc.isApproved ? 'signed' : 'pending',
     projectStatus: normalizeProjectStatus(doc.projectStatus),
     lineItems: allLines,
@@ -255,15 +260,12 @@ export function mapEstimateFromApi(doc: EstimateApiDoc): EstimateRecord {
     discount: null,
     signedAt: doc.isApproved ? doc.updatedAt : undefined,
     invoiceRef: undefined,
-    rawEstimateStartDate: doc.estimateStartDate,
-    rawEstimateEndDate: doc.estimateEndDate,
-    totalDays:
-      typeof doc.totalDate === 'number'
-        ? doc.totalDate
-        : typeof doc.totalDays === 'number'
-          ? doc.totalDays
-          : undefined,
+    totalDays,
     grandTotal: doc.totalCost ?? undefined,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    createdAtDisplay: formatDateForUi(doc.createdAt),
+    updatedAtDisplay: formatDateForUi(doc.updatedAt),
   }
 }
 

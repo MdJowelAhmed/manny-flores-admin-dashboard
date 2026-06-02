@@ -85,8 +85,6 @@ export interface EstimateRecord {
   customerName: string
   customerEmail: string
   customerAddress: string
-  deadlineFrom: string
-  deadlineTo: string
   location: string
   paymentMethod: string
   description: string
@@ -98,10 +96,13 @@ export interface EstimateRecord {
   signedAt?: string
   signatureDataUrl?: string
   invoiceRef?: string
-  rawEstimateStartDate?: string
-  rawEstimateEndDate?: string
+  /** Duration in days (`totalDate` from API). */
   totalDays?: number
   grandTotal?: number
+  createdAt?: string
+  updatedAt?: string
+  createdAtDisplay?: string
+  updatedAtDisplay?: string
 }
 
 /** @deprecated Use EstimateRecord */
@@ -189,8 +190,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     customerName: 'Startech BD',
     customerEmail: 'contact@startech.bd',
     customerAddress: '123 Riverside Drive',
-    deadlineFrom: '01 Feb, 2026',
-    deadlineTo: '12 Feb, 2026',
+    totalDays: 12,
     location: '123 Riverside Drive',
     paymentMethod: 'Paypal',
     description:
@@ -210,8 +210,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     customerName: 'Startech BD',
     customerEmail: 'contact@startech.bd',
     customerAddress: '123 Riverside Drive, Park Section A',
-    deadlineFrom: '01 Feb, 2026',
-    deadlineTo: '12 Feb, 2026',
+    totalDays: 12,
     location: '123 Riverside Drive, Park Section A',
     paymentMethod: 'Google pay',
     description: 'Artificial turf install with edging and infill.',
@@ -232,8 +231,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     customerName: 'Green Valley LLC',
     customerEmail: 'ops@greenvalley.com',
     customerAddress: '88 Oak Street, North Wing',
-    deadlineFrom: '15 Feb, 2026',
-    deadlineTo: '28 Feb, 2026',
+    totalDays: 14,
     location: '88 Oak Street, North Wing',
     paymentMethod: 'Bank transfer',
     description: 'Soil preparation, mulching, and seasonal planting.',
@@ -249,8 +247,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     customerName: 'AquaFlow Inc.',
     customerEmail: 'service@aquaflow.com',
     customerAddress: '200 Garden Plaza, Lot 4',
-    deadlineFrom: '03 Mar, 2026',
-    deadlineTo: '05 Mar, 2026',
+    totalDays: 3,
     location: '200 Garden Plaza, Lot 4',
     paymentMethod: 'Card',
     description: 'Inspect drip lines and controller zones.',
@@ -266,8 +263,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     customerName: 'Urban Parks Dept',
     customerEmail: 'parks@city.gov',
     customerAddress: 'Main Avenue, Blocks 12–14',
-    deadlineFrom: '10 Mar, 2026',
-    deadlineTo: '20 Mar, 2026',
+    totalDays: 11,
     location: 'Main Avenue, Blocks 12–14',
     paymentMethod: 'Paypal',
     description: 'Safety pruning and disposal of cuttings.',
@@ -283,8 +279,7 @@ export const MOCK_ESTIMATE_ITEMS: EstimateRecord[] = [
     customerName: 'Oak Ridge HOA',
     customerEmail: 'board@oakridgehoa.org',
     customerAddress: '450 Cedar Lane',
-    deadlineFrom: '18 Mar, 2026',
-    deadlineTo: '22 Mar, 2026',
+    totalDays: 5,
     location: '450 Cedar Lane',
     paymentMethod: 'Google pay',
     description: 'Spread organic mulch in designated beds.',

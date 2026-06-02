@@ -157,8 +157,8 @@ export default function EstimatePage() {
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.location')}</th>
                 
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.totalCost')}</th>
-                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.startDate')}</th>
-                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.endDate')}</th>
+                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.totalDays')}</th>
+                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.created')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.status')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800 text-right w-[140px]">
                   {t('estimate.table.action')}
@@ -173,16 +173,21 @@ export default function EstimatePage() {
                   key={row.id}
                   className="border-t border-gray-200 bg-white hover:bg-gray-50/60 transition-colors"
                 >
-                  <td className="px-5 py-4 text-gray-900 align-middle">{row.title.slice(0, 30)}...</td>
-                  
+                  <td className="px-5 py-4 text-gray-900 align-middle max-w-[200px] truncate" title={row.title}>
+                    {row.title}
+                  </td>
                   <td className="px-5 py-4 text-gray-700 align-middle">{row.customerName}</td>
-                  <td className="px-5 py-4 text-gray-700 align-middle">{row.location}</td>
-                  <td className="px-5 py-4 text-gray-700 align-middle">{formatCurrency(row.grandTotal ?? 0)}</td>
-                  <td className="px-5 py-4 text-gray-700 align-middle whitespace-nowrap">
-                    {row.deadlineFrom}
+                  <td className="px-5 py-4 text-gray-700 align-middle max-w-[180px] truncate" title={row.location}>
+                    {row.location}
+                  </td>
+                  <td className="px-5 py-4 text-gray-700 align-middle tabular-nums">
+                    {formatCurrency(row.grandTotal ?? 0)}
+                  </td>
+                  <td className="px-5 py-4 text-gray-700 align-middle tabular-nums whitespace-nowrap">
+                    {row.totalDays != null ? row.totalDays : '—'}
                   </td>
                   <td className="px-5 py-4 text-gray-700 align-middle whitespace-nowrap">
-                    {row.deadlineTo}
+                    {row.createdAtDisplay ?? '—'}
                   </td>
           
                   <td className="px-5 py-4 align-middle">
@@ -249,7 +254,7 @@ export default function EstimatePage() {
               )})}
               {!isLoading && paginatedItems.length === 0 && (
                 <tr>
-                  <td className="px-5 py-8 text-center text-gray-500" colSpan={7}>
+                  <td className="px-5 py-8 text-center text-gray-500" colSpan={8}>
                     {t('common.noDataFound')}
                   </td>
                 </tr>

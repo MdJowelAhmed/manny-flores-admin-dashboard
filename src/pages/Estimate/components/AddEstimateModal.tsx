@@ -274,8 +274,6 @@ export function AddEstimateModal({
       customerName: customerName.trim(),
       customerEmail: customerEmail.trim(),
       customerAddress: customerAddress.trim(),
-      deadlineFrom: '—',
-      deadlineTo: '—',
       location: customerAddress.trim() || '—',
       paymentMethod: '—',
       description: description.trim(),

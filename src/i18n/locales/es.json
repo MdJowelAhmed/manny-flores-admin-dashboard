@@ -990,8 +990,8 @@
       "projectName": "Nombre del proyecto",
       "location": "Ubicación",
       "clientName": "Nombre del cliente",
-      "startDate": "Fecha de inicio",
-      "endDate": "Fecha de fin",
+      "totalDays": "Días totales",
+      "created": "Creado",
       "totalCost": "Costo total",
       "status": "Estado",
       "action": "Acción"
@@ -1093,6 +1093,7 @@
       "title": "Vista previa de estimación",
       "open": "Vista previa",
       "estimateFor": "Preparado para",
+      "updated": "Actualizado",
       "item": "Ítem",
       "unitPrice": "Precio unitario",
       "subtotal": "Subtotal",
