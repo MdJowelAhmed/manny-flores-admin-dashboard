@@ -136,7 +136,7 @@ export function getEstimateMaterialCatalog(): EstimateCatalogOption[] {
   return mockMaterialsData.map((m) => ({
     id: m.id,
     name: m.materialName,
-    unitPrice: m.projectRate || m.unitPrice || 0,
+    unitPrice: m.unitPrice || 0,
   }))
 }
 

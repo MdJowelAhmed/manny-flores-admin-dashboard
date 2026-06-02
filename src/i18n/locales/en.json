@@ -485,6 +485,8 @@
     "materialCreated": "Material added successfully.",
     "searchMaterials": "Search materials...",
     "noMaterialsFound": "No materials found",
+    "createdAt": "Created",
+    "updatedAt": "Updated",
     "deleteMaterial": "Delete Material",
     "deleteMaterialConfirm": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
     "materialDeleted": "Material Deleted",

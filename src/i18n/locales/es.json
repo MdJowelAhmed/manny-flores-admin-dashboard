@@ -485,6 +485,8 @@
     "materialCreated": "Material agregado correctamente.",
     "searchMaterials": "Buscar materiales...",
     "noMaterialsFound": "No se encontraron materiales",
+    "createdAt": "Creado",
+    "updatedAt": "Actualizado",
     "deleteMaterial": "Eliminar Material",
     "deleteMaterialConfirm": "¿Está seguro de que desea eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
     "materialDeleted": "Material Eliminado",

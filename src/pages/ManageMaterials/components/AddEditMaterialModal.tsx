@@ -69,8 +69,8 @@ export function AddEditMaterialModal({
       setMaterialName(material.materialName)
       setCategoryId(material.categoryId || firstId)
       setUnitPrice(String(material.unitPrice ?? ''))
-      setStock(String(material.currentStock ?? ''))
-      setQuantity(String(material.quantity ?? material.minimumStock ?? ''))
+      setStock(String(material.stock ?? ''))
+      setQuantity(String(material.quantity ?? ''))
     } else {
       setMaterialName('')
       setCategoryId(firstId)
@@ -207,7 +207,7 @@ export function AddEditMaterialModal({
             />
             <FormInput
               className="sm:col-span-2"
-              label={t('manageMaterials.minimumStock')}
+              label={t('manageMaterials.quantity')}
               placeholder="150"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
