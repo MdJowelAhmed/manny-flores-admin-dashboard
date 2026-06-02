@@ -3,10 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import {
   Calendar,
-  CalendarClock,
+  Eye,
   Loader2,
-  Plus,
-  Send,
+
   Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -18,7 +17,9 @@ import {
   type RescheduleFormValues,
 } from './components/AddEditScheduleModal'
 import { AssignEmployeeModal } from './components/AssignEmployeeModal'
-import { AddTeamModal, type TeamDraft } from './components/AddTeamModal'
+import { AddTeamModal } from './components/AddTeamModal'
+import { ViewTeamListModal } from './components/ViewTeamListModal'
+import { Pagination } from '@/components/common/Pagination'
 import type { ScheduledProject } from './projectSchedulingData'
 import { consumePendingSchedules } from '@/pages/Estimate/estimateBridge'
 import { cn } from '@/utils/cn'
@@ -28,10 +29,11 @@ import {
   mapProjectFromApi,
   useAssignProjectEmployeeMutation,
   useCompleteProjectMutation,
-  useGetProjectsQuery,
+  useGetAllEmployeesQuery,
+  useGetScheduledProjectsQuery,
   useReScheduleProjectMutation,
 } from '@/redux/api/projectsApi'
-import { useAllEmployeeManageQuery } from '@/redux/slices/super-admin/employeeManagement'
+import { useGetTeamsQuery } from '@/redux/api/teamApi'
 import { getProjectStatusClasses } from '@/pages/Estimate/estimateData'
 import { formatDateDisplay } from '@/utils/formatters'
 
@@ -39,8 +41,7 @@ function teamBadgeLabel(team: string) {
   const raw = team.trim()
   if (!raw) return ''
   if (/^\d+$/.test(raw)) return `CREW ${raw}`
-  const u = raw.toUpperCase()
-  return u.startsWith('TEAM') ? u : `TEAM ${u}`
+  return raw.toUpperCase()
 }
 
 function formatIsoDate(iso?: string): string {
@@ -59,15 +60,16 @@ function isProjectCompleted(schedule: ScheduledProject): boolean {
 
 export default function ProjectScheduling() {
   const { t } = useTranslation()
-  const [page] = useState(1)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
   const [pendingSchedules] = useState(() => consumePendingSchedules())
 
-  const { data: projectsResponse, isLoading, isFetching, refetch } = useGetProjectsQuery({
+  const { data: projectsResponse, isLoading, isFetching, refetch } = useGetScheduledProjectsQuery({
     page,
-    limit: 50,
+    limit,
   })
 
-  const { data: employeesResponse } = useAllEmployeeManageQuery({ page: 1, limit: 100 })
+  const { data: employeesResponse } = useGetAllEmployeesQuery({ page: 1, limit: 100 })
 
   const [reScheduleProject, { isLoading: isRescheduling }] = useReScheduleProjectMutation()
   const [assignProjectEmployee, { isLoading: isAssigning }] = useAssignProjectEmployeeMutation()
@@ -80,6 +82,20 @@ export default function ProjectScheduling() {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const [assignTarget, setAssignTarget] = useState<ScheduledProject | null>(null)
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false)
+  const [isViewTeamsModalOpen, setIsViewTeamsModalOpen] = useState(false)
+
+  const { data: teamsResponse } = useGetTeamsQuery({ page: 1, limit: 100 })
+
+  /** Every employee that is already on some other team. The API rule is
+   *  "one employee can belong to a single team only" — these IDs are
+   *  filtered out of the AddTeam dropdown / search. */
+  const blockedEmployeeIds = useMemo(() => {
+    const set = new Set<string>()
+    teamsResponse?.data?.forEach((team) =>
+      team.employees?.forEach((emp) => emp.id && set.add(emp.id))
+    )
+    return Array.from(set)
+  }, [teamsResponse?.data])
 
   const schedules = useMemo(() => {
     const apiSchedules = (projectsResponse?.data ?? []).map(mapProjectFromApi)
@@ -88,20 +104,12 @@ export default function ProjectScheduling() {
     return [...localOnly, ...apiSchedules]
   }, [projectsResponse?.data, pendingSchedules])
 
+  const totalItems = projectsResponse?.pagination?.total ?? schedules.length
+  const totalPages = projectsResponse?.pagination?.totalPage ?? 1
+
   const employees: Employee[] = useMemo(() => {
     return (
-      employeesResponse?.data?.map((employee: {
-        id: string
-        name: string
-        email: string
-        city?: string
-        isBanned?: boolean
-        createdAt: string
-        role: string
-        country?: string
-        contact?: string
-        verified?: boolean
-      }) => ({
+      employeesResponse?.data?.map((employee) => ({
         id: employee.id,
         employeeId: employee.id.slice(0, 8),
         fullName: employee.name,
@@ -111,7 +119,7 @@ export default function ProjectScheduling() {
         joiningDate: employee.createdAt,
         role: employee.role,
         workSchedule: employee.country || 'N/A',
-        contact: employee.contact,
+        contact: employee.contact ?? undefined,
         verified: employee.verified,
         isBanned: !!employee.isBanned,
       })) ?? []
@@ -142,10 +150,7 @@ export default function ProjectScheduling() {
     setIsRescheduleModalOpen(true)
   }
 
-  const handleOpenAssign = (schedule: ScheduledProject) => {
-    setAssignTarget(schedule)
-    setIsAssignModalOpen(true)
-  }
+
 
   const handleRescheduleSubmit = async (
     estimateId: string,
@@ -195,10 +200,6 @@ export default function ProjectScheduling() {
     }
   }
 
-  const handleCreateTeam = (_team: TeamDraft) => {
-    // Team creation is local UI-only until a teams API exists.
-  }
-
   const loading = isLoading || isFetching
 
   return (
@@ -217,11 +218,18 @@ export default function ProjectScheduling() {
             {t('projectScheduling.subtitle')}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="outline"
-            onClick={() => setIsAddTeamModalOpen(true)}
+            onClick={() => setIsViewTeamsModalOpen(true)}
             className="shrink-0 rounded-lg h-11 px-5 border-gray-200 text-gray-900 hover:bg-muted/50"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            {t('projectScheduling.viewTeamList', 'View team list')}
+          </Button>
+          <Button
+            onClick={() => setIsAddTeamModalOpen(true)}
+            className="shrink-0 rounded-lg h-11 px-5 bg-primary hover:bg-primary/90 text-white"
           >
             <Users className="h-4 w-4 mr-2" />
             {t('projectScheduling.addTeam')}
@@ -269,11 +277,13 @@ export default function ProjectScheduling() {
                           <div className="flex flex-wrap items-start gap-2">
                             <div className="min-w-0 flex-1">
                               <h2 className="text-base font-semibold text-gray-900 leading-snug">
-                                {schedule.projectTitle}
+                                {schedule.projectTitle || '—'}
                               </h2>
-                              <p className="text-sm text-muted-foreground mt-0.5">
-                                {schedule.category}
-                              </p>
+                              {schedule.category && (
+                                <p className="text-sm text-muted-foreground mt-0.5">
+                                  {schedule.category}
+                                </p>
+                              )}
                             </div>
                             <span
                               className={cn(
@@ -287,14 +297,6 @@ export default function ProjectScheduling() {
                           </div>
 
                           <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-4">
-                            <div>
-                              <span className="text-xs text-muted-foreground block mb-1">
-                                {t('projectScheduling.project')}
-                              </span>
-                              <span className="text-sm font-medium text-gray-900">
-                                {schedule.project}
-                              </span>
-                            </div>
                             <div>
                               <span className="text-xs text-muted-foreground block mb-1">
                                 {t('projectScheduling.startDate')}
@@ -319,22 +321,26 @@ export default function ProjectScheduling() {
                                 {schedule.uploadDate}
                               </span>
                             </div>
-                            <div>
-                              <span className="text-xs text-muted-foreground block mb-1">
-                                {t('projectScheduling.client')}
-                              </span>
-                              <span className="text-sm font-medium text-gray-900">
-                                {schedule.uploadedBy}
-                              </span>
-                            </div>
-                            <div className="col-span-2 lg:col-span-1">
-                              <span className="text-xs text-muted-foreground block mb-1">
-                                {t('projectScheduling.serviceLocation')}
-                              </span>
-                              <span className="text-sm font-medium text-gray-900 leading-snug">
-                                {schedule.serviceLocation || '—'}
-                              </span>
-                            </div>
+                            {schedule.uploadedBy && (
+                              <div>
+                                <span className="text-xs text-muted-foreground block mb-1">
+                                  {t('projectScheduling.client')}
+                                </span>
+                                <span className="text-sm font-medium text-gray-900">
+                                  {schedule.uploadedBy}
+                                </span>
+                              </div>
+                            )}
+                            {schedule.serviceLocation && (
+                              <div className="col-span-2 lg:col-span-1">
+                                <span className="text-xs text-muted-foreground block mb-1">
+                                  {t('projectScheduling.serviceLocation')}
+                                </span>
+                                <span className="text-sm font-medium text-gray-900 leading-snug">
+                                  {schedule.serviceLocation}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -387,7 +393,7 @@ export default function ProjectScheduling() {
                                 </Tooltip>
                               )
                             })}
-                            {!completed && (
+                            {/* {!completed && (
                               <button
                                 type="button"
                                 onClick={() => handleOpenAssign(schedule)}
@@ -399,10 +405,10 @@ export default function ProjectScheduling() {
                               >
                                 <Plus className="h-4 w-4" />
                               </button>
-                            )}
+                            )} */}
                           </div>
 
-                          <div className="mt-auto pt-2">
+                          {/* <div className="mt-auto pt-2">
                             <div className="flex items-center justify-between gap-2 rounded-lg bg-white border border-gray-100 px-3 py-2 shadow-sm">
                               <div className="flex items-center gap-2 min-w-0">
                                 <CalendarClock
@@ -421,7 +427,7 @@ export default function ProjectScheduling() {
                                 <Send className="h-4 w-4" />
                               </button>
                             </div>
-                          </div>
+                          </div> */}
                         </div>
 
                         <div className="flex flex-col w-full xl:w-[min(100%,280px)] shrink-0 xl:self-stretch">
@@ -469,6 +475,20 @@ export default function ProjectScheduling() {
               {t('projectScheduling.noScheduledProjects')}
             </div>
           )}
+
+          {totalItems > 0 && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={limit}
+              onPageChange={setPage}
+              onItemsPerPageChange={(newLimit) => {
+                setLimit(newLimit)
+                setPage(1)
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -504,12 +524,18 @@ export default function ProjectScheduling() {
         isSaving={isAssigning}
       />
 
-      {/* <AddTeamModal
+      <AddTeamModal
         open={isAddTeamModalOpen}
         onClose={() => setIsAddTeamModalOpen(false)}
         employees={employees}
-        onCreateTeam={handleCreateTeam}
-      /> */}
+        blockedEmployeeIds={blockedEmployeeIds}
+      />
+
+      <ViewTeamListModal
+        open={isViewTeamsModalOpen}
+        onClose={() => setIsViewTeamsModalOpen(false)}
+        employees={employees}
+      />
     </motion.div>
   )
 }

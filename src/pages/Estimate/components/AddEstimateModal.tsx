@@ -596,14 +596,14 @@ export function AddEstimateModal({
           />
 
           <div className="flex flex-col items-end gap-2 rounded-xl border border-gray-100 bg-gray-50/50 p-4">
-            <div className="flex items-center gap-3">
+            {/* <div className="flex items-center gap-3">
               <Label className="text-sm font-semibold text-gray-700">
                 {t('estimate.preview.subtotal')}
               </Label>
               <span className="text-base font-bold tabular-nums text-primary">
                 {formatCurrency(totals.subtotal)}
               </span>
-            </div>
+            </div> */}
             {taxPercentValue > 0 && (
               <div className="flex items-center gap-3">
                 <Label className="text-sm font-semibold text-gray-700">
