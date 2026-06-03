@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -12,10 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { projectStats, mockProjectsData, projectStatusFilterOptions } from './companyProjectsData'
+import { projectStats, projectStatusFilterOptions } from './companyProjectsData'
 import { ViewProjectDetailsModal } from './components/ViewProjectDetailsModal'
 import { AddEditProjectModal } from './components/AddEditProjectModal'
-import type { Project, ProjectStatus } from '@/types'
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { STATUS_COLORS } from '@/utils/constants'
@@ -30,23 +29,33 @@ export default function CompanyProjects() {
   const statusFilter = searchParams.get('status') ?? 'all'
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
-
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   // API CALLS
   const { data: companyOverviewRes,  } = useCompanyProjectsOverviewQuery()
 
-  // const { data: companyPorjectsApi, isLoading: companyProjectLoading, refetch } = useGetCompanyProjectsQuery({
-  //   status: statusFilter,
-  //   page: currentPage,
-  //   limit: itemsPerPage,
-  //   search: searchQuery
-  // })
+  const { data: companyPorjectsApi, isLoading: companyProjectLoading, refetch } = useGetCompanyProjectsQuery({
+    status: statusFilter === 'all' ? '' : statusFilter.toUpperCase(),
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchQuery
+  })
 
+  const projects = companyPorjectsApi?.data || []
+  const totalItems = companyPorjectsApi?.pagination?.total || 0
+  const totalPages = companyPorjectsApi?.pagination?.totalPage || 1
 
+  // ── Customer infinite-scroll state ─────────────────────────────────────────
+  const [custSearch, setCustSearch] = useState('')
+  const [custPage, setCustPage] = useState(1)
+  const [custOptions, setCustOptions] = useState<{ value: string; label: string }[]>([])
 
-  // const projects = companyPorjectsApi?.data || []
-  // console.log(projects)
-  // console.log(companyOverviewRes)
-
+  const { data: customersRes, isFetching: custLoading } = useGetAllCustomersQuery({
+    search: custSearch,
+    page: custPage,
+  }, {
+    skip: !(isAddModalOpen || isEditModalOpen)
+  })
 
   const setSearch = (v: string) => {
     const next = new URLSearchParams(searchParams)
@@ -72,38 +81,13 @@ export default function CompanyProjects() {
     setSearchParams(next, { replace: true })
   }
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
-  const [projects, setProjects] = useState<Project[]>(mockProjectsData)
-
-
-
-
-
-  const filteredProjects = useMemo(() => {
-    return projects.filter((p) => {
-      const matchesSearch =
-        !searchQuery ||
-        p.projectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.customer.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesStatus = statusFilter === 'all' || p.status === statusFilter
-      return matchesSearch && matchesStatus
-    })
-  }, [projects, searchQuery, statusFilter])
-
-  const totalPages = Math.max(1, Math.ceil(filteredProjects.length / itemsPerPage))
+  const [selectedProject, setSelectedProject] = useState<any | null>(null)
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
   }, [totalPages, currentPage])
-
-  const paginatedProjects = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filteredProjects.slice(start, start + itemsPerPage)
-  }, [filteredProjects, currentPage, itemsPerPage])
 
   const handleStatusFilterChange = (value: string) => {
     setStatus(value)
@@ -112,12 +96,12 @@ export default function CompanyProjects() {
     setSearch(value)
   }
 
-  const handleViewDetails = (project: Project) => {
+  const handleViewDetails = (project: any) => {
     setSelectedProject(project)
     setIsViewModalOpen(true)
   }
 
-  const handleEdit = (project: Project, e: React.MouseEvent) => {
+  const handleEdit = (project: any, e: React.MouseEvent) => {
     e.stopPropagation()
     setSelectedProject(project)
     setIsEditModalOpen(true)
@@ -128,46 +112,15 @@ export default function CompanyProjects() {
     setIsAddModalOpen(true)
   }
 
-  const handleSaveProject = (data: Partial<Project>) => {
-    if (selectedProject) {
-      setProjects((prev) =>
-        prev.map((p) =>
-          p.id === selectedProject.id
-            ? {
-              ...p,
-              ...data,
-              remaining: (data.totalBudget ?? p.totalBudget) - (data.amountSpent ?? p.amountSpent),
-              lineItems: data.lineItems ?? p.lineItems,
-            }
-            : p
-        )
-      )
-    } else {
-      const newProject: Project = {
-        id: `proj-${Date.now()}`,
-        projectName: data.projectName ?? '',
-        category: data.category ?? 'General',
-        customer: data.customer ?? '',
-        email: data.email ?? '',
-        company: data.company ?? '',
-        startDate: data.startDate ?? '',
-        totalBudget: data.totalBudget ?? 0,
-        amountSpent: data.amountSpent ?? 0,
-        duration: data.duration ?? '0 weeks',
-        remaining: data.remaining ?? 0,
-        paymentMethod: data.paymentMethod,
-        status: (data.status as ProjectStatus) ?? 'Active',
-        amountDue: data.amountDue,
-        description: data.description,
-        lineItems: data.lineItems,
-      }
-      setProjects((prev) => [newProject, ...prev])
-    }
+  const resetCustomerStates = () => {
+    setCustSearch('')
+    setCustPage(1)
+    setCustOptions([])
   }
 
-  // if (companyProjectLoading || companyOverviewLoading) {
-  //   return <Spinner />
-  // }
+  if (companyProjectLoading || companyOverviewLoading) {
+    return <Spinner />
+  }
 
   return (
     <motion.div
@@ -178,14 +131,14 @@ export default function CompanyProjects() {
     >
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {projectStats.map((stat, index) => {
+        {projectStats?.map((stat, index) => {
           const Icon = stat.icon
           const value =
             stat.titleKey === 'companyProjects.totalProject'
               ? companyOverviewRes?.data?.totalProjects
               : stat.titleKey === 'companyProjects.activeProject'
                 ? companyOverviewRes?.data?.activeProjects
-                : stat.titleKey === 'companyProjects.pendingProject'
+                : stat.titleKey === 'companyProjects.cancelledProject'
                   ? companyOverviewRes?.data?.cancelledProjects
                   : companyOverviewRes?.data?.completedProjects
           return (
@@ -250,11 +203,12 @@ export default function CompanyProjects() {
         </div>
 
         <div className="space-y-6">
-          {filteredProjects.length === 0 ? (
+          {projects.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">{t('companyProjects.noProjectsFound')}</div>
           ) : (
-            paginatedProjects.map((project) => {
-              const statusColors = STATUS_COLORS[project.status] ?? { bg: 'bg-gray-100', text: 'text-gray-800' }
+            projects.map((project: any) => {
+              const uiStatus = mapPaymentTypeToStatus(project.paymentType)
+              const statusColors = STATUS_COLORS[uiStatus] ?? { bg: 'bg-gray-100', text: 'text-gray-800' }
               return (
                 <motion.div
                   key={project.id}
@@ -264,7 +218,7 @@ export default function CompanyProjects() {
                 >
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-accent truncate">{project.projectName}</h4>
-                    <p className="text-sm text-muted-foreground mt-0.5">{project.category}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{project.companyName || 'General'}</p>
                     <div className="flex flex-wrap gap-4 mt-5">
                       <div className="flex flex-col gap-2">
                         <span className="text-sm text-muted-foreground block">{t('companyProjects.budget')}</span>
@@ -272,9 +226,16 @@ export default function CompanyProjects() {
                           {formatCurrency(project.totalBudget)}
                         </span>
                       </div>
+
                       <div className="flex flex-col gap-2">
                         <span className="text-sm text-muted-foreground block">{t('companyProjects.timeline')}</span>
-                        <span className=" font-bold text-accent ">{project.duration}</span>
+                        <span className=" font-bold text-accent ">{getProjectDuration(project.startDate, project.endDate)}</span>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm text-muted-foreground block">{t('companyProjects.amountDue')}</span>
+                        <span className=" font-bold text-accent">
+                          {formatCurrency(project.amountDue)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -286,7 +247,7 @@ export default function CompanyProjects() {
                         statusColors.text
                       )}
                     >
-                      {project.status}
+                      {uiStatus}
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -313,12 +274,12 @@ export default function CompanyProjects() {
           )}
 
           {/* Pagination */}
-          {filteredProjects.length > 0 && (
+          {projects.length > 0 && (
             <div className="border-t border-gray-100 pt-4">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                totalItems={filteredProjects.length}
+                totalItems={totalItems}
                 itemsPerPage={itemsPerPage}
                 onPageChange={setPage}
                 onItemsPerPageChange={setLimit}
@@ -344,9 +305,17 @@ export default function CompanyProjects() {
           setIsAddModalOpen(false)
           setIsEditModalOpen(false)
           setSelectedProject(null)
+          resetCustomerStates()
         }}
         project={isEditModalOpen ? selectedProject : null}
-        onSave={handleSaveProject}
+        refetch={refetch}
+        customersRes={customersRes}
+        custPage={custPage}
+        custOptions={custOptions}
+        setCustOptions={setCustOptions}
+        setCustPage={setCustPage}
+        setCustSearch={setCustSearch}
+        custLoading={custLoading}
       />
     </motion.div>
   )

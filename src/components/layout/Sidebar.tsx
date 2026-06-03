@@ -21,7 +21,6 @@ import {
   FileCheck,
   CalendarDays,
   Package2,
-  Wallet,
   ClipboardCheck,
   DollarSign,
   FileBarChart,
@@ -133,15 +132,15 @@ const navItems: NavItem[] = [
     icon: Building2,
     feature: 'company-projects',
   },
-  {
-    title: 'Customer & Finance',
-    titleKey: 'sidebar.customerFinance',
-    href: '/customer-finance',
-    icon: Wallet,
-    feature: 'customer-finance',
-  },
+  // {
+  //   title: 'Customer & Finance',
+  //   titleKey: 'sidebar.customerFinance',
+  //   href: '/customer-finance',
+  //   icon: Wallet,
+  //   feature: 'customer-finance',
+  // },
 
- 
+
   {
     title: 'Material Maintenance',
     titleKey: 'sidebar.manageMaterials',
@@ -365,7 +364,7 @@ export function Sidebar() {
                         ? 'bg-primary text-white shadow-md'
                         : 'text-muted-foreground'
                     )}
-                  > 
+                  >
                     <Settings
                       className={cn(
                         'h-5 w-5 flex-shrink-0',

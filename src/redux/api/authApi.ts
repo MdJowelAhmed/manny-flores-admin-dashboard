@@ -20,7 +20,7 @@ interface LoginCredentials {
 interface ChangePasswordPayload {
     currentPassword: string;
     newPassword: string;
-    confirmPassword: string;
+    confirmNewPassword: string;
 }
 
 interface ChangePasswordResponse {
@@ -30,7 +30,7 @@ interface ChangePasswordResponse {
 
 interface VerifyEmailPayload {
     email: string;
-    oneTimeCode: number ;
+    oneTimeCode: number;
 }
 
 interface VerifyEmailResponse {
@@ -42,7 +42,7 @@ interface VerifyEmailResponse {
 
 interface ResetPasswordPayload {
     newPassword: string;
-    confirmPassword: string;
+    confirmNewPassword: string;
 }
 
 interface ResetPasswordResponse {
@@ -58,7 +58,7 @@ interface GetMyProfileResponse {
         name: string;
         email: string;
         role: string;
-        profileImage?: string;
+        profile?: string;
         status: string;
         isVerified: boolean;
         isPhoneVerified: boolean;
@@ -80,6 +80,32 @@ interface UpdateMyProfileResponse {
 export interface UpdateMyProfilePayload {
     name?: string;
     profileImage?: File | null;
+}
+
+export function buildProfileFormData(
+    data: {
+        name: string;
+        email: string;
+        contact: string;
+        address?: string;
+        city?: string;
+        country?: string;
+    },
+    profileFile?: File | null
+): FormData {
+    const formData = new FormData();
+    formData.append('name', data.name);
+    formData.append('email', data.email);
+    formData.append('contact', data.contact);
+    formData.append('address', data.address ?? '');
+    formData.append('city', data.city ?? '');
+    formData.append('country', data.country ?? '');
+
+    if (profileFile instanceof File) {
+        formData.append('profile', profileFile, profileFile.name);
+    }
+
+    return formData;
 }
 
 const authApi = baseApi.injectEndpoints({
@@ -234,7 +260,14 @@ const authApi = baseApi.injectEndpoints({
             providesTags: ['Auth'],
         }),
 
-        updateMyProfile: builder.mutation<UpdateMyProfileResponse, UpdateMyProfilePayload>({
+        updateMyProfile: builder.mutation<UpdateMyProfileResponse, FormData>({
+            query: (formData) => ({
+                url: '/user/profile',
+                method: 'PATCH',
+                body: formData,
+            }),
+            invalidatesTags: ['Auth'],
+        }), Profile: builder.mutation<UpdateMyProfileResponse, UpdateMyProfilePayload>({
             query: ({ name, profileImage }) => {
                 const formData = new FormData();
 
@@ -247,7 +280,7 @@ const authApi = baseApi.injectEndpoints({
                 }
 
                 return {
-                    url: '/users/profile',
+                    url: '/user/profile',
                     method: 'PATCH',
                     body: formData,
                 };
@@ -272,5 +305,5 @@ export const {
     useResentOtpMutation,
     useGetMyProfileQuery,
     useUpdateMyProfileMutation,
- } =
+} =
     authApi

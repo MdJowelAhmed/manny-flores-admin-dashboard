@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Camera } from 'lucide-react'
@@ -10,69 +11,149 @@ import { Separator } from '@/components/ui/separator'
 import { FormInput } from '@/components/common'
 import { toast } from '@/utils/toast'
 import { motion } from 'framer-motion'
-import { useTranslation } from 'react-i18next'
+import { buildProfileFormData, useGetMyProfileQuery, useUpdateMyProfileMutation } from '@/redux/api/authApi'
+import { getImageUrl } from '@/utils/getImageUrl'
+
+
 
 const profileSchema = z.object({
-  firstName: z.string().min(2, 'First name must be at least 2 characters'),
-  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
-  phone: z.string().min(10, 'Please enter a valid phone number'),
+  contact: z.string().min(10, 'Please enter a valid contact number'),
   address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
-  bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
 })
 
 type ProfileFormData = z.infer<typeof profileSchema>
 
-export default function ProfileSettings() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [avatar, setAvatar] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Admin')
-  const { t } = useTranslation()
+const DEFAULT_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Employee'
 
+// function getProfileImageUrl(profile?: string): string {
+//   if (!profile) return DEFAULT_AVATAR
+//   if (profile.startsWith('http') || profile.startsWith('data:')) return profile
+
+//   const base = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
+//   return `${base}${profile.startsWith('/') ? profile : `/${profile}`}`
+// }
+
+function getInitials(name?: string): string {
+  if (!name?.trim()) return 'U'
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+function profileToFormValues(profile: any): ProfileFormData {
+  return {
+    name: profile.name ?? '',
+    email: profile.email ?? '',
+    contact: profile.contact ?? '',
+    address: profile.address ?? '',
+    city: profile.city ?? '',
+    country: profile.country ?? '',
+  }
+}
+
+function getApiErrorMessage(err: unknown, fallback: string): string {
+  if (
+    typeof err === 'object' &&
+    err !== null &&
+    'data' in err &&
+    typeof (err as { data?: { message?: string } }).data?.message === 'string'
+  ) {
+    return (err as { data: { message: string } }).data.message
+  }
+  return fallback
+}
+
+export default function ProfileSettings() {
+  const { t } = useTranslation()
+  const [avatarPreview, setAvatarPreview] = useState(DEFAULT_AVATAR)
+  console.log(avatarPreview)
+  const profileFileRef = useRef<File | null>(null)
+
+  const { data: profileResponse, isLoading: isProfileLoading } = useGetMyProfileQuery()
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateMyProfileMutation()
+
+  const profile = profileResponse?.data
+console.log(profile)
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      firstName: 'Jowel',
-      lastName: 'Ahmed',
-      email: 'mdjowelahmed924@gmail.com',
-      phone: '+1234567890',
-      address: '123 Main Street',
-      city: 'Dhaka',
-      country: 'Bangladesh',
-      // bio: 'Dashboard administrator with full access to all features.',
+      name: '',
+      email: '',
+      contact: '',
+      address: '',
+      city: '',
+      country: '',
     },
   })
 
+  useEffect(() => {
+    if (!profile) return
+// console.log(profile.profile)
+    reset(profileToFormValues(profile))
+    setAvatarPreview(getImageUrl(profile?.profile ?? ''))
+    profileFileRef.current = null
+  }, [profile, reset])
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        setAvatar(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
+    if (!file) return
+
+    profileFileRef.current = file
+    const reader = new FileReader()
+    reader.onload = () => {
+      setAvatarPreview(reader.result as string)
+    } 
+    reader.readAsDataURL(file)
+  }
+
+  const handleCancel = () => {
+    if (!profile) return
+    reset(profileToFormValues(profile))
+    setAvatarPreview(getImageUrl(profile.profile ?? ''))
+    profileFileRef.current = null
   }
 
   const onSubmit = async (data: ProfileFormData) => {
-    setIsSubmitting(true)
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    
-    console.log('Profile data:', data)
-    
-    toast({
-      title: t('settings.profileUpdated'),
-      description: t('settings.profileUpdatedDesc'),
-    })
-    
-    setIsSubmitting(false)
+    try {
+      const formData = buildProfileFormData(data, profileFileRef.current)
+      const response = await updateProfile(formData).unwrap()
+
+      reset(profileToFormValues(response.data))
+      setAvatarPreview(getImageUrl(response.data.profile ?? ''))
+      profileFileRef.current = null
+
+      toast({
+        title: response.message || t('settings.profileUpdated'),
+        description: t('settings.profileUpdatedDesc'),
+        variant: 'success',
+      })
+    } catch (err) {
+      toast({
+        title: getApiErrorMessage(err, t('settings.profileUpdateFailed')),
+        variant: 'destructive',
+      })
+    }
+  }
+
+  if (isProfileLoading) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        <div className="h-96 rounded-xl bg-muted/40 animate-pulse" />
+      </div>
+    )
   }
 
   return (
@@ -91,12 +172,11 @@ export default function ProfileSettings() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            {/* Avatar Section */}
             <div className="flex items-center gap-6">
               <div className="relative">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={avatar} />
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarImage src={avatarPreview} />
+                  <AvatarFallback>{getInitials(profile?.name)}</AvatarFallback>
                 </Avatar>
                 <label
                   htmlFor="avatar-upload"
@@ -122,52 +202,41 @@ export default function ProfileSettings() {
 
             <Separator />
 
-            {/* Personal Information */}
             <div className="space-y-4">
               <h3 className="font-semibold">{t('settings.personalInformation')}</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormInput
-                  label={t('settings.firstName')}
-                  placeholder={t('settings.firstNamePlaceholder')}
-                  error={errors.firstName?.message}
-                  required
-                  {...register('firstName')}
-                />
-                <FormInput
-                  label={t('settings.lastName')}
-                  placeholder={t('settings.lastNamePlaceholder')}
-                  error={errors.lastName?.message}
-                  required
-                  {...register('lastName')}
-                />
-              </div>
+              <FormInput
+                label={t('settings.name')}
+                placeholder={t('settings.enterName')}
+                error={errors.name?.message}
+                required
+                {...register('name')}
+              />
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormInput
                   label={t('settings.email')}
                   type="email"
-                  placeholder={t('settings.emailPlaceholder')}
+                  placeholder={t('settings.enterEmail')}
                   error={errors.email?.message}
-                  required
+                  disabled
                   {...register('email')}
                 />
                 <FormInput
                   label={t('settings.phone')}
                   placeholder={t('settings.phonePlaceholder')}
-                  error={errors.phone?.message}
+                  error={errors.contact?.message}
                   required
-                  {...register('phone')}
+                  {...register('contact')}
                 />
               </div>
             </div>
 
             <Separator />
 
-            {/* Address Information */}
             <div className="space-y-4">
               <h3 className="font-semibold">{t('settings.addressSection')}</h3>
               <FormInput
                 label={t('settings.streetAddress')}
-                placeholder={t('settings.streetAddressPlaceholder')}
+                placeholder={t('settings.streetAddress')}
                 error={errors.address?.message}
                 {...register('address')}
               />
@@ -189,13 +258,11 @@ export default function ProfileSettings() {
 
             <Separator />
 
-        
-
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" onClick={handleCancel} disabled={isUpdating}>
                 {t('settings.cancel')}
               </Button>
-              <Button type="submit" isLoading={isSubmitting}>
+              <Button type="submit" isLoading={isUpdating} disabled={!profile}>
                 {t('settings.saveChanges')}
               </Button>
             </div>
@@ -205,15 +272,3 @@ export default function ProfileSettings() {
     </motion.div>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
