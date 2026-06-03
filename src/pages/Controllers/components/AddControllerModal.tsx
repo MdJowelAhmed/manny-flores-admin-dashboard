@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ModalWrapper, FormInput, FormSelect } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import { useAppDispatch, useAppSelector } from '@/redux/hooks'
+import { useAppDispatch } from '@/redux/hooks'
 import { addController } from '@/redux/slices/controllerSlice'
 import type { Controller, ControllerRole, Shop } from '@/types'
 import { toast } from '@/utils/toast'
@@ -29,7 +29,7 @@ interface AddControllerModalProps {
 
 export function AddControllerModal({ open, onClose }: AddControllerModalProps) {
   const dispatch = useAppDispatch()
-  const shops = useAppSelector((s) => s.shops.filteredList)
+  const shops: Shop[] = []
 
   const {
     register,

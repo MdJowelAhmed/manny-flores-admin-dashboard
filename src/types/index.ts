@@ -811,3 +811,17 @@ export interface ReviewUI {
   projectId?: string
   projectName?: string
 }
+
+/** Demo / follow-up UI shape (distinct from API `ReviewUI`). */
+export interface Review {
+  id: string
+  caseId?: string
+  customerName: string
+  projectName?: string
+  projectId?: string
+  rating: number
+  feedback: string
+  status: ReviewStatus
+  reviewDate?: string
+  avatarUrl?: string
+}

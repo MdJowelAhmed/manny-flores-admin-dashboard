@@ -20,8 +20,7 @@ import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { STATUS_COLORS } from '@/utils/constants'
 import { useTranslation } from 'react-i18next'
-import { useCompanyProjectsOverviewQuery, useGetCompanyProjectsQuery } from '@/redux/slices/super-admin/company-projectsApi'
-import Spinner from '@/components/common/Spinner'
+import { useCompanyProjectsOverviewQuery } from '@/redux/slices/super-admin/company-projectsApi'
 
 export default function CompanyProjects() {
   const { t } = useTranslation()
@@ -33,7 +32,7 @@ export default function CompanyProjects() {
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
 
   // API CALLS
-  const { data: companyOverviewRes, isLoading: companyOverviewLoading } = useCompanyProjectsOverviewQuery()
+  const { data: companyOverviewRes,  } = useCompanyProjectsOverviewQuery()
 
   // const { data: companyPorjectsApi, isLoading: companyProjectLoading, refetch } = useGetCompanyProjectsQuery({
   //   status: statusFilter,

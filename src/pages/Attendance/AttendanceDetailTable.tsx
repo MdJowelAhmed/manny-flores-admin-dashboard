@@ -1,6 +1,4 @@
 import { motion } from 'framer-motion'
-import { Info, Lock, Pencil, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import type { AttendanceRecord, AttendanceStatus } from './attendanceData'
 import { STATUS_STYLES } from './attendanceData'
@@ -8,19 +6,15 @@ import { cn } from '@/utils/cn'
 
 interface AttendanceDetailTableProps {
   records: AttendanceRecord[]
-  onView: (r: AttendanceRecord) => void
-  onEdit: (r: AttendanceRecord, e: React.MouseEvent) => void
+  onView?: (r: AttendanceRecord) => void
+  onEdit?: (r: AttendanceRecord, e: React.MouseEvent) => void
   onLock?: (r: AttendanceRecord) => void
-  onDelete: (r: AttendanceRecord) => void
+  onDelete?: (r: AttendanceRecord) => void
   onStatusChange?: (r: AttendanceRecord, isActive: boolean) => void
 }
 
 export function AttendanceDetailTable({
   records,
-  onView,
-  onEdit,
-  onLock,
-  onDelete,
   onStatusChange,
 }: AttendanceDetailTableProps) {
   return (

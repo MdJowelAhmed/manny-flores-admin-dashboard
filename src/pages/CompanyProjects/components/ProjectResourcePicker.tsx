@@ -139,7 +139,7 @@ function buildLineItems(
   return items
 }
 
-type SectionAddButton = (onClick: () => void, ariaLabel: string) => React.ReactNode
+// type SectionAddButton = (onClick: () => void, ariaLabel: string) => React.ReactNode
 
 function sectionAddButton(onClick: () => void, ariaLabel: string) {
   return (

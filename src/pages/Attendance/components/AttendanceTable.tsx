@@ -18,7 +18,6 @@ interface AttendanceTableProps {
 
 export function AttendanceTable({
   records,
-  onView,
   onLock,
 }: AttendanceTableProps) {
   const { t } = useTranslation(); 

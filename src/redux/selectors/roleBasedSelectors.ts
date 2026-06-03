@@ -26,12 +26,11 @@ export const selectUserRole = (state: RootState): UserRole | null => {
  */
 export const selectRoleBasedCars = (state: RootState): Car[] => {
   const { user } = state.auth
-  const { filteredList } = state.cars
 
   if (!user) return []
 
   if (user.role === UserRole.SUPER_ADMIN) {
-    return filteredList
+    return []
   }
 
   return []
@@ -40,12 +39,13 @@ export const selectRoleBasedCars = (state: RootState): Car[] => {
 /**
  * Selector to get paginated cars based on role
  */
+const DEFAULT_CARS_PAGE = 1
+const DEFAULT_CARS_LIMIT = 10
+
 export const selectPaginatedRoleBasedCars = (state: RootState): Car[] => {
   const roleBasedCars = selectRoleBasedCars(state)
-  const { pagination } = state.cars
-
-  const startIndex = (pagination.page - 1) * pagination.limit
-  return roleBasedCars.slice(startIndex, startIndex + pagination.limit)
+  const startIndex = (DEFAULT_CARS_PAGE - 1) * DEFAULT_CARS_LIMIT
+  return roleBasedCars.slice(startIndex, startIndex + DEFAULT_CARS_LIMIT)
 }
 
 /**
@@ -60,8 +60,7 @@ export const selectRoleBasedCarsCount = (state: RootState): number => {
  */
 export const selectRoleBasedTotalPages = (state: RootState): number => {
   const count = selectRoleBasedCarsCount(state)
-  const { limit } = state.cars.pagination
-  return Math.ceil(count / limit)
+  return Math.ceil(count / DEFAULT_CARS_LIMIT) || 1
 }
 
 /**

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { ClipboardList, Plus } from 'lucide-react'
+import {  Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MaterialsTable } from './components/MaterialsTable'
@@ -290,7 +290,7 @@ export default function ManageMaterials() {
 
         <TabsContent value="materials" className="mt-0 space-y-4">
           <div className="flex flex-wrap justify-end gap-2">
-            <Button
+            {/* <Button
               type="button"
               variant="outline"
               onClick={() => setIsMaterialOrderModalOpen(true)}
@@ -298,7 +298,7 @@ export default function ManageMaterials() {
             >
               <ClipboardList className="h-4 w-4 mr-2" />
               {t('manageMaterials.materialsOrderButton')}
-            </Button>
+            </Button> */}
             <Button
               onClick={handleAdd}
               className="bg-[#00AB41] hover:bg-[#009638] text-white shrink-0 font-semibold shadow-sm"
