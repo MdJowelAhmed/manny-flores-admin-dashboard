@@ -21,7 +21,6 @@ import {
 import { EstimateItemModal } from './components/EstimateItemModal'
 import { AddEstimateModal } from './components/AddEstimateModal'
 import { getProjectStatusClasses, type EstimateRecord } from './estimateData'
-import { runEstimateSignedWorkflow } from './estimateWorkflow'
 import { formatCurrency } from '@/utils/formatters'
 
 export default function EstimatePage() {
@@ -129,29 +128,6 @@ export default function EstimatePage() {
     setEditEstimate(null)
   }
 
-  const handleSignEstimate = (estimate: EstimateRecord, signatureDataUrl: string) => {
-    const { invoice } = runEstimateSignedWorkflow(estimate)
-    setItems((prev) =>
-      prev.map((row) =>
-        row.id === estimate.id
-          ? {
-              ...row,
-              status: 'signed',
-              signedAt: new Date().toISOString(),
-              signatureDataUrl,
-              invoiceRef: invoice.invoiceRef,
-            }
-          : row
-      )
-    )
-    toast({
-      title: t('estimate.signed.successTitle'),
-      description: t('estimate.signed.successDescription', { ref: invoice.invoiceRef }),
-      variant: 'success',
-    })
-    closeModal()
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
@@ -181,8 +157,8 @@ export default function EstimatePage() {
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.location')}</th>
                 
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.totalCost')}</th>
-                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.startDate')}</th>
-                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.endDate')}</th>
+                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.totalDays')}</th>
+                <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.created')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.status')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800 text-right w-[140px]">
                   {t('estimate.table.action')}
@@ -197,16 +173,21 @@ export default function EstimatePage() {
                   key={row.id}
                   className="border-t border-gray-200 bg-white hover:bg-gray-50/60 transition-colors"
                 >
-                  <td className="px-5 py-4 text-gray-900 align-middle">{row.title.slice(0, 30)}...</td>
-                  
+                  <td className="px-5 py-4 text-gray-900 align-middle max-w-[200px] truncate" title={row.title}>
+                    {row.title}
+                  </td>
                   <td className="px-5 py-4 text-gray-700 align-middle">{row.customerName}</td>
-                  <td className="px-5 py-4 text-gray-700 align-middle">{row.location}</td>
-                  <td className="px-5 py-4 text-gray-700 align-middle">{formatCurrency(row.grandTotal ?? 0)}</td>
-                  <td className="px-5 py-4 text-gray-700 align-middle whitespace-nowrap">
-                    {row.deadlineFrom}
+                  <td className="px-5 py-4 text-gray-700 align-middle max-w-[180px] truncate" title={row.location}>
+                    {row.location}
+                  </td>
+                  <td className="px-5 py-4 text-gray-700 align-middle tabular-nums">
+                    {formatCurrency(row.grandTotal ?? 0)}
+                  </td>
+                  <td className="px-5 py-4 text-gray-700 align-middle tabular-nums whitespace-nowrap">
+                    {row.totalDays != null ? row.totalDays : '—'}
                   </td>
                   <td className="px-5 py-4 text-gray-700 align-middle whitespace-nowrap">
-                    {row.deadlineTo}
+                    {row.createdAtDisplay ?? '—'}
                   </td>
           
                   <td className="px-5 py-4 align-middle">
@@ -273,7 +254,7 @@ export default function EstimatePage() {
               )})}
               {!isLoading && paginatedItems.length === 0 && (
                 <tr>
-                  <td className="px-5 py-8 text-center text-gray-500" colSpan={7}>
+                  <td className="px-5 py-8 text-center text-gray-500" colSpan={8}>
                     {t('common.noDataFound')}
                   </td>
                 </tr>
@@ -294,12 +275,7 @@ export default function EstimatePage() {
         />
       </div>
 
-      <EstimateItemModal
-        open={modalOpen}
-        onClose={closeModal}
-        item={selectedItem}
-        onSign={handleSignEstimate}
-      />
+      <EstimateItemModal open={modalOpen} onClose={closeModal} item={selectedItem} />
 
       <AddEstimateModal
         open={addOpen}

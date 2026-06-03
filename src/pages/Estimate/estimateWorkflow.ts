@@ -1,4 +1,4 @@
-import { formatDateISO } from '@/utils/formatters'
+import { formatDateISO, formatDateDayMonth } from '@/utils/formatters'
 import type { InvoiceLineItem, InvoiceRecord } from '@/pages/Invoice/invoiceData'
 import type { ScheduledProject } from '@/pages/ProjectScheduling/projectSchedulingData'
 import type { EstimateRecord } from './estimateData'
@@ -11,17 +11,23 @@ function makeId(prefix: string) {
     : `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
-function parseDisplayDate(value: string): Date {
-  const trimmed = value.trim()
-  if (!trimmed) return new Date()
-  const parsed = new Date(trimmed)
+function parseIsoDate(iso?: string): Date {
+  if (!iso?.trim()) return new Date()
+  const parsed = new Date(iso)
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed
 }
 
+function addDays(iso: string, days: number): string {
+  const d = parseIsoDate(iso)
+  d.setDate(d.getDate() + (Number(days) || 0))
+  return d.toISOString()
+}
+
 export function createInvoiceFromEstimate(estimate: EstimateRecord): InvoiceRecord {
-  const issued = parseDisplayDate(estimate.deadlineFrom)
-  const due = parseDisplayDate(estimate.deadlineTo)
-  const year = issued.getFullYear()
+  const issuedIso = estimate.createdAt ?? new Date().toISOString()
+  const days = estimate.totalDays ?? 0
+  const dueIso = days > 0 ? addDays(issuedIso, days) : issuedIso
+  const year = parseIsoDate(issuedIso).getFullYear()
   const short = String(Math.floor(100 + Math.random() * 900))
 
   const lineItems: InvoiceLineItem[] = estimate.lineItems.map((row) => ({
@@ -37,35 +43,38 @@ export function createInvoiceFromEstimate(estimate: EstimateRecord): InvoiceReco
     customerName: estimate.customerName,
     customerAddress: estimate.customerAddress || estimate.location,
     invoiceRef: `#INV-${year}-${short}`,
-    issuedDate: formatDateISO(issued),
-    dueDate: formatDateISO(due > issued ? due : issued),
+    issuedDate: formatDateISO(parseIsoDate(issuedIso)),
+    dueDate: formatDateISO(parseIsoDate(dueIso)),
     taxPercent: estimate.taxPercent,
     lineItems,
   }
 }
 
 export function createScheduleFromEstimate(estimate: EstimateRecord): ScheduledProject {
-  const scheduledDate = estimate.deadlineFrom.trim() || estimate.deadlineTo.trim() || 'TBD'
+  const startIso = estimate.createdAt ?? new Date().toISOString()
+  const days = estimate.totalDays ?? 0
+  const endIso = days > 0 ? addDays(startIso, days) : startIso
+  const scheduledDisplay = formatDateDayMonth(parseIsoDate(startIso))
 
   return {
     id: makeId('sch'),
     estimateId: estimate.id,
     status: 'PENDING',
     projectStatus: estimate.projectStatus,
-    scheduledDate,
-    estimateStartDate: estimate.deadlineFrom,
-    estimateEndDate: estimate.deadlineTo,
+    scheduledDate: scheduledDisplay,
+    estimateStartDate: startIso,
+    estimateEndDate: endIso,
     projectTitle: estimate.title,
-    category: 'Estimate',
+    category: estimate.description?.trim() || '—',
     project: estimate.title,
-    uploadDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    uploadedBy: 'System',
+    uploadDate: scheduledDisplay,
+    uploadedBy: estimate.customerName,
     team: '',
     customer: estimate.customerName,
     email: estimate.customerEmail || '',
     company: estimate.customerName,
     serviceLocation: estimate.location,
-    eta: '09:00 AM',
+    eta: '',
     assignedAvatarUrls: [],
     assignedEmployeeIds: [],
     assignedEmployees: [],

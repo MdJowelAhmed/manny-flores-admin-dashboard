@@ -189,7 +189,7 @@ export function MaterialOrderModal({
                     <SelectContent>
                       {materials.map((m) => (
                         <SelectItem key={m.id} value={m.id}>
-                          {`${m.materialName} (${getAvailableStock(m)} ${m.unit})`}
+                          {`${m.materialName} (${t('manageMaterials.totalStock')}: ${getAvailableStock(m)})`}
                         </SelectItem>
                       ))}
                     </SelectContent>
