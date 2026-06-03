@@ -72,16 +72,7 @@ export default function InvoicePage() {
   return (
     <div className="space-y-6">
       <div className={cn('bg-white shadow-sm', 'text-gray-900')}>
-        <div className="flex items-center justify-between gap-3 px-1 py-2">
-          <h1 className="text-xl font-semibold text-gray-900">{t('invoice.pageTitle')}</h1>
-          <Button
-            type="button"
-            className="bg-primary hover:bg-primary/90"
-            onClick={() => setCreateOpen(true)}
-          >
-            {t('invoice.create.addNew')}
-          </Button>
-        </div>
+   
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 -mx-1">
           <table className="w-full min-w-[720px] text-sm">

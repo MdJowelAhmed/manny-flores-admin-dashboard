@@ -26,7 +26,7 @@ function DetailRow({ label, value, highlight }: { label: string; value: string |
 function ResourceGroup({
   title,
   items,
-
+  
 }: {
   title: string
   items: ProjectLineItem[]
