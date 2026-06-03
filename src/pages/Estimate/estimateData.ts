@@ -8,6 +8,7 @@ export type EstimateProjectStatus =
   | 'PENDING'
   | 'IN_PROGRESS'
   | 'COMPLETED'
+  | 'COMPLETED_REQUESTED'
   | 'SCHEDULED'
   | 'CANCELLED'
 
@@ -15,6 +16,7 @@ export const ESTIMATE_PROJECT_STATUSES: EstimateProjectStatus[] = [
   'PENDING',
   'IN_PROGRESS',
   'COMPLETED',
+  'COMPLETED_REQUESTED',
   'SCHEDULED',
   'CANCELLED',
 ]
@@ -38,6 +40,8 @@ export function getProjectStatusClasses(status: EstimateProjectStatus): {
       return { text: 'text-blue-600', dot: 'bg-blue-500' }
     case 'COMPLETED':
       return { text: 'text-emerald-600', dot: 'bg-emerald-500' }
+    case 'COMPLETED_REQUESTED':
+      return { text: 'text-amber-700', dot: 'bg-amber-500' }
     case 'SCHEDULED':
       return { text: 'text-violet-600', dot: 'bg-violet-500' }
     case 'CANCELLED':

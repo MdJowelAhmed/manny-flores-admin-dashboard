@@ -69,6 +69,8 @@ export interface ProjectApiDoc {
   signature?: string | null
   projectStatus: string
   assignEmployee?: string[]
+  teamId?: string | null
+  assignedEmployees?: ProjectEmployeeApiDoc[]
   projectStartDate: string
   projectEndDate: string
   createdAt: string
@@ -104,7 +106,7 @@ export interface AssignProjectEmployeePayload {
 }
 
 export interface CompleteProjectPayload {
-  projectStatus: 'COMPLETED'
+  projectStatus: 'COMPLETED' | 'COMPLETED_REQUESTED'
 }
 
 export interface EmployeeUserApiDoc {
@@ -174,9 +176,13 @@ function shortEstimateId(id: string): string {
  *  payload, so we can resolve `assignEmployee` IDs into full employee
  *  records without making a second request. */
 function buildEmployeeIndex(
-  teams?: ProjectTeamApiDoc[]
+  teams?: ProjectTeamApiDoc[],
+  assignedEmployees?: ProjectEmployeeApiDoc[]
 ): Map<string, ProjectEmployeeApiDoc> {
   const index = new Map<string, ProjectEmployeeApiDoc>()
+  assignedEmployees?.forEach((emp) => {
+    if (emp?.id && !index.has(emp.id)) index.set(emp.id, emp)
+  })
   if (!Array.isArray(teams)) return index
   teams.forEach((team) =>
     team?.employees?.forEach((emp) => {
@@ -225,26 +231,30 @@ export function mapProjectFromApi(doc: ProjectApiDoc): ScheduledProject {
       ? [doc.team]
       : []
   const assignedIds = doc.assignEmployee?.filter(Boolean) ?? []
+  const rootAssigned = doc.assignedEmployees ?? []
 
-  const employeeIndex = buildEmployeeIndex(teams)
+  const employeeIndex = buildEmployeeIndex(teams, rootAssigned)
   const fallbackEmployees = doc.employees ?? []
 
-  const assignedEmployees: AssignedEmployee[] = assignedIds
+  let assignedEmployees: AssignedEmployee[] = assignedIds
     .map((id) => {
-      const fromTeams = employeeIndex.get(id)
-      if (fromTeams) return mapEmployee(fromTeams)
+      const indexed = employeeIndex.get(id)
+      if (indexed) return mapEmployee(indexed)
       const fromLegacy = fallbackEmployees.find((e) => e?.id === id)
       return fromLegacy ? mapEmployee(fromLegacy) : null
     })
     .filter((e): e is AssignedEmployee => !!e)
 
-  // If the API didn't ship `assignEmployee` IDs (older shape), fall back
-  // to any inline `employees` array on the schedule itself.
+  if (assignedEmployees.length === 0 && rootAssigned.length > 0) {
+    assignedEmployees = rootAssigned
+      .map((emp) => mapEmployee(emp))
+      .filter((e): e is AssignedEmployee => !!e)
+  }
+
   if (assignedEmployees.length === 0 && fallbackEmployees.length > 0) {
-    fallbackEmployees.forEach((emp) => {
-      const mapped = mapEmployee(emp)
-      if (mapped) assignedEmployees.push(mapped)
-    })
+    assignedEmployees = fallbackEmployees
+      .map((emp) => mapEmployee(emp))
+      .filter((e): e is AssignedEmployee => !!e)
   }
 
   const startIso = doc.projectStartDate || doc.createdAt
@@ -253,7 +263,11 @@ export function mapProjectFromApi(doc: ProjectApiDoc): ScheduledProject {
     : '—'
   const projectName = estimate?.projectName?.trim() || fallbackTitle
 
-  const assignedTeam = resolveAssignedTeam(teams, assignedIds)
+  const teamById = doc.teamId
+    ? teams.find((team) => team.id === doc.teamId)
+    : undefined
+  const assignedTeam =
+    teamById ?? resolveAssignedTeam(teams, assignedIds) ?? teams[0] ?? null
   const teamLabel = assignedTeam?.teamName?.trim()
     ? assignedTeam.teamName.trim()
     : assignedEmployees.length > 0
@@ -328,12 +342,12 @@ const projectsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Projects'],
     }),
-    completeProject: builder.mutation<
+    completeRequest: builder.mutation<
       { success?: boolean; message?: string },
       { projectId: string; body: CompleteProjectPayload }
     >({
       query: ({ projectId, body }) => ({
-        url: `/project/complete/${projectId}`,
+        url: `/estimate-schedules/mark-as-completed/${projectId}`,
         method: 'PATCH',
         body,
       }),
@@ -357,6 +371,6 @@ export const {
   useGetScheduledProjectsQuery,
   useAssignProjectEmployeeMutation,
   useReScheduleProjectMutation,
-  useCompleteProjectMutation,
+  useCompleteRequestMutation,
   useGetAllEmployeesQuery,
 } = projectsApi

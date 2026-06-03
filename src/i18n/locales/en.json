@@ -620,6 +620,9 @@
     "markComplete": "Mark complete",
     "projectCompleted": "Project marked as completed.",
     "completeProjectFailed": "Could not complete the project. Please try again.",
+    "requestComplete": "Request completion",
+    "completeRequestSent": "Completion request sent to the user.",
+    "completeRequestFailed": "Could not send the completion request. Please try again.",
     "status": "Status",
     "loadingProjects": "Loading projects...",
     "customerSignature": "Customer signature",
@@ -1086,6 +1089,7 @@
       "PENDING": "Pending",
       "IN_PROGRESS": "In Progress",
       "COMPLETED": "Completed",
+      "COMPLETED_REQUESTED": "Completion requested",
       "SCHEDULED": "Scheduled",
       "CANCELLED": "Cancelled"
     },

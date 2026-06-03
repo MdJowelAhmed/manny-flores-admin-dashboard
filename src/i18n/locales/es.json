@@ -620,6 +620,9 @@
     "markComplete": "Marcar completado",
     "projectCompleted": "Proyecto marcado como completado.",
     "completeProjectFailed": "No se pudo completar el proyecto. Inténtelo de nuevo.",
+    "requestComplete": "Solicitar finalización",
+    "completeRequestSent": "Solicitud de finalización enviada al usuario.",
+    "completeRequestFailed": "No se pudo enviar la solicitud. Inténtelo de nuevo.",
     "status": "Estado",
     "loadingProjects": "Cargando proyectos...",
     "customerSignature": "Firma del cliente",
@@ -1005,6 +1008,7 @@
       "PENDING": "Pendiente",
       "IN_PROGRESS": "En progreso",
       "COMPLETED": "Completado",
+      "COMPLETED_REQUESTED": "Finalización solicitada",
       "SCHEDULED": "Programado",
       "CANCELLED": "Cancelado"
     },

@@ -28,7 +28,7 @@ import { toast } from '@/utils/toast'
 import {
   mapProjectFromApi,
   useAssignProjectEmployeeMutation,
-  useCompleteProjectMutation,
+  useCompleteRequestMutation,
   useGetAllEmployeesQuery,
   useGetScheduledProjectsQuery,
   useReScheduleProjectMutation,
@@ -54,7 +54,9 @@ function formatIsoDate(iso?: string): string {
 function isProjectCompleted(schedule: ScheduledProject): boolean {
   return (
     schedule.status === 'COMPLETED' ||
-    schedule.projectStatus === 'COMPLETED'
+    schedule.status === 'COMPLETED_REQUESTED' ||
+    schedule.projectStatus === 'COMPLETED' ||
+    schedule.projectStatus === 'COMPLETED_REQUESTED'
   )
 }
 
@@ -73,7 +75,7 @@ export default function ProjectScheduling() {
 
   const [reScheduleProject, { isLoading: isRescheduling }] = useReScheduleProjectMutation()
   const [assignProjectEmployee, { isLoading: isAssigning }] = useAssignProjectEmployeeMutation()
-  const [completeProject, { isLoading: isCompleting }] = useCompleteProjectMutation()
+  const [completeRequest, { isLoading: isCompleting }] = useCompleteRequestMutation()
 
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduledProject | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
@@ -179,22 +181,28 @@ export default function ProjectScheduling() {
     }
   }
 
-  const handleCompleteProject = async (schedule: ScheduledProject) => {
+  const handleCompleteRequest = async (schedule: ScheduledProject) => {
     try {
-      await completeProject({
+      await completeRequest({
         projectId: schedule.id,
-        body: { projectStatus: 'COMPLETED' },
+        body: { projectStatus: 'COMPLETED_REQUESTED' },
       }).unwrap()
       toast({
         title: t('common.success'),
-        description: t('projectScheduling.projectCompleted'),
+        description: t(
+          'projectScheduling.completeRequestSent',
+          'Completion request sent to the user.'
+        ),
         variant: 'success',
       })
       refetch()
     } catch {
       toast({
         title: t('common.error'),
-        description: t('projectScheduling.completeProjectFailed'),
+        description: t(
+          'projectScheduling.completeRequestFailed',
+          'Could not send the completion request. Please try again.'
+        ),
         variant: 'destructive',
       })
     }
@@ -450,14 +458,16 @@ export default function ProjectScheduling() {
                                 >
                                   {t('projectScheduling.reschedule')}
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  className="h-9 rounded-lg bg-primary hover:bg-primary/90 text-white"
-                                  disabled={isCompleting}
-                                  onClick={() => handleCompleteProject(schedule)}
-                                >
-                                  {t('projectScheduling.markComplete')}
-                                </Button>
+                                {schedule.projectStatus === 'SCHEDULED' && (
+                                  <Button
+                                    size="sm"
+                                    className="h-9 rounded-lg bg-primary hover:bg-primary/90 text-white"
+                                    disabled={isCompleting}
+                                    onClick={() => handleCompleteRequest(schedule)}
+                                  >
+                                    {t('projectScheduling.requestComplete', 'Request completion')}
+                                  </Button>
+                                )}
                               </>
                             )}
                           </div>
