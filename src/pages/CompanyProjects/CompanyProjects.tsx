@@ -19,7 +19,34 @@ import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { STATUS_COLORS } from '@/utils/constants'
 import { useTranslation } from 'react-i18next'
-import { useCompanyProjectsOverviewQuery } from '@/redux/slices/super-admin/company-projectsApi'
+import { useCompanyProjectsOverviewQuery, useGetCompanyProjectsQuery } from '@/redux/slices/super-admin/company-projectsApi'
+import { useGetAllCustomersQuery } from '@/redux/slices/super-admin/payrollApi'
+import Spinner from '@/components/common/Spinner'
+import { differenceInWeeks, parseISO } from 'date-fns'
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+export const getProjectDuration = (start?: string, end?: string) => {
+  if (!start || !end) return 'N/A'
+  try {
+    const startDate = parseISO(start)
+    const endDate = parseISO(end)
+    const weeks = differenceInWeeks(endDate, startDate)
+    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`
+  } catch {
+    return 'N/A'
+  }
+}
+
+export const mapPaymentTypeToStatus = (paymentType?: string): string => {
+  if (!paymentType) return 'Active'
+  switch (paymentType.toUpperCase()) {
+    case 'ACTIVE': return 'Active'
+    case 'COMPLETED': return 'Completed'
+    case 'PENDING': return 'Pending'
+    case 'CANCELLED': return 'Cancelled'
+    default: return 'Active'
+  }
+}
 
 export default function CompanyProjects() {
   const { t } = useTranslation()
@@ -32,7 +59,7 @@ export default function CompanyProjects() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   // API CALLS
-  const { data: companyOverviewRes,  } = useCompanyProjectsOverviewQuery()
+  const { data: companyOverviewRes, isLoading: companyOverviewLoading } = useCompanyProjectsOverviewQuery()
 
   const { data: companyPorjectsApi, isLoading: companyProjectLoading, refetch } = useGetCompanyProjectsQuery({
     status: statusFilter === 'all' ? '' : statusFilter.toUpperCase(),
