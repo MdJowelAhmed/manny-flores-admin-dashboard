@@ -7,7 +7,6 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { loginStart, loginFailure } from "@/redux/slices/authSlice";
 import { useLoginMutation } from "@/redux/api/authApi";
@@ -177,7 +176,7 @@ export default function Login() {
       </form>
 
 
- 
+
     </div>
   );
 }

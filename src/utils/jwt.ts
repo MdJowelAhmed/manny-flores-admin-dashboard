@@ -18,6 +18,7 @@ export interface AuthUserFromToken {
   lastName: string
   role: UserRoleValue
   avatar?: string
+  businessId?: string
 }
 
 function mapApiRoleToUserRole(apiRole?: string): UserRoleValue {

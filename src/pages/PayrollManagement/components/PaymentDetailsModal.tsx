@@ -38,8 +38,7 @@ export function PaymentDetailsModal({
       className="max-w-lg bg-white rounded-xl"
     >
       <div className="space-y-1">
-        <DetailRow label="Employee ID" value={record.employee?.id || 'N/A'} />
-        <DetailRow label="Employee Name" value={record.employee?.name || 'N/A'} />
+        <DetailRow label="Employee ID" value={record.employee.id} />
         <DetailRow label="Project ID" value={record.projectId || 'N/A'} />
         <DetailRow label="Pay Type" value={record.payType} />
         <DetailRow label="Status" value={record.paymentTypeStatus} />

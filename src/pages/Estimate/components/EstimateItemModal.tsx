@@ -5,17 +5,8 @@ interface EstimateItemModalProps {
   open: boolean
   onClose: () => void
   item: EstimateRecord | null
-  onSign?: (estimate: EstimateRecord, signatureDataUrl: string) => void
 }
 
-export function EstimateItemModal({ open, onClose, item, onSign }: EstimateItemModalProps) {
-  return (
-    <EstimatePreviewModal
-      open={open}
-      onClose={onClose}
-      estimate={item}
-      onSign={item?.status === 'pending' ? onSign : undefined}
-      readOnly={item?.status !== 'pending'}
-    />
-  )
+export function EstimateItemModal({ open, onClose, item }: EstimateItemModalProps) {
+  return <EstimatePreviewModal open={open} onClose={onClose} estimate={item} />
 }

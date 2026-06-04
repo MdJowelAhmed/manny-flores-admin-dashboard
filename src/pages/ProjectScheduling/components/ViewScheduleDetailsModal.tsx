@@ -47,6 +47,11 @@ export function ViewScheduleDetailsModal({
   if (!schedule) return null
 
   const statusStyle = getProjectStatusClasses(schedule.projectStatus)
+  const hasCustomerInfo = !!(
+    schedule.customer ||
+    schedule.email ||
+    schedule.serviceLocation
+  )
 
   return (
     <ModalWrapper
@@ -80,20 +85,26 @@ export function ViewScheduleDetailsModal({
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              {t('projectScheduling.customerInformation')}
-            </p>
-            <p className="text-lg font-bold">{schedule.customer}</p>
-            {schedule.email && (
-              <p className="text-sm text-gray-500">{schedule.email}</p>
+            {hasCustomerInfo && (
+              <>
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  {t('projectScheduling.customerInformation')}
+                </p>
+                {schedule.customer && (
+                  <p className="text-lg font-bold">{schedule.customer}</p>
+                )}
+                {schedule.email && (
+                  <p className="text-sm text-gray-500">{schedule.email}</p>
+                )}
+                {schedule.serviceLocation && (
+                  <p className="mt-1 text-sm text-gray-500 max-w-xs">
+                    {schedule.serviceLocation}
+                  </p>
+                )}
+              </>
             )}
-            {schedule.serviceLocation && (
-              <p className="mt-1 text-sm text-gray-500 max-w-xs">
-                {schedule.serviceLocation}
-              </p>
-            )}
-            <p className="mt-3 text-sm text-gray-600">
-              <span className="font-medium">{schedule.projectTitle}</span>
+            <p className={cn('text-sm text-gray-600', hasCustomerInfo && 'mt-3')}>
+              <span className="font-medium">{schedule.projectTitle || '—'}</span>
             </p>
             <p className="text-xs text-gray-500">
               {formatIsoDate(schedule.estimateStartDate)} —{' '}
@@ -114,7 +125,7 @@ export function ViewScheduleDetailsModal({
                 {t('projectScheduling.projectName')}
               </p>
               <p className="mt-1 font-medium text-gray-900">
-                {schedule.projectTitle}
+                {schedule.projectTitle || '—'}
               </p>
             </div>
             <div className="sm:text-right">
@@ -147,14 +158,16 @@ export function ViewScheduleDetailsModal({
                 {formatIsoDate(schedule.estimateEndDate)}
               </p>
             </div>
-            <div className="sm:col-span-2">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">
-                {t('projectScheduling.serviceLocation')}
-              </p>
-              <p className="mt-1 font-medium text-gray-900">
-                {schedule.serviceLocation || '—'}
-              </p>
-            </div>
+            {schedule.serviceLocation && (
+              <div className="sm:col-span-2">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  {t('projectScheduling.serviceLocation')}
+                </p>
+                <p className="mt-1 font-medium text-gray-900">
+                  {schedule.serviceLocation}
+                </p>
+              </div>
+            )}
             {schedule.description?.trim() && (
               <div className="sm:col-span-2">
                 <p className="text-xs text-gray-500 uppercase tracking-wide">

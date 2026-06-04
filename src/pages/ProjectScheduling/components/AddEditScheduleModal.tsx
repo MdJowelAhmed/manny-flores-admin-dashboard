@@ -10,9 +10,8 @@ import { parseFlexibleDate } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 
 export interface RescheduleFormValues {
+  projectStartDate: string
   note: string
-  estimateStartDate: string
-  estimateEndDate: string
 }
 
 interface AddEditScheduleModalProps {
@@ -24,9 +23,7 @@ interface AddEditScheduleModalProps {
 }
 
 function toIsoDate(date: Date): string {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  return d.toISOString()
+  return new Date(date).toISOString()
 }
 
 export function AddEditScheduleModal({
@@ -40,13 +37,11 @@ export function AddEditScheduleModal({
 
   const [note, setNote] = useState('')
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
 
   useEffect(() => {
     if (!schedule) {
       setNote('')
       setStartDate(undefined)
-      setEndDate(undefined)
       return
     }
     setNote('')
@@ -55,17 +50,12 @@ export function AddEditScheduleModal({
         ? new Date(schedule.estimateStartDate)
         : parseFlexibleDate(schedule.scheduledDate) ?? undefined
     )
-    setEndDate(
-      schedule.estimateEndDate
-        ? new Date(schedule.estimateEndDate)
-        : undefined
-    )
   }, [schedule, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!schedule?.estimateId) return
-    if (!startDate || !endDate) {
+    if (!startDate) {
       toast({
         title: t('common.error'),
         description: t('projectScheduling.rescheduleDatesRequired'),
@@ -73,20 +63,11 @@ export function AddEditScheduleModal({
       })
       return
     }
-    if (endDate < startDate) {
-      toast({
-        title: t('common.error'),
-        description: t('projectScheduling.rescheduleEndBeforeStart'),
-        variant: 'destructive',
-      })
-      return
-    }
 
     try {
       await onReschedule(schedule.estimateId, {
+        projectStartDate: toIsoDate(startDate),
         note: note.trim(),
-        estimateStartDate: toIsoDate(startDate),
-        estimateEndDate: toIsoDate(endDate),
       })
       toast({
         title: t('common.success'),
@@ -117,20 +98,12 @@ export function AddEditScheduleModal({
         )}
 
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DatePicker
-              label={t('projectScheduling.startDate')}
-              value={startDate}
-              onChange={setStartDate}
-              className="[&_button]:rounded-lg [&_button]:bg-muted/50 [&_button]:border-gray-200/80 [&_button]:h-11 [&_button]:font-normal"
-            />
-            <DatePicker
-              label={t('projectScheduling.endDate')}
-              value={endDate}
-              onChange={setEndDate}
-              className="[&_button]:rounded-lg [&_button]:bg-muted/50 [&_button]:border-gray-200/80 [&_button]:h-11 [&_button]:font-normal"
-            />
-          </div>
+          <DatePicker
+            label={t('projectScheduling.startDate')}
+            value={startDate}
+            onChange={setStartDate}
+            className="[&_button]:rounded-lg [&_button]:bg-muted/50 [&_button]:border-gray-200/80 [&_button]:h-11 [&_button]:font-normal"
+          />
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">

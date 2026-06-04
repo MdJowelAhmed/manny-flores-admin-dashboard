@@ -5,7 +5,6 @@ import { Pagination } from '@/components/common/Pagination'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'
 import { formatCurrency, formatDate } from '@/utils/formatters'
-import { toast } from '@/utils/toast'
 import { getProjectStatusClasses } from '@/pages/Estimate/estimateData'
 import { useGetInvoicesQuery, mapInvoiceFromApi } from '@/redux/api/invoiceApi'
 import { consumePendingInvoices } from '@/pages/Estimate/estimateBridge'
@@ -22,12 +21,6 @@ export default function InvoicePage() {
   const [detailsInvoice, setDetailsInvoice] = useState<InvoiceRecord | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [localExtras, setLocalExtras] = useState<InvoiceRecord[]>(() => consumePendingInvoices())
-  const [signatureOverrides, setSignatureOverrides] = useState<
-    Record<
-      string,
-      { customerSignature: string; providerSignature: string; signedAt: string }
-    >
-  >({})
 
   const { data: invoiceData, isLoading, isFetching } = useGetInvoicesQuery({
     page: currentPage,
@@ -42,19 +35,8 @@ export default function InvoicePage() {
   const invoices = useMemo(() => {
     const apiIds = new Set(apiInvoices.map((inv) => inv.id))
     const extras = localExtras.filter((inv) => !apiIds.has(inv.id))
-    const merged = [...extras, ...apiInvoices]
-    return merged.map((inv) => {
-      const override = signatureOverrides[inv.id]
-      if (!override) return inv
-      return {
-        ...inv,
-        customerSignature: override.customerSignature,
-        providerSignature: override.providerSignature,
-        signedAt: override.signedAt,
-        isProvideSignature: true,
-      }
-    })
-  }, [apiInvoices, localExtras, signatureOverrides])
+    return [...extras, ...apiInvoices]
+  }, [apiInvoices, localExtras])
 
   const totalItems = invoiceData?.pagination?.total ?? invoices.length
   const totalPages = Math.max(
@@ -87,50 +69,10 @@ export default function InvoicePage() {
 
   const pageInvoices = invoices
 
-  const handleSignInvoice = (
-    invoice: InvoiceRecord,
-    signatures: { customerSignature: string; providerSignature: string }
-  ) => {
-    const signedAt = new Date().toISOString()
-    setSignatureOverrides((prev) => ({
-      ...prev,
-      [invoice.id]: {
-        customerSignature: signatures.customerSignature,
-        providerSignature: signatures.providerSignature,
-        signedAt,
-      },
-    }))
-    setDetailsInvoice((current) =>
-      current && current.id === invoice.id
-        ? {
-            ...current,
-            customerSignature: signatures.customerSignature,
-            providerSignature: signatures.providerSignature,
-            signedAt,
-            isProvideSignature: true,
-          }
-        : current
-    )
-    toast({
-      title: t('invoice.signedSuccessTitle'),
-      description: t('invoice.signedSuccessDescription'),
-      variant: 'success',
-    })
-  }
-
   return (
     <div className="space-y-6">
       <div className={cn('bg-white shadow-sm', 'text-gray-900')}>
-        <div className="flex items-center justify-between gap-3 px-1 py-2">
-          <h1 className="text-xl font-semibold text-gray-900">{t('invoice.pageTitle')}</h1>
-          <Button
-            type="button"
-            className="bg-primary hover:bg-primary/90"
-            onClick={() => setCreateOpen(true)}
-          >
-            {t('invoice.create.addNew')}
-          </Button>
-        </div>
+
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 -mx-1">
           <table className="w-full min-w-[720px] text-sm">
@@ -244,7 +186,6 @@ export default function InvoicePage() {
         open={detailsInvoice !== null}
         onClose={() => setDetailsInvoice(null)}
         invoice={detailsInvoice}
-        onSign={handleSignInvoice}
       />
 
       <CreateInvoiceModal
