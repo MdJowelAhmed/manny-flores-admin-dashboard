@@ -281,9 +281,9 @@ export function AddTeamModal({
                   <div className="px-2 py-3 text-sm text-muted-foreground">
                     {availableEmployees.length === 0
                       ? t(
-                          'projectScheduling.allEmployeesInTeams',
-                          'All employees are already in a team.'
-                        )
+                        'projectScheduling.allEmployeesInTeams',
+                        'All employees are already in a team.'
+                      )
                       : t('projectScheduling.noEmployeesFound')}
                   </div>
                 ) : (

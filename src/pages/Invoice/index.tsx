@@ -72,7 +72,7 @@ export default function InvoicePage() {
   return (
     <div className="space-y-6">
       <div className={cn('bg-white shadow-sm', 'text-gray-900')}>
-   
+
 
         <div className="overflow-x-auto rounded-xl border border-gray-200 -mx-1">
           <table className="w-full min-w-[720px] text-sm">

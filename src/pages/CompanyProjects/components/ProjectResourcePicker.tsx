@@ -382,124 +382,124 @@ interface ProjectResourcePickerProps {
 
 export const ProjectResourcePicker = forwardRef<ProjectResourcePickerHandle, ProjectResourcePickerProps>(
   function ProjectResourcePicker({ open, resetKey, initialLineItems = [] }, ref) {
-  const { t } = useTranslation()
-  const materialCatalog = useMemo(() => getEstimateMaterialCatalog(), [])
-  const equipmentCatalog = useMemo(() => getEstimateEquipmentCatalog(), [])
-  const vehicleCatalog = useMemo(() => getEstimateVehicleCatalog(), [])
+    const { t } = useTranslation()
+    const materialCatalog = useMemo(() => getEstimateMaterialCatalog(), [])
+    const equipmentCatalog = useMemo(() => getEstimateEquipmentCatalog(), [])
+    const vehicleCatalog = useMemo(() => getEstimateVehicleCatalog(), [])
 
-  const [materials, setMaterials] = useState<CatalogRow[]>(() => [emptyCatalogRow('mat')])
-  const [equipment, setEquipment] = useState<CatalogRow[]>(() => [emptyCatalogRow('eq')])
-  const [vehicles, setVehicles] = useState<VehicleRow[]>(() => [emptyVehicleRow()])
+    const [materials, setMaterials] = useState<CatalogRow[]>(() => [emptyCatalogRow('mat')])
+    const [equipment, setEquipment] = useState<CatalogRow[]>(() => [emptyCatalogRow('eq')])
+    const [vehicles, setVehicles] = useState<VehicleRow[]>(() => [emptyVehicleRow()])
 
-  useImperativeHandle(ref, () => ({
-    getLineItems: () => buildLineItems(materials, equipment, vehicles),
-  }))
+    useImperativeHandle(ref, () => ({
+      getLineItems: () => buildLineItems(materials, equipment, vehicles),
+    }))
 
-  useEffect(() => {
-    if (!open) return
-    const items = initialLineItems ?? []
-    setMaterials(rowsFromLineItems(items, 'material', () => emptyCatalogRow('mat')) as CatalogRow[])
-    setEquipment(rowsFromLineItems(items, 'equipment', () => emptyCatalogRow('eq')) as CatalogRow[])
-    setVehicles(rowsFromLineItems(items, 'vehicle', () => emptyVehicleRow()) as VehicleRow[])
-  }, [open, resetKey, initialLineItems])
+    useEffect(() => {
+      if (!open) return
+      const items = initialLineItems ?? []
+      setMaterials(rowsFromLineItems(items, 'material', () => emptyCatalogRow('mat')) as CatalogRow[])
+      setEquipment(rowsFromLineItems(items, 'equipment', () => emptyCatalogRow('eq')) as CatalogRow[])
+      setVehicles(rowsFromLineItems(items, 'vehicle', () => emptyVehicleRow()) as VehicleRow[])
+    }, [open, resetKey, initialLineItems])
 
-  const matCols =
-    materials.length > 1
-      ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
-      : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
-  const eqCols =
-    equipment.length > 1
-      ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
-      : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
+    const matCols =
+      materials.length > 1
+        ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+        : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
+    const eqCols =
+      equipment.length > 1
+        ? 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr_44px]'
+        : 'md:grid-cols-[1.2fr_0.9fr_1fr_1fr]'
 
-  return (
-    <div className="space-y-8">
-      <h3 className="text-sm font-semibold text-foreground">{t('companyProjects.resourcesSection')}</h3>
+    return (
+      <div className="space-y-8">
+        <h3 className="text-sm font-semibold text-foreground">{t('companyProjects.resourcesSection')}</h3>
 
-      <CatalogSection
-        title={t('estimate.material')}
-        addLabel={t('estimate.addMaterialRow')}
-        onAdd={() => setMaterials((r) => [...r, emptyCatalogRow('mat')])}
-        headerCols={matCols}
-        rowCols={matCols}
-        headers={
-          <>
-            <span>{t('estimate.name')}</span>
-            <span>{t('estimate.quantity')}</span>
-            <span>{t('estimate.unitPriceSqft')}</span>
-            <span>{t('estimate.totalPrice')}</span>
-          </>
-        }
-        rows={materials}
-        catalog={materialCatalog}
-        showQuantity
-        unitPriceLabel={t('estimate.unitPriceSqft')}
-        onRemove={(id) => setMaterials((r) => (r.length <= 1 ? r : r.filter((x) => x.id !== id)))}
-        onCatalogChange={(id, catalogId) =>
-          setMaterials((rows) =>
-            rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, materialCatalog) } : r))
-          )
-        }
-        onQuantityChange={(id, quantity) =>
-          setMaterials((rows) => rows.map((r) => (r.id === id ? { ...r, quantity } : r)))
-        }
-        onUnitPriceChange={(id, unitPrice) =>
-          setMaterials((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
-        }
-        t={t}
-      />
+        <CatalogSection
+          title={t('estimate.material')}
+          addLabel={t('estimate.addMaterialRow')}
+          onAdd={() => setMaterials((r) => [...r, emptyCatalogRow('mat')])}
+          headerCols={matCols}
+          rowCols={matCols}
+          headers={
+            <>
+              <span>{t('estimate.name')}</span>
+              <span>{t('estimate.quantity')}</span>
+              <span>{t('estimate.unitPriceSqft')}</span>
+              <span>{t('estimate.totalPrice')}</span>
+            </>
+          }
+          rows={materials}
+          catalog={materialCatalog}
+          showQuantity
+          unitPriceLabel={t('estimate.unitPriceSqft')}
+          onRemove={(id) => setMaterials((r) => (r.length <= 1 ? r : r.filter((x) => x.id !== id)))}
+          onCatalogChange={(id, catalogId) =>
+            setMaterials((rows) =>
+              rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, materialCatalog) } : r))
+            )
+          }
+          onQuantityChange={(id, quantity) =>
+            setMaterials((rows) => rows.map((r) => (r.id === id ? { ...r, quantity } : r)))
+          }
+          onUnitPriceChange={(id, unitPrice) =>
+            setMaterials((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
+          }
+          t={t}
+        />
 
-      <CatalogSection
-        title={t('estimate.equipment')}
-        addLabel={t('estimate.addEquipmentRow')}
-        onAdd={() => setEquipment((r) => [...r, emptyCatalogRow('eq')])}
-        headerCols={eqCols}
-        rowCols={eqCols}
-        headers={
-          <>
-            <span>{t('estimate.name')}</span>
-            <span>{t('estimate.quantity')}</span>
-            <span>{t('estimate.unitPriceDay')}</span>
-            <span>{t('estimate.totalPrice')}</span>
-          </>
-        }
-        rows={equipment}
-        catalog={equipmentCatalog}
-        showQuantity
-        unitPriceLabel={t('estimate.unitPriceDay')}
-        onRemove={(id) => setEquipment((r) => (r.length <= 1 ? r : r.filter((x) => x.id !== id)))}
-        onCatalogChange={(id, catalogId) =>
-          setEquipment((rows) =>
-            rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, equipmentCatalog) } : r))
-          )
-        }
-        onQuantityChange={(id, quantity) =>
-          setEquipment((rows) => rows.map((r) => (r.id === id ? { ...r, quantity } : r)))
-        }
-        onUnitPriceChange={(id, unitPrice) =>
-          setEquipment((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
-        }
-        t={t}
-      />
+        <CatalogSection
+          title={t('estimate.equipment')}
+          addLabel={t('estimate.addEquipmentRow')}
+          onAdd={() => setEquipment((r) => [...r, emptyCatalogRow('eq')])}
+          headerCols={eqCols}
+          rowCols={eqCols}
+          headers={
+            <>
+              <span>{t('estimate.name')}</span>
+              <span>{t('estimate.quantity')}</span>
+              <span>{t('estimate.unitPriceDay')}</span>
+              <span>{t('estimate.totalPrice')}</span>
+            </>
+          }
+          rows={equipment}
+          catalog={equipmentCatalog}
+          showQuantity
+          unitPriceLabel={t('estimate.unitPriceDay')}
+          onRemove={(id) => setEquipment((r) => (r.length <= 1 ? r : r.filter((x) => x.id !== id)))}
+          onCatalogChange={(id, catalogId) =>
+            setEquipment((rows) =>
+              rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, equipmentCatalog) } : r))
+            )
+          }
+          onQuantityChange={(id, quantity) =>
+            setEquipment((rows) => rows.map((r) => (r.id === id ? { ...r, quantity } : r)))
+          }
+          onUnitPriceChange={(id, unitPrice) =>
+            setEquipment((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
+          }
+          t={t}
+        />
 
-      <VehicleSection
-        title={t('estimate.vehicle')}
-        addLabel={t('estimate.addVehicleRow')}
-        onAdd={() => setVehicles((r) => [...r, emptyVehicleRow()])}
-        rows={vehicles}
-        catalog={vehicleCatalog}
-        onRemove={(id) => setVehicles((r) => (r.length <= 1 ? r : r.filter((x) => x.id !== id)))}
-        onCatalogChange={(id, catalogId) =>
-          setVehicles((rows) =>
-            rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, vehicleCatalog) } : r))
-          )
-        }
-        onUnitPriceChange={(id, unitPrice) =>
-          setVehicles((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
-        }
-        t={t}
-      />
-    </div>
-  )
+        <VehicleSection
+          title={t('estimate.vehicle')}
+          addLabel={t('estimate.addVehicleRow')}
+          onAdd={() => setVehicles((r) => [...r, emptyVehicleRow()])}
+          rows={vehicles}
+          catalog={vehicleCatalog}
+          onRemove={(id) => setVehicles((r) => (r.length <= 1 ? r : r.filter((x) => x.id !== id)))}
+          onCatalogChange={(id, catalogId) =>
+            setVehicles((rows) =>
+              rows.map((r) => (r.id === id ? { ...r, ...pickCatalog(catalogId, vehicleCatalog) } : r))
+            )
+          }
+          onUnitPriceChange={(id, unitPrice) =>
+            setVehicles((rows) => rows.map((r) => (r.id === id ? { ...r, unitPrice } : r)))
+          }
+          t={t}
+        />
+      </div>
+    )
   }
 )

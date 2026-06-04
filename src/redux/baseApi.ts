@@ -21,8 +21,8 @@ export const baseApi = createApi({
         },
     }),
     tagTypes: ['Auth', 'Category', 'Chats', 'Materials', 'Equipment', 'Vehicles', 'Estimate', 'Invoice', 'Projects', 'Teams', 'Employees', 'Attendance', 'PayrollManagement', 'ResourceRequestsReport', 'ChangeOrders', 'VehicleMaintenance', 'EquipmentMaintenance', 'Review', 'DailySafetyReports', 'Customers', 'Notification'],
-  
-   
+
+
     endpoints: () => ({}),
 })
 
