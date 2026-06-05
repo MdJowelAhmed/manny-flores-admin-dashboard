@@ -1,6 +1,8 @@
 import { baseApi } from '../baseApi'
-import type { Vehicle } from '@/types'
-import { formatCurrency, formatDateDisplay } from '@/utils/formatters'
+import type {
+  VehicleAssignedEmployeeItem,
+  VehicleListItem,
+} from '@/pages/VehicleMaintenance/vehicleMaintenanceData'
 
 export interface VehicleCategoryRef {
   id: string
@@ -20,13 +22,14 @@ export interface VehicleApiDoc {
   year: number
   type: string
   categoryId: string
+  category?: VehicleCategoryRef
   purchaseDate: string
   purchaseCost: number
   insuranceExpires: string
   maintenanceLastServiceDate?: string
   maintenanceNextServiceDate?: string
-  assignEmployeeId?: string
-  assignedEmployee?: VehicleAssignedEmployeeApi
+  assignEmployeeId?: string | null
+  assignedEmployee?: VehicleAssignedEmployeeApi | null
   isDeleted?: boolean
   userId?: string
   createdAt: string
@@ -66,46 +69,39 @@ export interface VehiclePayload {
   maintenanceNextServiceDate?: string
 }
 
-function formatApiDate(value?: string): string {
-  if (!value?.trim()) return ''
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return formatDateDisplay(parsed)
+function mapAssignedEmployee(
+  emp?: VehicleAssignedEmployeeApi | null
+): VehicleAssignedEmployeeItem | null | undefined {
+  if (!emp) return emp ?? undefined
+  return {
+    id: emp.id,
+    name: emp.name,
+    email: emp.email,
+    profile: emp.profile,
+  }
 }
 
 export function mapVehicleFromApi(
   doc: VehicleApiDoc,
   categoryNameById?: Record<string, string>
-): Vehicle {
-  const assignedTo = doc.assignedEmployee?.name ?? ''
-  const nextService = formatApiDate(doc.maintenanceNextServiceDate)
-  const lastService = formatApiDate(doc.maintenanceLastServiceDate)
-  const category = categoryNameById?.[doc.categoryId] ?? ''
-
+): VehicleListItem {
   return {
     id: doc.id,
-    vehicleName: `${doc.model} (${doc.year})`,
-    category,
-    categoryId: doc.categoryId,
-    type: doc.type,
-    assignedTo,
-    usage: '',
-    nextService,
-    status: assignedTo ? 'In Use' : 'Available',
     model: doc.model,
-    year: String(doc.year),
-    purchaseDate: formatApiDate(doc.purchaseDate),
-    purchaseCost: formatCurrency(doc.purchaseCost),
-    insuranceExpiry: formatApiDate(doc.insuranceExpires),
-    assignedEmployee: doc.assignedEmployee
-      ? {
-          name: doc.assignedEmployee.name,
-          project: '',
-          startDate: '',
-          location: '',
-        }
-      : undefined,
-    lastService,
+    year: doc.year,
+    type: doc.type,
+    categoryId: doc.categoryId,
+    category: doc.category?.name ?? categoryNameById?.[doc.categoryId] ?? '',
+    purchaseDate: doc.purchaseDate,
+    purchaseCost: doc.purchaseCost,
+    insuranceExpires: doc.insuranceExpires,
+    maintenanceLastServiceDate: doc.maintenanceLastServiceDate,
+    maintenanceNextServiceDate: doc.maintenanceNextServiceDate,
+    assignEmployeeId: doc.assignEmployeeId,
+    assignedEmployee: mapAssignedEmployee(doc.assignedEmployee),
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    isDeleted: doc.isDeleted,
   }
 }
 

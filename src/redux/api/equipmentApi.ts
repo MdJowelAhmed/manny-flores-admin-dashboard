@@ -1,6 +1,5 @@
 import { baseApi } from '../baseApi'
-import type { Equipment } from '@/types'
-import { formatCurrency, formatDateDisplay } from '@/utils/formatters'
+import type { EquipmentListItem } from '@/pages/EquipmentMaintenance/equipmentMaintenanceData'
 
 export interface EquipmentCategoryRef {
   id: string
@@ -10,7 +9,8 @@ export interface EquipmentCategoryRef {
 export interface EquipmentApiDoc {
   id: string
   equipmentName: string
-  category: string | EquipmentCategoryRef
+  categoryId: string
+  category?: EquipmentCategoryRef
   purchaseDate: string
   purchaseCost: number
   warrantyExpiryDate: string
@@ -42,55 +42,27 @@ export interface GetEquipmentParams {
 
 export interface EquipmentPayload {
   equipmentName: string
-  category: string
+  categoryId: string
   purchaseDate: string
   purchaseCost: number
   warrantyExpiryDate: string
 }
 
-function resolveCategoryId(category: EquipmentApiDoc['category']): string {
-  if (typeof category === 'string') return category
-  return category?.id ?? ''
-}
-
-function resolveCategoryName(
-  category: EquipmentApiDoc['category'],
-  categoryNameById?: Record<string, string>
-): string {
-  if (typeof category === 'object' && category?.name) return category.name
-  const id = resolveCategoryId(category)
-  return categoryNameById?.[id] ?? ''
-}
-
-function formatApiDate(value: string): string {
-  if (!value?.trim()) return '—'
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return formatDateDisplay(parsed)
-}
-
 export function mapEquipmentFromApi(
   doc: EquipmentApiDoc,
   categoryNameById?: Record<string, string>
-): Equipment {
-  const categoryId = resolveCategoryId(doc.category)
-  const categoryName = resolveCategoryName(doc.category, categoryNameById)
-
+): EquipmentListItem {
   return {
     id: doc.id,
     equipmentName: doc.equipmentName,
-    categoryId,
-    category: categoryName,
-    type: categoryName,
-    model: doc.equipmentName,
-    assignedTo: '—',
-    usage: '—',
-    nextService: '—',
-    status: 'Available',
-    purchaseDate: formatApiDate(doc.purchaseDate),
-    purchaseCost: formatCurrency(doc.purchaseCost),
-    warrantyExpiry: formatApiDate(doc.warrantyExpiryDate),
-    lastService: '—',
+    categoryId: doc.categoryId,
+    category: doc.category?.name ?? categoryNameById?.[doc.categoryId] ?? '',
+    purchaseDate: doc.purchaseDate,
+    purchaseCost: doc.purchaseCost,
+    warrantyExpiryDate: doc.warrantyExpiryDate,
+    createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
+    isDeleted: doc.isDeleted,
   }
 }
 

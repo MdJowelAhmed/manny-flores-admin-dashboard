@@ -760,6 +760,9 @@
   },
   "resourceRequests": {
     "title": "Resource Requests & Report",
+    "materials": "Materials",
+    "equipment": "Equipment",
+    "vehicles": "Vehicles",
     "request": "Request",
     "report": "Report",
     "requestId": "Request ID",
@@ -774,6 +777,9 @@
     "noReportsFound": "No reports found",
     "approved": "Approved",
     "denied": "Denied",
+    "approve": "Approve",
+    "reject": "Reject",
+    "updateStatus": "Update Status",
     "requestDeleted": "Request Deleted",
     "requestRemoved": "Resource request has been removed.",
     "reportDeleted": "Report Deleted",
@@ -782,11 +788,21 @@
     "deleteReport": "Delete Resource Report",
     "deleteRequestConfirm": "Are you sure you want to delete this resource request? This action cannot be undone.",
     "deleteReportConfirm": "Are you sure you want to delete this report? This action cannot be undone.",
-    "requestApproved": "Request approved.",
+    "requestApproved": "Request approved successfully.",
+    "requestRejected": "Request rejected successfully.",
+    "statusUpdateFailed": "Failed to update request status.",
     "reportedBy": "Reported by",
     "item": "Item",
     "type": "Type",
-    "urgency": "Urgency"
+    "urgency": "Urgency",
+    "reason": "Reason",
+    "materialName": "Material Name",
+    "equipmentName": "Equipment Name",
+    "vehicleType": "Vehicle Type",
+    "basicInformation": "Basic Information",
+    "materialRequestDetails": "Material Request Details",
+    "equipmentRequestDetails": "Equipment Request Details",
+    "vehicleRequestDetails": "Vehicle Request Details"
   },
   "changeOrders": {
     "totalChangeOrders": "Total Change Orders",
@@ -1306,9 +1322,13 @@
       "method": "Method",
       "total": "Total",
       "paid": "Paid",
+      "amount": "Amount",
       "status": "Status",
-      "receivedAt": "Received at"
+      "receivedAt": "Received at",
+      "createdAt": "Created at",
+      "trxId": "Transaction ID"
     },
+    "noCheckImage": "No check image available.",
     "status": {
       "paid": "Paid",
       "partiallyPaid": "Partially Paid",
@@ -1316,6 +1336,10 @@
     },
     "actions": {
       "uploadProof": "Upload proof",
+      "viewCheck": "View check",
+      "updateStatus": "Update status",
+      "markCompleted": "Completed",
+      "markRejected": "Rejected",
       "markPaid": "Mark Paid",
       "recordReceived": "Record received"
     },
@@ -1350,7 +1374,10 @@
       "paidTitle": "Payment updated",
       "paidDesc": "The payment has been marked as Paid.",
       "receivedTitle": "Cash received recorded",
-      "receivedDesc": "Cash received has been recorded. Waiting for Manny approval."
+      "receivedDesc": "Cash received has been recorded. Waiting for Manny approval.",
+      "completedDesc": "Payment marked as completed.",
+      "rejectedDesc": "Payment has been rejected.",
+      "statusUpdateFailed": "Failed to update payment status."
     }
   },
   "dailySafetyReports": {

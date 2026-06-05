@@ -43,6 +43,9 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   active: { bg: 'bg-success/10', text: 'text-success' },
   blocked: { bg: 'bg-destructive/10', text: 'text-destructive' },
   pending: { bg: 'bg-warning/10', text: 'text-warning' },
+  completed: { bg: 'bg-green-100', text: 'text-green-700' },
+  rejected: { bg: 'bg-red-100', text: 'text-red-700' },
+  request_for_complete: { bg: 'bg-amber-100', text: 'text-amber-700' },
   inactive: { bg: 'bg-muted', text: 'text-muted-foreground' },
   draft: { bg: 'bg-muted', text: 'text-muted-foreground' },
   out_of_stock: { bg: 'bg-destructive/10', text: 'text-destructive' },
@@ -52,6 +55,9 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   Cancelled: { bg: 'bg-gray-100', text: 'text-gray-800' },
   Active: { bg: 'bg-orange-100', text: 'text-orange-800' },
   Leave: { bg: 'bg-orange-100', text: 'text-orange-600' },
+  APPROVED: { bg: 'bg-green-100', text: 'text-green-700' },
+  PENDING: { bg: 'bg-amber-100', text: 'text-amber-700' },
+  REJECTED: { bg: 'bg-red-100', text: 'text-red-700' },
 }
 
 export const ROLE_COLORS: Record<string, { bg: string; text: string }> = {

@@ -13,9 +13,9 @@ import {
   AddEditVehicleModal,
   type VehicleFormSavePayload,
 } from './components/AddEditVehicleModal'
-import type { Vehicle } from '@/types'
 import { toast } from '@/utils/toast'
 import type { VehicleCategory } from '@/types'
+import type { VehicleListItem } from './vehicleMaintenanceData'
 import { DEFAULT_PAGINATION } from '@/utils/constants'
 import { VehicleCategoriesTable } from './components/VehicleCategoriesTable'
 import { AddEditVehicleCategoryModal } from './components/AddEditVehicleCategoryModal'
@@ -41,8 +41,8 @@ export default function VehicleMaintenance() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
-  const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null)
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleListItem | null>(null)
+  const [vehicleToDelete, setVehicleToDelete] = useState<VehicleListItem | null>(null)
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
@@ -84,11 +84,13 @@ export default function VehicleMaintenance() {
     if (!searchQuery.trim()) return vehicles
     const q = searchQuery.toLowerCase()
     return vehicles.filter((v) => {
+      const assignedName = v.assignedEmployee?.name ?? ''
       return (
-        v.vehicleName.toLowerCase().includes(q) ||
+        v.model.toLowerCase().includes(q) ||
+        String(v.year).includes(q) ||
         v.category.toLowerCase().includes(q) ||
         v.type.toLowerCase().includes(q) ||
-        v.assignedTo.toLowerCase().includes(q)
+        assignedName.toLowerCase().includes(q)
       )
     })
   }, [vehicles, searchQuery])
@@ -122,12 +124,12 @@ export default function VehicleMaintenance() {
     setCategoryPage(1)
   }
 
-  const handleView = (vehicle: Vehicle) => {
+  const handleView = (vehicle: VehicleListItem) => {
     setSelectedVehicle(vehicle)
     setIsViewModalOpen(true)
   }
 
-  const handleEdit = (vehicle: Vehicle, e: React.MouseEvent) => {
+  const handleEdit = (vehicle: VehicleListItem, e: React.MouseEvent) => {
     e?.stopPropagation?.()
     setSelectedVehicle(vehicle)
     setIsViewModalOpen(false)
@@ -246,7 +248,7 @@ export default function VehicleMaintenance() {
     }
   }
 
-  const handleDelete = (vehicle: Vehicle) => {
+  const handleDelete = (vehicle: VehicleListItem) => {
     setVehicleToDelete(vehicle)
     setIsConfirmOpen(true)
   }
@@ -266,7 +268,9 @@ export default function VehicleMaintenance() {
       toast({
         variant: 'success',
         title: t('vehicleMaintenance.vehicleDeleted'),
-        description: t('vehicleMaintenance.vehicleRemoved', { name: vehicleToDelete.vehicleName }),
+        description: t('vehicleMaintenance.vehicleRemoved', {
+          name: `${vehicleToDelete.model} (${vehicleToDelete.year})`,
+        }),
       })
       setIsConfirmOpen(false)
       setVehicleToDelete(null)
@@ -420,7 +424,11 @@ export default function VehicleMaintenance() {
         }}
         onConfirm={handleConfirmDelete}
         title={t('vehicleMaintenance.deleteVehicle')}
-        description={t('vehicleMaintenance.deleteVehicleConfirm', { name: vehicleToDelete?.vehicleName ?? '' })}
+        description={t('vehicleMaintenance.deleteVehicleConfirm', {
+          name: vehicleToDelete
+            ? `${vehicleToDelete.model} (${vehicleToDelete.year})`
+            : '',
+        })}
         confirmText={t('common.delete')}
         cancelText={t('common.cancel')}
         variant="danger"

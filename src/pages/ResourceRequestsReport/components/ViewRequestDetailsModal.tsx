@@ -1,13 +1,19 @@
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import type { ResourceRequest } from '../resourceRequestsData'
+import { StatusBadge } from '@/components/common/StatusBadge'
+import { formatDateTime } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
+import type { ResourceRequestStatusUpdate } from '@/redux/api/resouceRequestApi'
+import type { ViewableResourceRequest } from '../resourceRequestsData'
+import { formatUrgencyLevel, isHighUrgency, isPendingResourceStatus } from '../resourceRequestsData'
 
 interface ViewRequestDetailsModalProps {
   open: boolean
   onClose: () => void
-  record: ResourceRequest | null
-  onApproved?: () => void
+  viewRecord: ViewableResourceRequest | null
+  onStatusUpdate?: (id: string, status: ResourceRequestStatusUpdate) => void
+  isUpdating?: boolean
 }
 
 function DetailRow({
@@ -24,7 +30,7 @@ function DetailRow({
       <span className="text-sm text-muted-foreground">{label}:</span>
       <span
         className={cn(
-          'text-sm font-medium',
+          'text-sm font-medium text-right',
           valueHighlight ? 'text-red-600' : 'text-foreground'
         )}
       >
@@ -37,74 +43,92 @@ function DetailRow({
 export function ViewRequestDetailsModal({
   open,
   onClose,
-  record,
-  onApproved,
+  viewRecord,
+  onStatusUpdate,
+  isUpdating = false,
 }: ViewRequestDetailsModalProps) {
-  if (!record) return null
+  const { t } = useTranslation()
 
-  const title = `${record.resource} Request`
-  const attachments = record.attachments ?? []
+  if (!viewRecord) return null
+
+  const { tab, record } = viewRecord
+  const isPending = isPendingResourceStatus(record.status)
+
+  const title =
+    tab === 'materials'
+      ? t('resourceRequests.materialRequestDetails')
+      : tab === 'equipment'
+        ? t('resourceRequests.equipmentRequestDetails')
+        : t('resourceRequests.vehicleRequestDetails')
 
   return (
-    <ModalWrapper
-      open={open}
-      onClose={onClose}
-      title={title}
-      size="md"
-      className="max-w-2xl bg-white"
-    >
+    <ModalWrapper open={open} onClose={onClose} title={title} size="md" className="max-w-2xl bg-white">
       <div className="space-y-5">
         <div>
           <h3 className="text-sm font-semibold mb-3 text-foreground">
-            Basic Information
+            {t('resourceRequests.basicInformation')}
           </h3>
           <div className="space-y-1">
+            {tab === 'materials' && (
+              <>
+                <DetailRow label={t('resourceRequests.materialName')} value={record.materialName} />
+                <DetailRow
+                  label={t('resourceRequests.quantity')}
+                  value={String(record.quantityNeeded)}
+                />
+              </>
+            )}
+            {tab === 'equipment' && (
+              <DetailRow label={t('resourceRequests.equipmentName')} value={record.equipmentName} />
+            )}
+            {tab === 'vehicles' && (
+              <>
+                <DetailRow
+                  label={t('resourceRequests.vehicleType')}
+                  value={record.vehicleType}
+                />
+                <DetailRow
+                  label={t('projectScheduling.project')}
+                  value={record.projectName}
+                />
+              </>
+            )}
             <DetailRow
-              label="Equipment Name"
-              value={record.equipmentName ?? record.resource}
+              label={t('resourceRequests.urgency')}
+              value={formatUrgencyLevel(record.urgencyLevel)}
+              valueHighlight={isHighUrgency(record.urgencyLevel)}
             />
-            <DetailRow label="Type" value={record.type} />
-            <DetailRow label="Project Name" value={record.project} />
+            <DetailRow label={t('resourceRequests.reason')} value={record.reason || '—'} />
             <DetailRow
-              label="Urgency Level"
-              value={record.urgency}
-              valueHighlight={record.urgency === 'High'}
+              label={t('resourceRequests.requestDate')}
+              value={formatDateTime(record.createdAt)}
             />
-            <DetailRow label="Reason" value={record.reason ?? '-'} />
+            <div className="flex justify-between items-center py-2 gap-4">
+              <span className="text-sm text-muted-foreground">{t('common.status')}:</span>
+              <StatusBadge status={record.status} />
+            </div>
           </div>
         </div>
 
-        {attachments.length > 0 && (
-          <div>
-            <h3 className="text-sm font-semibold mb-3 text-foreground">
-              Attachments ({attachments.length})
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {attachments.map((url, i) => (
-                <img
-                  key={i}
-                  src={url}
-                  alt={`Attachment ${i + 1}`}
-                  className="h-20 w-28 object-cover rounded-md border border-gray-200"
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      'https://placehold.co/112x80/e5e7eb/9ca3af?text=Image'
-                  }}
-                />
-              ))}
-            </div>
+        {isPending && onStatusUpdate && (
+          <div className="flex gap-3 pt-2">
+            <Button
+              className="flex-1 bg-primary hover:bg-primary/90 text-white"
+              disabled={isUpdating}
+              onClick={() => onStatusUpdate(record.id, 'APPROVED')}
+            >
+              {t('resourceRequests.approve')}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              disabled={isUpdating}
+              onClick={() => onStatusUpdate(record.id, 'REJECTED')}
+            >
+              {t('resourceRequests.reject')}
+            </Button>
           </div>
         )}
-
-        <Button
-          className="w-full bg-primary hover:bg-primary/90 text-white mt-6"
-          onClick={() => {
-            onApproved?.()
-            onClose()
-          }}
-        >
-          Approved
-        </Button>
       </div>
     </ModalWrapper>
   )

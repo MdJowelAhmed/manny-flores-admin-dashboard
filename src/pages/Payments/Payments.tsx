@@ -3,74 +3,73 @@ import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { ModalWrapper } from '@/components/common/ModalWrapper'
-import { ConfirmDialog } from '@/components/common/ConfirmDialog'
-import { useAppSelector } from '@/redux/hooks'
-import { UserRole } from '@/types/roles'
+import { SearchInput } from '@/components/common/SearchInput'
+import {
+  useGetPaymentsQuery,
+  usePaymentStatusUpdateMutation,
+  mapPaymentFromApi,
+  type PaymentStatusUpdate,
+} from '@/redux/api/paymentApi'
+import { DEFAULT_PAGINATION } from '@/utils/constants'
 import { toast } from '@/utils/toast'
 
-import {
-  mockPayments,
-  type PaymentRecord,
-} from './paymentsData'
-
+import { formatPaymentMethod, type PaymentListItem } from './paymentsData'
 import { PaymentStatsCards } from './components/PaymentStatsCards'
 import { PaymentsTableSection } from './components/PaymentsTableSection'
 
-function getOutstanding(r: PaymentRecord) {
-  return Math.max(0, r.totalAmount - r.paidAmount)
+function isPendingStatus(status: string) {
+  const normalized = status?.toLowerCase()
+  return normalized === 'pending' || normalized === 'request_for_complete'
 }
 
 export default function Payments() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-  const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
+  const itemsPerPage =
+    Math.max(1, parseInt(searchParams.get('limit') || String(DEFAULT_PAGINATION.limit), 10)) ||
+    DEFAULT_PAGINATION.limit
 
-  const { user } = useAppSelector((state) => state.auth)
-  const userRole = (user?.role as UserRole) ?? UserRole.SUPER_ADMIN
-  const isSuperAdmin = userRole === UserRole.SUPER_ADMIN
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedRecord, setSelectedRecord] = useState<PaymentListItem | null>(null)
+  const [checkModalOpen, setCheckModalOpen] = useState(false)
+  const [updatingPaymentId, setUpdatingPaymentId] = useState<string | null>(null)
 
-  const [records, setRecords] = useState<PaymentRecord[]>(mockPayments)
-  const [query] = useState('')
+  const [updatePaymentStatus] = usePaymentStatusUpdateMutation()
 
-  const [selectedRecord, setSelectedRecord] = useState<PaymentRecord | null>(null)
-  const [proofModalOpen, setProofModalOpen] = useState(false)
-  const [proofFile, setProofFile] = useState<File | null>(null)
-  const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null)
+  const {
+    data: paymentsResponse,
+    isLoading,
+    isFetching,
+  } = useGetPaymentsQuery({
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchQuery,
+  })
 
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [confirmLoading, setConfirmLoading] = useState(false)
-  const [confirmMeta, setConfirmMeta] = useState<{
-    type: 'markPaid' | 'recordCashReceived'
-    recordId: string
-  } | null>(null)
+  const payments = useMemo(
+    () => (paymentsResponse?.data ?? []).map(mapPaymentFromApi),
+    [paymentsResponse]
+  )
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return records
-    return records.filter((r) => {
-      return (
-        r.paymentId.toLowerCase().includes(q) ||
-        r.projectName.toLowerCase().includes(q) ||
-        r.customerName.toLowerCase().includes(q) ||
-        r.method.toLowerCase().includes(q)
-      )
-    })
-  }, [records, query])
+  const pagination = paymentsResponse?.pagination
+  const totalPages = pagination?.totalPage ?? 1
+  const totalItems = pagination?.total ?? payments.length
 
   const totals = useMemo(() => {
-    const totalCollected = filtered.reduce((sum, r) => sum + r.paidAmount, 0)
-    const totalOutstanding = filtered.reduce((sum, r) => sum + getOutstanding(r), 0)
-    const pendingApprovals = filtered.filter((r) => r.method === 'cash' && r.cashReceivedRecorded && !r.cashFinalApproved).length
-    const totalProjects = new Set(filtered.map((r) => r.projectName)).size
+    const totalCollected = payments.reduce(
+      (sum, r) => (r.status?.toLowerCase() === 'completed' && r.amount != null ? sum + r.amount : sum),
+      0
+    )
+    const totalOutstanding = payments.reduce(
+      (sum, r) => (isPendingStatus(r.status) && r.amount != null ? sum + r.amount : sum),
+      0
+    )
+    const pendingApprovals = payments.filter((r) => isPendingStatus(r.status)).length
+    const totalProjects = new Set(payments.map((r) => r.estimateId).filter(Boolean)).size
     return { totalCollected, totalOutstanding, pendingApprovals, totalProjects }
-  }, [filtered])
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage))
+  }, [payments])
 
   const setPage = (p: number) => {
     const next = new URLSearchParams(searchParams)
@@ -80,7 +79,7 @@ export default function Payments() {
 
   const setLimit = (l: number) => {
     const next = new URLSearchParams(searchParams)
-    l !== 10 ? next.set('limit', String(l)) : next.delete('limit')
+    l !== DEFAULT_PAGINATION.limit ? next.set('limit', String(l)) : next.delete('limit')
     next.delete('page')
     setSearchParams(next, { replace: true })
   }
@@ -90,101 +89,38 @@ export default function Payments() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalPages])
 
-  const paginatedRecords = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filtered.slice(start, start + itemsPerPage)
-  }, [filtered, currentPage, itemsPerPage])
-
-  useEffect(() => {
-    if (!proofFile) {
-      setProofPreviewUrl(null)
-      return
-    }
-    const url = URL.createObjectURL(proofFile)
-    setProofPreviewUrl(url)
-    return () => URL.revokeObjectURL(url)
-  }, [proofFile])
-
-  const openProofModal = (r: PaymentRecord) => {
-    setSelectedRecord(r)
-    setProofFile(null)
-    setProofModalOpen(true)
+  const openCheckModal = (record: PaymentListItem) => {
+    setSelectedRecord(record)
+    setCheckModalOpen(true)
   }
 
-  const requestConfirm = (type: 'markPaid' | 'recordCashReceived', recordId: string) => {
-    setConfirmMeta({ type, recordId })
-    setConfirmOpen(true)
-  }
-
-  const applyMarkPaid = (recordId: string) => {
-    setRecords((prev) =>
-      prev.map((r) => {
-        if (r.id !== recordId) return r
-        const nextPaid = r.totalAmount
-        return {
-          ...r,
-          paidAmount: nextPaid,
-          status: 'paid',
-          cashFinalApproved: r.method === 'cash' ? true : r.cashFinalApproved,
-        }
-      })
-    )
-    toast({
-      variant: 'success',
-      title: t('payments.toast.paidTitle'),
-      description: t('payments.toast.paidDesc'),
-    })
-  }
-
-  const applyRecordCashReceived = (recordId: string) => {
-    setRecords((prev) =>
-      prev.map((r) => (r.id === recordId ? { ...r, cashReceivedRecorded: true } : r))
-    )
-    toast({
-      variant: 'success',
-      title: t('payments.toast.receivedTitle'),
-      description: t('payments.toast.receivedDesc'),
-    })
-  }
-
-  const handleConfirm = async () => {
-    if (!confirmMeta) return
-    setConfirmLoading(true)
+  const handleStatusUpdate = async (id: string, status: PaymentStatusUpdate) => {
+    setUpdatingPaymentId(id)
     try {
-      await new Promise((res) => setTimeout(res, 250))
-      if (confirmMeta.type === 'markPaid') {
-        applyMarkPaid(confirmMeta.recordId)
-      } else {
-        applyRecordCashReceived(confirmMeta.recordId)
-      }
-      setConfirmOpen(false)
-      setConfirmMeta(null)
-    } finally {
-      setConfirmLoading(false)
-    }
-  }
-
-  const handleSaveProof = () => {
-    if (!selectedRecord) return
-    if (!proofFile || !proofPreviewUrl) {
+      await updatePaymentStatus({ id, status }).unwrap()
       toast({
-        variant: 'destructive',
-        title: t('common.error'),
-        description: t('payments.proof.selectImageError'),
+        variant: 'success',
+        title: t('common.success'),
+        description:
+          status === 'completed'
+            ? t('payments.toast.completedDesc')
+            : t('payments.toast.rejectedDesc'),
       })
-      return
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('payments.toast.statusUpdateFailed')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
+    } finally {
+      setUpdatingPaymentId(null)
     }
-    setRecords((prev) =>
-      prev.map((r) => (r.id === selectedRecord.id ? { ...r, proofImageUrl: proofPreviewUrl } : r))
-    )
-    toast({
-      variant: 'success',
-      title: t('payments.proof.uploadedTitle'),
-      description: t('payments.proof.uploadedDesc'),
-    })
-    setProofModalOpen(false)
-    setSelectedRecord(null)
-    setProofFile(null)
   }
 
   return (
@@ -194,7 +130,6 @@ export default function Payments() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      {/* Stats */}
       <PaymentStatsCards
         totalCollected={totals.totalCollected}
         totalOutstanding={totals.totalOutstanding}
@@ -202,133 +137,67 @@ export default function Payments() {
         totalProjects={totals.totalProjects}
       />
 
-   
+      <div className="flex items-center justify-end">
+        <SearchInput
+          value={searchQuery}
+          onChange={(value) => {
+            setSearchQuery(value)
+            setPage(1)
+          }}
+          placeholder={t('payments.searchPlaceholder')}
+          className="w-[280px] bg-white"
+          debounceMs={300}
+        />
+      </div>
 
-      {/* Table */}
-      <PaymentsTableSection
-        paginatedRecords={paginatedRecords}
-        isSuperAdmin={isSuperAdmin}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={filtered.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setPage}
-        onItemsPerPageChange={setLimit}
-        onUploadProof={openProofModal}
-        onRecordCashReceived={(recordId) => requestConfirm('recordCashReceived', recordId)}
-        onMarkPaid={(recordId) => requestConfirm('markPaid', recordId)}
-      />
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        {isLoading || isFetching ? (
+          <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+            {t('common.loading')}
+          </div>
+        ) : (
+          <PaymentsTableSection
+            paginatedRecords={payments}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setPage}
+            onItemsPerPageChange={setLimit}
+            onViewCheckImage={openCheckModal}
+            onStatusUpdate={handleStatusUpdate}
+            updatingPaymentId={updatingPaymentId}
+          />
+        )}
+      </div>
 
-      {/* Proof modal */}
       <ModalWrapper
-        open={proofModalOpen}
+        open={checkModalOpen}
         onClose={() => {
-          setProofModalOpen(false)
+          setCheckModalOpen(false)
           setSelectedRecord(null)
-          setProofFile(null)
         }}
         title={t('payments.proof.title')}
-        description={selectedRecord ? `${selectedRecord.paymentId} • ${selectedRecord.projectName}` : undefined}
+        description={
+          selectedRecord
+            ? `${selectedRecord.projectName} • ${formatPaymentMethod(selectedRecord.method)}`
+            : undefined
+        }
         size="lg"
         className="max-w-xl bg-white"
-        footer={
-          <div className="flex items-center justify-end gap-2">
-          
-            <Button onClick={handleSaveProof} className="bg-primary hover:bg-primary/90 text-white">
-              {t('payments.proof.save')}
-            </Button>
-          </div>
-        }
       >
-        <div className="space-y-4">
-          {selectedRecord?.proofImageUrl && (
-            <div className="rounded-lg border bg-muted/20 p-3">
-              <div className="text-sm font-medium text-accent">{t('payments.proof.current')}</div>
-              <img
-                src={selectedRecord.proofImageUrl}
-                alt="check proof"
-                className="mt-3 w-full max-h-[320px] object-contain rounded-md bg-white"
-              />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label>{t('payments.proof.uploadLabel')}</Label>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+        {selectedRecord?.checkImageUrl ? (
+          <div className="rounded-lg border bg-muted/20 p-3">
+            <img
+              src={selectedRecord.checkImageUrl}
+              alt="check"
+              className="w-full max-h-[420px] object-contain rounded-md bg-white"
             />
-            <p className="text-xs text-muted-foreground">{t('payments.proof.hint')}</p>
           </div>
-
-          {proofPreviewUrl && (
-            <div className="rounded-lg border bg-muted/20 p-3">
-              <div className="text-sm font-medium text-accent">{t('payments.proof.preview')}</div>
-              <img
-                src={proofPreviewUrl}
-                alt="preview"
-                className="mt-3 w-full max-h-[320px] object-contain rounded-md bg-white"
-              />
-            </div>
-          )}
-        </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t('payments.noCheckImage')}</p>
+        )}
       </ModalWrapper>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        onClose={() => {
-          setConfirmOpen(false)
-          setConfirmMeta(null)
-        }}
-        onConfirm={async () => {
-          if (!confirmMeta) return
-
-          const record = records.find((r) => r.id === confirmMeta.recordId)
-          if (!record) return
-
-          if (confirmMeta.type === 'markPaid') {
-            const canMarkPaid =
-              record.status !== 'paid' &&
-              (record.method === 'cash'
-                ? isSuperAdmin && Boolean(record.cashReceivedRecorded)
-                : record.method === 'check'
-                  ? Boolean(record.proofImageUrl)
-                  : true)
-
-            if (!canMarkPaid) {
-              toast({
-                variant: 'destructive',
-                title: t('common.error'),
-                description:
-                  record.method === 'check' && !record.proofImageUrl
-                    ? t('payments.rules.checkNeedsProof')
-                    : record.method === 'cash' && !isSuperAdmin
-                      ? t('payments.rules.cashMannyOnly')
-                      : t('payments.rules.notAllowed'),
-              })
-              return
-            }
-          }
-
-          await handleConfirm()
-        }}
-        title={
-          confirmMeta?.type === 'recordCashReceived'
-            ? t('payments.confirm.recordReceivedTitle')
-            : t('payments.confirm.markPaidTitle')
-        }
-        description={
-          confirmMeta?.type === 'recordCashReceived'
-            ? t('payments.confirm.recordReceivedDesc')
-            : t('payments.confirm.markPaidDesc')
-        }
-        confirmText={t('common.confirm')}
-        cancelText={t('common.cancel')}
-        variant="info"
-        isLoading={confirmLoading}
-      />
     </motion.div>
   )
 }
-

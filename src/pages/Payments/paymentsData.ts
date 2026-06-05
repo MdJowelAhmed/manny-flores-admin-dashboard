@@ -1,97 +1,32 @@
 import { DollarSign, CircleDollarSign, AlertCircle, FolderKanban } from 'lucide-react'
+import type { PaymentEstimateApiDoc, PaymentUserApiDoc } from '@/redux/api/paymentApi'
 
-export type PaymentMethod = 'cash' | 'check' | 'card' | 'financing'
-export type PaymentStatus = 'pending' | 'partially_paid' | 'paid'
-
-export interface PaymentRecord {
+/** UI model aligned with `GET /payment` response fields. */
+export interface PaymentListItem {
   id: string
-  paymentId: string
+  userId: string
+  estimateId: string
+  amount: number | null
+  receiverId: string | null
+  note: string | null
+  method: string
+  checkImage: string | null
+  checkImageUrl: string | null
+  trxId: string | null
+  stripePaymentIntentId: string | null
+  stripeCheckoutSessionId: string | null
+  status: string
+  createdAt: string
+  updatedAt: string
+  resolverId: string | null
   projectName: string
+  estimateTotalCost: number
   customerName: string
-  method: PaymentMethod
-  totalAmount: number
-  paidAmount: number
-  status: PaymentStatus
-  receivedAt: string // ISO
-  receivedBy: string
-  /**
-   * Approval hierarchy:
-   * - cash: staff/admin can record as received, but only super-admin can confirm + mark Paid
-   * - check: requires proof before marking Paid
-   */
-  cashReceivedRecorded?: boolean
-  cashFinalApproved?: boolean
-  proofImageUrl?: string
-  notes?: string
+  customerEmail: string
+  userProfileUrl: string | null
+  estimate: PaymentEstimateApiDoc | null
+  user: PaymentUserApiDoc | null
 }
-
-export const mockPayments: PaymentRecord[] = [
-  {
-    id: 'pay-1',
-    paymentId: '#P-10021',
-    projectName: 'Residential Backyard Renovation',
-    customerName: 'John Davis',
-    method: 'cash',
-    totalAmount: 5200,
-    paidAmount: 0,
-    status: 'pending',
-    receivedAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
-    receivedBy: 'Staff Admin',
-    cashReceivedRecorded: true,
-    cashFinalApproved: false,
-    notes: 'Cash received by staff; waiting for Manny confirmation.',
-  },
-  {
-    id: 'pay-2',
-    paymentId: '#P-10022',
-    projectName: 'Office Park Landscaping',
-    customerName: 'Acme Corp',
-    method: 'check',
-    totalAmount: 12400,
-    paidAmount: 12400,
-    status: 'paid',
-    receivedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    receivedBy: 'Manager',
-    proofImageUrl: '/assets/check-proof-sample.png',
-  },
-  {
-    id: 'pay-3',
-    paymentId: '#P-10023',
-    projectName: 'Kitchen Remodel – Downtown',
-    customerName: 'Maria Gomez',
-    method: 'financing',
-    totalAmount: 18900,
-    paidAmount: 7200,
-    status: 'partially_paid',
-    receivedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6).toISOString(),
-    receivedBy: 'Manager',
-  },
-  {
-    id: 'pay-4',
-    paymentId: '#P-10024',
-    projectName: 'Poolside Patio Upgrade',
-    customerName: 'Ethan Clark',
-    method: 'card',
-    totalAmount: 3400,
-    paidAmount: 3400,
-    status: 'paid',
-    receivedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    receivedBy: 'Staff Admin',
-  },
-  {
-    id: 'pay-5',
-    paymentId: '#P-10025',
-    projectName: 'Garden Design & Installation',
-    customerName: 'Olivia Chen',
-    method: 'check',
-    totalAmount: 8600,
-    paidAmount: 0,
-    status: 'pending',
-    receivedAt: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(),
-    receivedBy: 'Manager',
-    notes: 'Check received; proof not uploaded yet.',
-  },
-]
 
 export const paymentStats = [
   {
@@ -124,3 +59,19 @@ export const paymentStats = [
   },
 ]
 
+export function isRequestForCompleteStatus(status: string): boolean {
+  return status?.toLowerCase() === 'request_for_complete'
+}
+
+export function formatPaymentMethod(method: string): string {
+  switch (method?.toUpperCase()) {
+    case 'CASH':
+      return 'Cash'
+    case 'CHEQUE':
+      return 'Cheque'
+    case 'CARD':
+      return 'Card'
+    default:
+      return method || '—'
+  }
+}

@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { FormInput, FormSelect, DatePicker } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
-import type { Vehicle } from '@/types'
+import type { VehicleListItem } from '../vehicleMaintenanceData'
 import { vehicleTypeOptions } from '../vehicleMaintenanceData'
 import { toast } from '@/utils/toast'
-import { parseFlexibleDate } from '@/utils/formatters'
+import { parseISO } from 'date-fns'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -33,7 +33,7 @@ export interface VehicleFormSavePayload {
 interface AddEditVehicleModalProps {
   open: boolean
   onClose: () => void
-  vehicle: Vehicle | null
+  vehicle: VehicleListItem | null
   onSave: (data: VehicleFormSavePayload) => void | Promise<void>
   isSaving?: boolean
 }
@@ -81,15 +81,24 @@ export function AddEditVehicleModal({
     const firstId = categoryOptions[0]?.id ?? ''
     if (vehicle) {
       setModel(vehicle.model)
-      setYear(vehicle.year)
+      setYear(String(vehicle.year))
       setCategoryId(vehicle.categoryId || firstId)
       setType(vehicle.type)
-      setPurchaseDate(parseFlexibleDate(vehicle.purchaseDate) ?? undefined)
-      const costNum = parseFloat(String(vehicle.purchaseCost).replace(/[^0-9.-]/g, ''))
-      setPurchaseCost(Number.isFinite(costNum) ? String(costNum) : '')
-      setInsuranceExpiry(parseFlexibleDate(vehicle.insuranceExpiry) ?? undefined)
-      setLastService(parseFlexibleDate(vehicle.lastService) ?? undefined)
-      setNextService(parseFlexibleDate(vehicle.nextService) ?? undefined)
+      setPurchaseDate(vehicle.purchaseDate ? parseISO(vehicle.purchaseDate) : undefined)
+      setPurchaseCost(String(vehicle.purchaseCost))
+      setInsuranceExpiry(
+        vehicle.insuranceExpires ? parseISO(vehicle.insuranceExpires) : undefined
+      )
+      setLastService(
+        vehicle.maintenanceLastServiceDate
+          ? parseISO(vehicle.maintenanceLastServiceDate)
+          : undefined
+      )
+      setNextService(
+        vehicle.maintenanceNextServiceDate
+          ? parseISO(vehicle.maintenanceNextServiceDate)
+          : undefined
+      )
     } else {
       setModel('')
       setYear('')

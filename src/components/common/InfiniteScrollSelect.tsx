@@ -145,9 +145,12 @@ export function InfiniteScrollSelect({
                 </span>
             </button>
 
-            {/* Dropdown */}
+            {/* Dropdown panel — stop wheel propagation so modal scroll handler doesn't hijack it */}
             {open && (
-                <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg overflow-hidden">
+                <div
+                    className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg overflow-hidden"
+                    onWheel={(e) => e.stopPropagation()}
+                >
                     {/* Search bar */}
                     <div className="flex items-center gap-2 border-b border-gray-100 px-3 py-2 bg-white">
                         <Search className="w-4 h-4 text-gray-400 shrink-0" />

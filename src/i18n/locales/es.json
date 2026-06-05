@@ -748,6 +748,9 @@
   },
   "resourceRequests": {
     "title": "Solicitudes de Recursos e Informes",
+    "materials": "Materiales",
+    "equipment": "Equipos",
+    "vehicles": "Vehículos",
     "request": "Solicitud",
     "report": "Informe",
     "requestId": "ID de Solicitud",
@@ -762,6 +765,9 @@
     "noReportsFound": "No se encontraron informes",
     "approved": "Aprobado",
     "denied": "Denegado",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "updateStatus": "Actualizar Estado",
     "requestDeleted": "Solicitud Eliminada",
     "requestRemoved": "La solicitud de recursos ha sido eliminada.",
     "reportDeleted": "Informe Eliminado",
@@ -770,11 +776,21 @@
     "deleteReport": "Eliminar Informe de Recursos",
     "deleteRequestConfirm": "¿Está seguro de que desea eliminar esta solicitud de recursos? Esta acción no se puede deshacer.",
     "deleteReportConfirm": "¿Está seguro de que desea eliminar este informe? Esta acción no se puede deshacer.",
-    "requestApproved": "Solicitud aprobada.",
+    "requestApproved": "Solicitud aprobada exitosamente.",
+    "requestRejected": "Solicitud rechazada exitosamente.",
+    "statusUpdateFailed": "Error al actualizar el estado de la solicitud.",
     "reportedBy": "Reportado por",
     "item": "Elemento",
     "type": "Tipo",
-    "urgency": "Urgencia"
+    "urgency": "Urgencia",
+    "reason": "Motivo",
+    "materialName": "Nombre del Material",
+    "equipmentName": "Nombre del Equipo",
+    "vehicleType": "Tipo de Vehículo",
+    "basicInformation": "Información Básica",
+    "materialRequestDetails": "Detalles de Solicitud de Material",
+    "equipmentRequestDetails": "Detalles de Solicitud de Equipo",
+    "vehicleRequestDetails": "Detalles de Solicitud de Vehículo"
   },
   "changeOrders": {
     "totalChangeOrders": "Total de Órdenes de Cambio",
@@ -1195,9 +1211,13 @@
       "method": "Método",
       "total": "Total",
       "paid": "Pagado",
+      "amount": "Monto",
       "status": "Estado",
-      "receivedAt": "Recibido en"
+      "receivedAt": "Recibido en",
+      "createdAt": "Creado en",
+      "trxId": "ID de transacción"
     },
+    "noCheckImage": "No hay imagen de cheque disponible.",
     "status": {
       "paid": "Pagado",
       "partiallyPaid": "Parcialmente pagado",
@@ -1205,6 +1225,10 @@
     },
     "actions": {
       "uploadProof": "Subir comprobante",
+      "viewCheck": "Ver cheque",
+      "updateStatus": "Actualizar estado",
+      "markCompleted": "Completado",
+      "markRejected": "Rechazado",
       "markPaid": "Marcar como pagado",
       "recordReceived": "Registrar recibido"
     },
@@ -1239,7 +1263,10 @@
       "paidTitle": "Pago actualizado",
       "paidDesc": "El pago se marcó como Pagado.",
       "receivedTitle": "Efectivo recibido registrado",
-      "receivedDesc": "Se registró el efectivo recibido. Esperando aprobación de Manny."
+      "receivedDesc": "Se registró el efectivo recibido. Esperando aprobación de Manny.",
+      "completedDesc": "Pago marcado como completado.",
+      "rejectedDesc": "El pago ha sido rechazado.",
+      "statusUpdateFailed": "No se pudo actualizar el estado del pago."
     }
   },
   "dailySafetyReports": {
