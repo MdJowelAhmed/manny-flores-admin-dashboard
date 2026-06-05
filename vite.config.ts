@@ -31,6 +31,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        '/image': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
   }

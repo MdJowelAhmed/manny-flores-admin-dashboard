@@ -2,6 +2,7 @@
 "use client";
 
 import { useContext, useEffect, useRef, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import moment from "moment";
 import { Search, Send, Paperclip, ArrowLeft } from "lucide-react";
@@ -10,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/utils/cn";
-import { imageUrl } from "@/redux/baseApi";
 
 import {
   useGetChatListQuery,
@@ -41,6 +41,8 @@ type TParticipant = {
 type TConversation = {
   id: string;
   status: boolean;
+  mode?: string;
+  groupName?: string;
   participants: TParticipant[];
   lastMessage: {
     text: string;
@@ -48,6 +50,53 @@ type TConversation = {
     senderId: string;
   } | null;
 };
+
+function getCurrentUserId(user: TUserContext["user"]) {
+  return user?.id ?? user?._id ?? "";
+}
+
+function getOtherParticipants(
+  conversation: TConversation,
+  currentUserId?: string,
+) {
+  if (!currentUserId) return conversation.participants ?? [];
+  return (
+    conversation.participants?.filter(
+      (participant) => participant.id !== currentUserId,
+    ) ?? []
+  );
+}
+
+function getConversationTitle(
+  conversation: TConversation,
+  currentUserId?: string,
+) {
+  const groupName = conversation.groupName?.trim();
+  if (groupName) return groupName;
+
+  const others = getOtherParticipants(conversation, currentUserId);
+  if (others.length === 1) return others[0].name;
+  if (others.length > 1) {
+    return others.map((participant) => participant.name).join(", ");
+  }
+
+  return conversation.participants?.[0]?.name || "Conversation";
+}
+
+function getConversationAvatar(
+  conversation: TConversation,
+  currentUserId?: string,
+) {
+  const others = getOtherParticipants(conversation, currentUserId);
+  return others[0]?.profile ?? conversation.participants?.[0]?.profile ?? null;
+}
+
+function getLastMessagePreview(
+  lastMessage: TConversation["lastMessage"],
+) {
+  const text = lastMessage?.text?.trim();
+  return text || "No messages yet";
+}
 
 type TMessage = {
   id: string;
@@ -57,7 +106,7 @@ type TMessage = {
   createdAt: string;
   updatedAt: string;
   resourceUrl: string | null;
-  type: "text" | "image";
+  type: string;
   sender: {
     id: string;
     name: string;
@@ -65,8 +114,18 @@ type TMessage = {
   };
 };
 
+function isImageMessage(message: TMessage) {
+  if (!message.resourceUrl) return false;
+  const type = message.type?.toLowerCase();
+  return type === "image" || (!message.text?.trim() && !!message.resourceUrl);
+}
+
 const Communication = () => {
   const { socket, user } = useContext(UserContext) as TUserContext;
+  const currentUserId = getCurrentUserId(user);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const chatIdParam = searchParams.get("chatId");
 
   const [selectedConversation, setSelectedConversation] =
     useState<TConversation | null>(null);
@@ -81,7 +140,54 @@ const Communication = () => {
 
   const { data: chatList } = useGetChatListQuery(keyword);
 
-  const { data: messageData } = useGetMessageListQuery(
+  useEffect(() => {
+    if (!chatIdParam) return;
+
+    const pendingChat = (location.state as { pendingChat?: TConversation } | null)
+      ?.pendingChat;
+
+    if (pendingChat?.id === chatIdParam) {
+      setSelectedConversation({
+        id: pendingChat.id,
+        status: pendingChat.status ?? true,
+        mode: pendingChat.mode,
+        groupName: pendingChat.groupName,
+        participants:
+          pendingChat.participants?.map((participant: any) => ({
+            id: participant.user?.id ?? participant.userId ?? participant.id,
+            name: participant.user?.name ?? "",
+            email: participant.user?.email ?? "",
+            profile: participant.user?.profile ?? null,
+            role: participant.user?.role ?? "",
+          })) ?? [],
+        lastMessage: null,
+      });
+    }
+
+    const fromList = chatList?.data?.find(
+      (conversation: TConversation) => conversation.id === chatIdParam,
+    );
+    if (fromList) {
+      setSelectedConversation(fromList);
+    } else if (pendingChat?.id === chatIdParam) {
+      // Keep pending chat selected until list refetch includes it.
+    } else if (!pendingChat) {
+      setSelectedConversation({
+        id: chatIdParam,
+        status: true,
+        participants: [],
+        lastMessage: null,
+      });
+    }
+
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("chatId");
+      return next;
+    }, { replace: true });
+  }, [chatIdParam, chatList?.data, location.state, setSearchParams]);
+
+  const { data: messageData, refetch: refetchMessages } = useGetMessageListQuery(
     selectedConversation?.id,
     {
       skip: !selectedConversation?.id,
@@ -91,10 +197,17 @@ const Communication = () => {
   const [sendMessage, { isLoading }] = useSendMessageMutation();
 
   useEffect(() => {
-    if (messageData?.data) {
-      setMessageList(messageData.data);
+    if (!selectedConversation?.id) {
+      setMessageList([]);
+      return;
     }
-  }, [messageData]);
+    setMessageList(messageData?.data ?? []);
+  }, [messageData, selectedConversation?.id]);
+
+  useEffect(() => {
+    setMessageInput("");
+    setSelectedImage(null);
+  }, [selectedConversation?.id]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -109,7 +222,10 @@ const Communication = () => {
     const event = `getMessage::${selectedConversation.id}`;
 
     const handleNewMessage = (data: TMessage) => {
-      setMessageList((prev) => [...prev, data]);
+      setMessageList((prev) => {
+        if (prev.some((message) => message.id === data.id)) return prev;
+        return [...prev, data];
+      });
     };
 
     socket.on(event, handleNewMessage);
@@ -142,6 +258,7 @@ const Communication = () => {
     if (res?.data?.success) {
       setMessageInput("");
       setSelectedImage(null);
+      await refetchMessages();
     }
   };
 
@@ -150,11 +267,11 @@ const Communication = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="h-[calc(100vh-90px)] overflow-hidden rounded-2xl border bg-white"
+      className="h-[calc(100vh-90px)] min-h-0 overflow-hidden rounded-2xl border bg-white"
     >
-      <div className="grid grid-cols-12 h-full">
+      <div className="grid grid-cols-12 h-full min-h-0">
         {/* Left Sidebar */}
-        <div className="lg:col-span-4 col-span-12 border-r bg-[#F7F7F7] flex flex-col">
+        <div className="lg:col-span-4 col-span-12 border-r bg-[#F7F7F7] flex flex-col min-h-0 overflow-hidden">
           <div className="h-[66px] bg-primary" />
 
           {/* Search */}
@@ -175,8 +292,8 @@ const Communication = () => {
           <div className="flex-1 overflow-y-auto p-2 space-y-2">
             {chatList?.data?.map((conversation: TConversation) => {
               const active = selectedConversation?.id === conversation?.id;
-
-              const participant = conversation?.participants?.[0];
+              const title = getConversationTitle(conversation, currentUserId);
+              const avatar = getConversationAvatar(conversation, currentUserId);
 
               return (
                 <button
@@ -192,10 +309,9 @@ const Communication = () => {
                   <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden bg-gray-200">
                     <img
                       src={
-                        participant?.profile? getImageUrl(participant?.profile) 
-                            : "/default-image.png"
+                        avatar ? getImageUrl(avatar) : "/default-image.png"
                       }
-                      alt={participant?.name}
+                      alt={title}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -203,7 +319,7 @@ const Communication = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-semibold truncate">
-                        {participant?.name}
+                        {title}
                       </p>
 
                       <span className="text-xs text-muted-foreground shrink-0">
@@ -216,7 +332,7 @@ const Communication = () => {
                     </div>
 
                     <p className="text-sm text-muted-foreground truncate mt-1">
-                      {conversation?.lastMessage?.text || "No messages yet"}
+                      {getLastMessagePreview(conversation.lastMessage)}
                     </p>
                   </div>
                 </button>
@@ -226,11 +342,11 @@ const Communication = () => {
         </div>
 
         {/* Right Section */}
-        <div className="lg:col-span-8 col-span-12 flex flex-col bg-white h-full">
+        <div className="lg:col-span-8 col-span-12 flex flex-col bg-white h-full min-h-0 overflow-hidden">
           {selectedConversation ? (
             <>
               {/* Header */}
-              <div className="h-[66px] bg-primary px-5 flex items-center">
+              <div className="h-[66px] shrink-0 bg-primary px-5 flex items-center">
                 <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
@@ -243,17 +359,29 @@ const Communication = () => {
                   <div className="h-11 w-11 rounded-full overflow-hidden bg-white/20">
                     <img
                       src={
-                        selectedConversation?.participants?.[0]?.profile ? getImageUrl(selectedConversation?.participants?.[0]?.profile)
-                            : "/default-image.png"
+                        getConversationAvatar(selectedConversation, currentUserId)
+                          ? getImageUrl(
+                              getConversationAvatar(
+                                selectedConversation,
+                                currentUserId,
+                              )!,
+                            )
+                          : "/default-image.png"
                       }
-                      alt={selectedConversation?.participants?.[0]?.name}
+                      alt={getConversationTitle(
+                        selectedConversation,
+                        currentUserId,
+                      )}
                       className="w-full h-full object-cover"
                     />
                   </div>
 
                   <div>
                     <p className="text-white font-semibold text-base">
-                      {selectedConversation?.participants?.[0]?.name}
+                      {getConversationTitle(
+                        selectedConversation,
+                        currentUserId,
+                      )}
                     </p>
                   </div>
                 </div>
@@ -262,10 +390,13 @@ const Communication = () => {
               {/* Messages */}
               <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto px-5 py-6 bg-[#F7F7F7] space-y-4"
+                className="flex-1 min-h-0 overflow-y-auto px-5 py-6 bg-[#F7F7F7] space-y-4"
               >
                 {messageList?.map((message) => {
-                  const isMine = user?.id === message?.senderId;
+                  const isMine =
+                    currentUserId === message?.senderId ||
+                    user?.id === message?.senderId ||
+                    user?._id === message?.senderId;
 
                   return (
                     <div
@@ -283,15 +414,12 @@ const Communication = () => {
                             : "bg-white rounded-t-2xl rounded-br-2xl",
                         )}
                       >
-                        {message?.type === "image" && message?.resourceUrl && (
+                        {isImageMessage(message) && (
                           <img
-                            src={
-                              message?.resourceUrl?.startsWith("http")
-                                ? message?.resourceUrl
-                                : `${imageUrl}${message?.resourceUrl}`
-                            }
-                            alt="chat"
-                            className="w-full h-[220px] object-cover rounded-xl mb-2"
+                            src={getImageUrl(message.resourceUrl!)}
+                            alt="chat attachment"
+                            className="max-w-full w-full max-h-[320px] min-h-[120px] object-contain rounded-xl bg-black/5 mb-2"
+                            loading="lazy"
                           />
                         )}
 
@@ -325,7 +453,7 @@ const Communication = () => {
               </div>
 
               {/* Footer */}
-              <div className="border-t px-5 py-4 bg-white">
+              <div className="shrink-0 border-t px-4 sm:px-5 py-3 sm:py-4 bg-white">
                 {selectedImage && (
                   <div className="mb-3 relative w-fit">
                     <img
@@ -335,6 +463,7 @@ const Communication = () => {
                     />
 
                     <button
+                      type="button"
                       onClick={() => setSelectedImage(null)}
                       className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
                     >
@@ -343,7 +472,7 @@ const Communication = () => {
                   </div>
                 )}
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 w-full">
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -360,7 +489,7 @@ const Communication = () => {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="shrink-0"
+                    className="shrink-0 h-11 w-11"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Paperclip className="h-5 w-5" />
@@ -376,13 +505,14 @@ const Communication = () => {
                       }
                     }}
                     placeholder="Type your message"
-                    className="h-12 rounded-full"
+                    className="flex-1 min-w-0 h-11 sm:h-12 rounded-full bg-white px-4"
                   />
 
                   <Button
+                    type="button"
                     onClick={handleSendMessage}
                     disabled={isLoading}
-                    className="h-12 w-12 rounded-full shrink-0"
+                    className="h-11 w-11 sm:h-12 sm:w-12 rounded-full shrink-0"
                   >
                     <Send className="h-5 w-5" />
                   </Button>
