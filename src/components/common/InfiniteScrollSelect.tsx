@@ -52,15 +52,14 @@ export function InfiniteScrollSelect({
         if (!value) setSelectedLabel('')
     }, [value])
 
-    // Focus search on open; clear search on close
+    // Focus search on open; clear local search on close (parent keeps fetched options)
     useEffect(() => {
         if (open) {
             setTimeout(() => searchRef.current?.focus(), 50)
         } else {
             setSearch('')
-            onSearch('')
         }
-    }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [open])
 
     // Debounced search → notify parent
     const handleSearchChange = (val: string) => {
