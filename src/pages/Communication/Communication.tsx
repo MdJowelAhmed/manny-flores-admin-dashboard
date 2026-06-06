@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import moment from "moment";
-import { Search, Send, Paperclip, ArrowLeft } from "lucide-react";
+import { Search, Send, Paperclip, ArrowLeft, FileText, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -114,10 +114,42 @@ type TMessage = {
   };
 };
 
-function isImageMessage(message: TMessage) {
+type AttachmentKind = "image" | "pdf";
+
+const ACCEPTED_FILE_TYPES = "image/*,application/pdf,.pdf";
+
+function getFileKind(file: File): AttachmentKind | null {
+  if (file.type.startsWith("image/")) return "image";
+  if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+    return "pdf";
+  }
+  return null;
+}
+
+function getAttachmentFileName(url: string) {
+  const name = url.split("/").pop() || "attachment";
+  return decodeURIComponent(name);
+}
+
+function isDocMessage(message: TMessage) {
   if (!message.resourceUrl) return false;
   const type = message.type?.toLowerCase();
-  return type === "image" || (!message.text?.trim() && !!message.resourceUrl);
+  return type === "doc" || message.resourceUrl.toLowerCase().endsWith(".pdf");
+}
+
+function isImageMessage(message: TMessage) {
+  if (!message.resourceUrl || isDocMessage(message)) return false;
+  const type = message.type?.toLowerCase();
+  return (
+    type === "image" ||
+    /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(message.resourceUrl)
+  );
+}
+
+function sortMessagesAsc(messages: TMessage[]) {
+  return [...messages].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
 }
 
 const Communication = () => {
@@ -133,7 +165,7 @@ const Communication = () => {
   const [messageInput, setMessageInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const [messageList, setMessageList] = useState<TMessage[]>([]);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -188,7 +220,11 @@ const Communication = () => {
   }, [chatIdParam, chatList?.data, location.state, setSearchParams]);
 
   const { data: messageData, refetch: refetchMessages } = useGetMessageListQuery(
-    selectedConversation?.id,
+    {
+      chatId: selectedConversation?.id ?? "",
+      page: 1,
+      limit: 100,
+    },
     {
       skip: !selectedConversation?.id,
     },
@@ -201,12 +237,18 @@ const Communication = () => {
       setMessageList([]);
       return;
     }
-    setMessageList(messageData?.data ?? []);
+    setMessageList(sortMessagesAsc((messageData?.data as TMessage[]) ?? []));
   }, [messageData, selectedConversation?.id]);
+
+  const sortedMessages = useMemo(
+    () => sortMessagesAsc(messageList),
+    [messageList],
+  );
 
   useEffect(() => {
     setMessageInput("");
-    setSelectedImage(null);
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }, [selectedConversation?.id]);
 
   useEffect(() => {
@@ -214,7 +256,7 @@ const Communication = () => {
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [messageList]);
+  }, [sortedMessages]);
 
   useEffect(() => {
     if (!socket || !selectedConversation?.id) return;
@@ -224,7 +266,7 @@ const Communication = () => {
     const handleNewMessage = (data: TMessage) => {
       setMessageList((prev) => {
         if (prev.some((message) => message.id === data.id)) return prev;
-        return [...prev, data];
+        return sortMessagesAsc([...prev, data]);
       });
     };
 
@@ -235,29 +277,39 @@ const Communication = () => {
     };
   }, [socket, selectedConversation]);
 
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleFileSelect = (file: File | undefined) => {
+    if (!file) return;
+    const kind = getFileKind(file);
+    if (!kind) return;
+    setSelectedFile(file);
+  };
+
   const handleSendMessage = async () => {
-    if ((!messageInput.trim() && !selectedImage) || !selectedConversation)
-      return;
+    if ((!messageInput.trim() && !selectedFile) || !selectedConversation) return;
 
     const formData = new FormData();
-
     formData.append("chatId", selectedConversation.id);
+    formData.append("text", messageInput);
 
-    if (selectedImage) {
-      formData.append("image", selectedImage);
-      formData.append("type", "image");
+    if (selectedFile) {
+      const kind = getFileKind(selectedFile);
+      formData.append("resourceUrl", selectedFile);
+      formData.append("type", kind === "pdf" ? "doc" : "image");
     } else {
       formData.append("type", "text");
     }
-
-    formData.append("text", messageInput);
 
     const res = await sendMessage(formData);
 
     //@ts-ignore
     if (res?.data?.success) {
       setMessageInput("");
-      setSelectedImage(null);
+      clearSelectedFile();
       await refetchMessages();
     }
   };
@@ -392,7 +444,7 @@ const Communication = () => {
                 ref={scrollRef}
                 className="flex-1 min-h-0 overflow-y-auto px-5 py-6 bg-[#F7F7F7] space-y-4"
               >
-                {messageList?.map((message) => {
+                {sortedMessages.map((message) => {
                   const isMine =
                     currentUserId === message?.senderId ||
                     user?.id === message?.senderId ||
@@ -421,6 +473,50 @@ const Communication = () => {
                             className="max-w-full w-full max-h-[320px] min-h-[120px] object-contain rounded-xl bg-black/5 mb-2"
                             loading="lazy"
                           />
+                        )}
+
+                        {isDocMessage(message) && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              window.open(
+                                getImageUrl(message.resourceUrl!),
+                                "_blank",
+                                "noopener,noreferrer",
+                              )
+                            }
+                            className={cn(
+                              "flex w-full items-center gap-3 rounded-xl border px-4 py-3 mb-2 text-left transition-opacity hover:opacity-90",
+                              isMine
+                                ? "border-white/30 bg-white/10"
+                                : "border-gray-200 bg-gray-50",
+                            )}
+                          >
+                            <FileText
+                              className={cn(
+                                "h-8 w-8 shrink-0",
+                                isMine ? "text-white" : "text-primary",
+                              )}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className={cn(
+                                  "text-sm font-medium truncate",
+                                  isMine ? "text-white" : "text-gray-900",
+                                )}
+                              >
+                                {getAttachmentFileName(message.resourceUrl!)}
+                              </p>
+                              <p
+                                className={cn(
+                                  "text-xs",
+                                  isMine ? "text-white/80" : "text-muted-foreground",
+                                )}
+                              >
+                                PDF document
+                              </p>
+                            </div>
+                          </button>
                         )}
 
                         {message?.text && (
@@ -454,20 +550,28 @@ const Communication = () => {
 
               {/* Footer */}
               <div className="shrink-0 border-t px-4 sm:px-5 py-3 sm:py-4 bg-white">
-                {selectedImage && (
-                  <div className="mb-3 relative w-fit">
-                    <img
-                      src={URL.createObjectURL(selectedImage)}
-                      alt="preview"
-                      className="h-20 w-20 rounded-lg object-cover border"
-                    />
+                {selectedFile && (
+                  <div className="mb-3 relative w-fit max-w-full">
+                    {getFileKind(selectedFile) === "image" ? (
+                      <img
+                        src={URL.createObjectURL(selectedFile)}
+                        alt="preview"
+                        className="h-20 w-20 rounded-lg object-cover border"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-lg border bg-gray-50 px-3 py-2 pr-8 max-w-xs">
+                        <FileText className="h-5 w-5 shrink-0 text-primary" />
+                        <span className="text-sm truncate">{selectedFile.name}</span>
+                      </div>
+                    )}
 
                     <button
                       type="button"
-                      onClick={() => setSelectedImage(null)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs"
+                      onClick={clearSelectedFile}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                      aria-label="Remove attachment"
                     >
-                      ×
+                      <X className="h-3 w-3" />
                     </button>
                   </div>
                 )}
@@ -477,11 +581,9 @@ const Communication = () => {
                     type="file"
                     ref={fileInputRef}
                     hidden
-                    accept="image/*"
+                    accept={ACCEPTED_FILE_TYPES}
                     onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        setSelectedImage(e.target.files[0]);
-                      }
+                      handleFileSelect(e.target.files?.[0]);
                     }}
                   />
 

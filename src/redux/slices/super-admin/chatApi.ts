@@ -59,6 +59,25 @@ export interface CreateGroupChatResponse {
 
 
 
+export interface GetMessageListParams {
+    chatId: string
+    page?: number
+    limit?: number
+}
+
+export interface MessageListResponse {
+    success: boolean
+    statusCode?: number
+    message: string
+    pagination: {
+        total: number
+        page: number
+        limit: number
+        totalPage: number
+    }
+    data: unknown[]
+}
+
 const chatSlice = baseApi.injectEndpoints({
 
     endpoints: (builder) => ({
@@ -141,15 +160,15 @@ const chatSlice = baseApi.injectEndpoints({
 
 
 
-        getMessageList: builder.query({
-
-            query: (id) => ({
-
-                url: `/message/${id}`,
-
+        getMessageList: builder.query<MessageListResponse, GetMessageListParams>({
+            query: ({ chatId, page = 1, limit = 100 }) => ({
+                url: `/message/${chatId}`,
+                params: { page, limit },
             }),
 
-            providesTags: (_result, _error, id) => [{ type: 'Chats', id: `messages-${id}` }],
+            providesTags: (_result, _error, { chatId }) => [
+                { type: 'Chats', id: `messages-${chatId}` },
+            ],
 
         }),
 
