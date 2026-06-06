@@ -18,6 +18,8 @@ import { useCreateChangeOrderMutation } from '@/redux/slices/super-admin/changeO
 
 const inputClass = 'rounded-lg bg-muted/40 border-gray-200/80 h-11'
 
+const getProjectEstimate = (project: any) => project?.estimate ?? project?.estimates ?? null
+
 interface NewChangeOrderModalProps {
   open: boolean
   onClose: () => void
@@ -70,12 +72,20 @@ export function NewChangeOrderModal({
     setAdditionalCost('0')
     setSelectedFiles([])
     setProjectPage(1)
-    setProjects([])
+
+    const incoming = getProjectsApi?.data
+    if (Array.isArray(incoming)) {
+      setProjects(incoming)
+    } else {
+      setProjects([])
+    }
+
     projectRefetch()
-  }, [open])
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const pagination = getProjectsApi?.pagination
   const hasMore = pagination ? projectPage < pagination.totalPage : false
+  const projectsWithEstimate = projects.filter((project) => getProjectEstimate(project)?.id)
 
   const handleDropdownScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
@@ -110,7 +120,7 @@ export function NewChangeOrderModal({
     const cleanCost = Number.parseFloat(additionalCost.replace(/[^0-9.-]/g, '')) || 0
 
     const formData = new FormData()
-    formData.append('projectId', selectedProjectId)
+    formData.append('estimateScheduleId', selectedProjectId)
     formData.append('reasonForChange', reasonKey)
     formData.append('description', description.trim())
     formData.append('additionalCost', cleanCost.toString())
@@ -171,11 +181,14 @@ export function NewChangeOrderModal({
                 className="max-h-52 overflow-y-auto"
                 onScroll={handleDropdownScroll}
               >
-                {getProjectsApi?.data?.map((project: any) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.estimates?.projectName ?? "Project ID: " + project.id.slice(0, 8)}
-                  </SelectItem>
-                ))}
+                {projectsWithEstimate.map((project: any) => {
+                  const estimate = getProjectEstimate(project)
+                  return (
+                    <SelectItem key={project.id} value={project.id}>
+                      {estimate.projectName}
+                    </SelectItem>
+                  )
+                })}
 
                 {/* Loading spinner */}
                 {projectFetching && (
@@ -185,14 +198,14 @@ export function NewChangeOrderModal({
                 )}
 
                 {/* All loaded */}
-                {!hasMore && !projectFetching && projects.length > 0 && (
+                {!hasMore && !projectFetching && projectsWithEstimate.length > 0 && (
                   <p className="text-xs text-center text-muted-foreground py-2">
                     {t('common.allLoaded')}
                   </p>
                 )}
 
                 {/* Empty */}
-                {!projectLoading && !projectFetching && projects.length === 0 && (
+                {!projectLoading && !projectFetching && projectsWithEstimate.length === 0 && (
                   <p className="text-xs text-center text-muted-foreground py-3">
                     {t('common.noData')}
                   </p>

@@ -123,7 +123,7 @@ export default function EstimatePage() {
   const handleUpdateEstimate = async (item: EstimateRecord) => {
     const payload = buildEstimatePayload(item)
     const res = await updateEstimate({ id: item.id, ...payload }).unwrap()
-    const mapped = mapEstimateFromApi(res.data)
+    const mapped = res.data ? mapEstimateFromApi(res.data) : item
     setItems((prev) => prev.map((row) => (row.id === item.id ? mapped : row)))
     setEditEstimate(null)
   }
