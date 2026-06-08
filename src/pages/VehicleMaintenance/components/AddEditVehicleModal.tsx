@@ -257,7 +257,7 @@ export function AddEditVehicleModal({
             />
             <FormInput
               label={t('vehicleMaintenance.purchaseCost')}
-              placeholder="25000"
+              placeholder="Enter purchase cost"
               value={purchaseCost}
               onChange={(e) => setPurchaseCost(e.target.value)}
               type="number"

@@ -131,7 +131,7 @@ export function AddEditMaterialModal({
             disabled={isSaving}
             isLoading={isSaving}
           >
-            {isEdit ? t('common.updateMaterial') : t('manageMaterials.addMaterial')}
+            {isEdit ? t('Update Material') : t('manageMaterials.addMaterial')}
           </Button>
         </div>
       }
@@ -144,7 +144,7 @@ export function AddEditMaterialModal({
           <div className="space-y-4">
             <FormInput
               label={t('manageMaterials.materialName')}
-              placeholder="Portland Cement OPC"
+              placeholder="Enter material name"
               value={materialName}
               onChange={(e) => setMaterialName(e.target.value)}
               required
@@ -184,7 +184,7 @@ export function AddEditMaterialModal({
           <div>
             <FormInput
               label={t('manageMaterials.unitPrice')}
-              placeholder="8.75"
+              placeholder="Enter unit price"
               value={unitPrice}
               onChange={(e) => setUnitPrice(e.target.value)}
               type="number"
@@ -194,7 +194,7 @@ export function AddEditMaterialModal({
             <FormInput
               className="sm:col-span-2"
               label={t('manageMaterials.quantity')}
-              placeholder="150"
+              placeholder="Enter quantity"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               type="number"

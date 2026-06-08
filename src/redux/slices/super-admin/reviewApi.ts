@@ -10,6 +10,7 @@ const reviewApi = baseApi.injectEndpoints({
                     params: params || undefined,
                 }
             },
+            providesTags: ['Reviews'],
         }),
         updateReviews: builder.mutation<any, { id: string, body: { reviewStatus: string } }>({
             query: ({ id, body }) => {
@@ -19,6 +20,7 @@ const reviewApi = baseApi.injectEndpoints({
                     body,
                 }
             },
+            invalidatesTags: ['Reviews'],
         }),
         reviewOverview: builder.query<any, void>({
             query: () => {
@@ -27,6 +29,7 @@ const reviewApi = baseApi.injectEndpoints({
                     method: 'GET',
                 }
             },
+            providesTags: ['Reviews'],
         }),
     }),
 })

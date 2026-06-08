@@ -169,7 +169,7 @@ export function AddEditEquipmentModal({
           <div className="grid grid-cols-2 gap-4">
             <FormInput
               label={t('equipmentMaintenance.equipmentName')}
-              placeholder="Industrial Air Compressor"
+              placeholder="Enter equipment name"
               value={equipmentName}
               onChange={(e) => setEquipmentName(e.target.value)}
               required
@@ -208,7 +208,7 @@ export function AddEditEquipmentModal({
             />
             <FormInput
               label={t('equipmentMaintenance.purchaseCost')}
-              placeholder="18500"
+              placeholder="Enter purchase cost"
               value={purchaseCost}
               onChange={(e) => setPurchaseCost(e.target.value)}
               type="number"

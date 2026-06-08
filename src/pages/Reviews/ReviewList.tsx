@@ -82,12 +82,6 @@ export default function ReviewList() {
     return reviewsData?.data || []
   }, [reviewsData])
 
-  const queueReviews = useMemo(() => {
-    return reviews.filter((r: any) => r.reviewStatus !== 'REJECTED')
-  }, [reviews])
-
-  console.log(queueReviews)
-
   /* =========================
      STATS FROM API
   ========================= */
@@ -230,12 +224,12 @@ export default function ReviewList() {
           REVIEWS
       ========================= */}
       <div className="space-y-4">
-        {queueReviews.length === 0 ? (
+        {reviews.length === 0 ? (
           <div className="text-center py-10 text-muted-foreground">
             No reviews found
           </div>
         ) : (
-          queueReviews.map((review: any, index: number) => (
+          reviews.map((review: any, index: number) => (
             <motion.div
               key={review.id}
               initial={{ opacity: 0, y: 10 }}
@@ -245,7 +239,8 @@ export default function ReviewList() {
               <ReviewCard
                 review={{
                   id: review.id,
-                  customerName: review.user?.name,
+                  userId: review.userId,
+                  customerName: review.user?.name || 'Unknown',
                   avatarUrl: review.user?.profilePicture,
                   rating: review.rating,
                   feedback: review.feedback,
@@ -253,7 +248,8 @@ export default function ReviewList() {
                     review.createdAt
                   ).toLocaleDateString(),
                   status: review.reviewStatus,
-                  projectId: review.projectId,
+                  projectId: review.projectId ?? undefined,
+                  projectName: review.projectName ?? undefined,
                 }}
                 onApprovePush={() =>
                   handleApprovePush(review)

@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/utils/cn'
 import { ReviewUI } from '@/types'
+import { useNavigate } from 'react-router-dom'
+import { useCreateInitialChatMutation } from '@/redux/slices/super-admin/chatApi'
+import { toast } from '@/utils/toast'
 
 interface ReviewCardProps {
   review: ReviewUI
@@ -33,6 +36,8 @@ export function ReviewCard({
   onRejectInternal,
 }: ReviewCardProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [createInitialChat, { isLoading: isCreatingChat }] = useCreateInitialChatMutation()
 
   const initials = review.customerName
     ?.split(' ')
@@ -40,6 +45,45 @@ export function ReviewCard({
     .join('')
     .slice(0, 2)
     .toUpperCase()
+
+  const handleFollowUp = async () => {
+    if (!review.userId) {
+      toast({
+        title: t('common.error'),
+        description: t('reviews.followUpUserMissing'),
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      const response = await createInitialChat(review.userId).unwrap()
+
+      if (response?.data?.id) {
+        navigate(`/communication?chatId=${response.data.id}`, {
+          state: { pendingChat: response.data },
+        })
+      } else {
+        navigate('/communication')
+      }
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('reviews.followUpFailed')
+      toast({
+        title: t('common.error'),
+        description: message,
+        variant: 'destructive',
+      })
+    }
+  }
 
   return (
     <div className="bg-white rounded-xl border border-gray-200/90 shadow-sm p-4 sm:p-5">
@@ -58,12 +102,11 @@ export function ReviewCard({
             <h3 className="font-bold text-foreground">
               {review.customerName}
             </h3>
-            {/* 
-            {review.projectId && (
+            {review.projectName && (
               <span className="text-xs font-medium text-muted-foreground px-2 py-0.5 rounded-md bg-secondary-foreground">
-                {review.projectId}
+                {review.projectName}
               </span>
-            )} */}
+            )}
           </div>
 
           <StarRatingDisplay value={review.rating} />
@@ -85,6 +128,10 @@ export function ReviewCard({
           {review.status === 'APPROVED' ? (
             <span className="sm:text-center px-3 py-2.5 rounded-lg text-sm font-semibold bg-primary/15 text-primary">
               {t('reviews.approvedBadge')}
+            </span>
+          ) : review.status === 'REJECTED' ? (
+            <span className="sm:text-center px-3 py-2.5 rounded-lg text-sm font-semibold  text-red-600">
+              {t('reviews.rejectedBadge')}
             </span>
           ) : (
             <>
@@ -110,6 +157,9 @@ export function ReviewCard({
               <Button
                 size="sm"
                 variant="outline"
+                onClick={handleFollowUp}
+                disabled={isCreatingChat}
+                isLoading={isCreatingChat}
               >
                 <MessageSquare className="h-4 w-4 mr-1" />
                 {t('reviews.followUp')}
