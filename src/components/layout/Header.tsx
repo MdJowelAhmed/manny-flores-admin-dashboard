@@ -20,7 +20,6 @@ import type { Notification } from '@/types/notification'
 import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { useGetMyProfileQuery } from '@/redux/api/authApi'
-import { imageUrl } from '@/redux/baseApi'
 import { getImageUrl } from '@/utils/getImageUrl'
 
 const routeTitleKeys: Record<string, string> = {

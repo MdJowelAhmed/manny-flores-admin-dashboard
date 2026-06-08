@@ -115,7 +115,7 @@ export default function EstimatePage() {
   const handleCreateEstimate = async (item: EstimateRecord) => {
     const payload = buildEstimatePayload(item)
     const res = await addEstimate(payload).unwrap()
-    const mapped = mapEstimateFromApi(res.data)
+    const mapped = res.data ? mapEstimateFromApi(res.data) : item
     setItems((prev) => [mapped, ...prev])
     setPage(1)
   }

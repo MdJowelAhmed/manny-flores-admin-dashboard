@@ -77,7 +77,6 @@ export interface ChangeOrder {
   contactNumber?: string
   newTotal?: number
   requestDate?: string
-  status?: string
   projectStartDate?: string
   amountSpent?: number
   totalBudget?: number
