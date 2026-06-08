@@ -50,6 +50,12 @@ export const paymentMethodOptions = [
   { value: 'ONLINE', label: 'ONLINE' },
 ]
 
+export const taskPriorityOptions = [
+  { value: 'LOW', labelKey: 'companyProjects.priorityLow' as const },
+  { value: 'MEDIUM', labelKey: 'companyProjects.priorityMedium' as const },
+  { value: 'HIGH', labelKey: 'companyProjects.priorityHigh' as const },
+]
+
 // Mock projects data
 export const mockProjectsData: Project[] = [
   {

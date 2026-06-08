@@ -1,42 +1,27 @@
-import { baseApi } from "@/redux/baseApi";
+export {
+  useCompanyProjectOverviewQuery as useCompanyProjectsOverviewQuery,
+  useGetCompanyProjectsQuery,
+  useCreateCompanyProjectMutation as useCreateCompanyProjectsMutation,
+  useUpdateCompanyProjectMutation as useUpdateCompanyProjectsMutation,
+  useAssignCompanyProjectTeamMutation,
+  useGetCompanyProjectTasksQuery,
+  useCreateCompanyProjectTaskMutation,
+  useUpdateCompanyProjectTaskMutation,
+  useGetCompanyProjectTaskQuery,
+  useDeleteCompanyProjectTaskMutation,
+  useGetCompanyProjectEmployeesQuery,
+} from '@/redux/api/companyProjectApi'
 
-const conmpanyProjectsApi = baseApi.injectEndpoints({
-    endpoints: (build) => ({
-        companyProjectsOverview: build.query<any, void>({
-            query: () => {
-                return {
-                    url: `/company-projects/overview`
-                }
-            },
-
-        }),
-        getCompanyProjects: build.query<any, { status: string, page?: number, limit?: number, search?: string }>({
-            query: ({ status, page = 1, limit = 10, search = "" }) => {
-                return {
-                    url: `/company-projects?status=${status}&page=${page}&limit=${limit}&search=${search}`
-                }
-            },
-        }),
-        createCompanyProjects: build.mutation<any, any>({
-            query: (data: any) => {
-                return {
-                    url: `/company-projects`,
-                    method: "POST",
-                    body: data,
-                }
-            },
-        }),
-        updateCompanyProjects: build.mutation<any, { id: string, body: any }>({
-            query: ({ id, body }) => {
-                return {
-                    url: `/company-projects/${id}`,
-                    method: "PATCH",
-                    body: body,
-                }
-            },
-        }),
-
-    }),
-});
-
-export const { useCompanyProjectsOverviewQuery, useGetCompanyProjectsQuery, useCreateCompanyProjectsMutation, useUpdateCompanyProjectsMutation } = conmpanyProjectsApi;
+export type {
+  CompanyProjectApiDoc,
+  CompanyProjectsListResponse,
+  CompanyProjectOverviewResponse,
+  CreateCompanyProjectPayload,
+  UpdateCompanyProjectPayload,
+  AssignCompanyProjectTeamPayload,
+  CreateCompanyProjectTaskPayload,
+  UpdateCompanyProjectTaskPayload,
+  CompanyProjectTaskApiDoc,
+  CompanyProjectTasksResponse,
+  CompanyProjectTaskResponse,
+} from '@/redux/api/companyProjectApi'
