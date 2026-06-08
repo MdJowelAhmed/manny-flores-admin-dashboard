@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import {  Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MaterialsTable } from './components/MaterialsTable'
@@ -159,12 +159,12 @@ export default function ManageMaterials() {
     } catch (err: unknown) {
       const message =
         err &&
-        typeof err === 'object' &&
-        'data' in err &&
-        err.data &&
-        typeof err.data === 'object' &&
-        'message' in err.data &&
-        typeof err.data.message === 'string'
+          typeof err === 'object' &&
+          'data' in err &&
+          err.data &&
+          typeof err.data === 'object' &&
+          'message' in err.data &&
+          typeof err.data.message === 'string'
           ? err.data.message
           : t('common.error')
       toast({ title: t('common.error'), description: message, variant: 'destructive' })
@@ -244,12 +244,12 @@ export default function ManageMaterials() {
     } catch (err: unknown) {
       const message =
         err &&
-        typeof err === 'object' &&
-        'data' in err &&
-        err.data &&
-        typeof err.data === 'object' &&
-        'message' in err.data &&
-        typeof err.data.message === 'string'
+          typeof err === 'object' &&
+          'data' in err &&
+          err.data &&
+          typeof err.data === 'object' &&
+          'message' in err.data &&
+          typeof err.data.message === 'string'
           ? err.data.message
           : t('common.error')
       toast({ title: t('common.error'), description: message, variant: 'destructive' })

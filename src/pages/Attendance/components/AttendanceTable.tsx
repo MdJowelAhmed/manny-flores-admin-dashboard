@@ -20,12 +20,12 @@ export function AttendanceTable({
   records,
   onLock,
 }: AttendanceTableProps) {
-  const { t } = useTranslation(); 
-   const navigate = useNavigate(); 
-   const viewRecord = (id:string) =>{
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const viewRecord = (id: string) => {
 
-     navigate(`/attendance/employee/${id}`); 
-   }
+    navigate(`/attendance/employee/${id}`);
+  }
 
   return (
     <div className="w-full overflow-auto">

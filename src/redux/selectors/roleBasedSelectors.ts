@@ -7,11 +7,11 @@ import { Car } from '@/types'
  */
 export const selectHasFeatureAccess =
   (feature: FeatureKey) =>
-  (state: RootState): boolean => {
-    const { user } = state.auth
-    if (!user) return false
-    return hasFeatureAccess(user.role as UserRole, feature)
-  }
+    (state: RootState): boolean => {
+      const { user } = state.auth
+      if (!user) return false
+      return hasFeatureAccess(user.role as UserRole, feature)
+    }
 
 /**
  * Get current user's role.
