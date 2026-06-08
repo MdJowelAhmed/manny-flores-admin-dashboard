@@ -25,7 +25,7 @@ export default function Dashboard() {
       return apiMonths.map((item: any) => ({
         month: item.month,
         revenue: Number(item.revenue || 0),
-        expenses: Number(item.expense || 0),
+        project: Number(item.project || 0),
       }))
     }
     return yearlyData[selectedYear] || []

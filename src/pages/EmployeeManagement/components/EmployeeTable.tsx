@@ -42,7 +42,7 @@ export function EmployeeTable({
             <th className="px-6 py-4 text-left text-sm font-bold">ID</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Name</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Email</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Department</th>
+            {/* <th className="px-6 py-4 text-left text-sm font-bold">Department</th> */}
             <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
             <th className="px-6 py-4 text-right text-sm font-bold">Action</th>
           </tr>
@@ -73,9 +73,9 @@ export function EmployeeTable({
                   <td className="px-6 py-3">
                     <span className="text-sm text-slate-600">{employee.email}</span>
                   </td>
-                  <td className="px-6 py-3">
+                  {/* <td className="px-6 py-3">
                     <span className="text-sm text-slate-600">{employee.department}</span>
-                  </td>
+                  </td> */}
                   <td className="px-6 py-3">
                     <div className="flex items-center gap-2">
                       <Switch

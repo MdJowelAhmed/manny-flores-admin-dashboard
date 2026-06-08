@@ -115,7 +115,7 @@ export default function EstimatePage() {
   const handleCreateEstimate = async (item: EstimateRecord) => {
     const payload = buildEstimatePayload(item)
     const res = await addEstimate(payload).unwrap()
-    const mapped = mapEstimateFromApi(res.data)
+    const mapped = res.data ? mapEstimateFromApi(res.data) : item
     setItems((prev) => [mapped, ...prev])
     setPage(1)
   }
@@ -123,7 +123,7 @@ export default function EstimatePage() {
   const handleUpdateEstimate = async (item: EstimateRecord) => {
     const payload = buildEstimatePayload(item)
     const res = await updateEstimate({ id: item.id, ...payload }).unwrap()
-    const mapped = mapEstimateFromApi(res.data)
+    const mapped = res.data ? mapEstimateFromApi(res.data) : item
     setItems((prev) => prev.map((row) => (row.id === item.id ? mapped : row)))
     setEditEstimate(null)
   }
@@ -152,10 +152,10 @@ export default function EstimatePage() {
                 <th className="px-5 py-4 font-bold text-gray-800">
                   {t('estimate.table.projectName')}
                 </th>
-
+                
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.clientName')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.location')}</th>
-
+                
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.totalCost')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.totalDays')}</th>
                 <th className="px-5 py-4 font-bold text-gray-800">{t('estimate.table.created')}</th>
@@ -169,40 +169,56 @@ export default function EstimatePage() {
               {paginatedItems.map((row) => {
                 const statusStyle = getProjectStatusClasses(row.projectStatus)
                 return (
-                  <tr
-                    key={row.id}
-                    className="border-t border-gray-200 bg-white hover:bg-gray-50/60 transition-colors"
-                  >
-                    <td className="px-5 py-4 text-gray-900 align-middle max-w-[200px] truncate" title={row.title}>
-                      {row.title}
-                    </td>
-                    <td className="px-5 py-4 text-gray-700 align-middle">{row.customerName}</td>
-                    <td className="px-5 py-4 text-gray-700 align-middle max-w-[180px] truncate" title={row.location}>
-                      {row.location}
-                    </td>
-                    <td className="px-5 py-4 text-gray-700 align-middle tabular-nums">
-                      {formatCurrency(row.grandTotal ?? 0)}
-                    </td>
-                    <td className="px-5 py-4 text-gray-700 align-middle tabular-nums whitespace-nowrap">
-                      {row.totalDays != null ? row.totalDays : '—'}
-                    </td>
-                    <td className="px-5 py-4 text-gray-700 align-middle whitespace-nowrap">
-                      {row.createdAtDisplay ?? '—'}
-                    </td>
-
-                    <td className="px-5 py-4 align-middle">
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-2 font-medium',
-                          statusStyle.text
-                        )}
-                      >
-                        <span className={cn('h-2 w-2 shrink-0 rounded-full', statusStyle.dot)} />
-                        {t(`estimate.projectStatus.${row.projectStatus}`)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 align-middle">
-                      <div className="flex items-center justify-end gap-1">
+                <tr
+                  key={row.id}
+                  className="border-t border-gray-200 bg-white hover:bg-gray-50/60 transition-colors"
+                >
+                  <td className="px-5 py-4 text-gray-900 align-middle max-w-[200px] truncate" title={row.title}>
+                    {row.title}
+                  </td>
+                  <td className="px-5 py-4 text-gray-700 align-middle">{row.customerName}</td>
+                  <td className="px-5 py-4 text-gray-700 align-middle max-w-[180px] truncate" title={row.location}>
+                    {row.location}
+                  </td>
+                  <td className="px-5 py-4 text-gray-700 align-middle tabular-nums">
+                    {formatCurrency(row.grandTotal ?? 0)}
+                  </td>
+                  <td className="px-5 py-4 text-gray-700 align-middle tabular-nums whitespace-nowrap">
+                    {row.totalDays != null ? row.totalDays : '—'}
+                  </td>
+                  <td className="px-5 py-4 text-gray-700 align-middle whitespace-nowrap">
+                    {row.createdAtDisplay ?? '—'}
+                  </td>
+          
+                  <td className="px-5 py-4 align-middle">
+                    <span
+                      className={cn(
+                        'inline-flex items-center gap-2 font-medium',
+                        statusStyle.text
+                      )}
+                    >
+                      <span className={cn('h-2 w-2 shrink-0 rounded-full', statusStyle.dot)} />
+                      {t(`estimate.projectStatus.${row.projectStatus}`)}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 align-middle">
+                    <div className="flex items-center justify-end gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 text-gray-600 hover:text-gray-900"
+                            onClick={() => openModal(row)}
+                          >
+                            <Info className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t('estimate.actions.details')}</TooltipContent>
+                      </Tooltip>
+                    
+                      {canCreate && row.projectStatus === 'PENDING' && row.status !== 'signed' && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -210,49 +226,32 @@ export default function EstimatePage() {
                               variant="ghost"
                               size="icon"
                               className="h-9 w-9 text-gray-600 hover:text-gray-900"
-                              onClick={() => openModal(row)}
+                              onClick={() => setEditEstimate(row)}
                             >
-                              <Info className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>{t('estimate.actions.details')}</TooltipContent>
+                          <TooltipContent>{t('common.edit')}</TooltipContent>
                         </Tooltip>
-
-                        {canCreate && row.projectStatus === 'PENDING' && row.status !== 'signed' && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 text-gray-600 hover:text-gray-900"
-                                onClick={() => setEditEstimate(row)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{t('common.edit')}</TooltipContent>
-                          </Tooltip>
-                        )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => setDeleteTarget(row)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>{t('estimate.actions.delete')}</TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
+                      )}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => setDeleteTarget(row)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t('estimate.actions.delete')}</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </td>
+                </tr>
+              )})}
               {!isLoading && paginatedItems.length === 0 && (
                 <tr>
                   <td className="px-5 py-8 text-center text-gray-500" colSpan={8}>

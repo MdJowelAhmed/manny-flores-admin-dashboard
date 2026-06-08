@@ -4,16 +4,40 @@ export type ChangeOrderStatus = 'Pending' | 'Approved'
 
 export interface ChangeOrder {
   id: string
-  projectId: string
+  projectId?: string | null
+  estimateScheduleId?: string
   userId: string
   reasonForChange: string
   description: string
   originalCost: number
   additionalCost: number
   totalCost: number
+  status?: string
   documentation: string[]
   createdAt: string
   updatedAt: string
+  estimateSchedule?: {
+    id: string
+    estimateId: string
+    projectStatus?: string
+    estimate?: {
+      id: string
+      projectName?: string
+      customerAddress?: string
+      customerEmail?: string
+      clientName?: string
+      phone?: string
+      email?: string
+      company?: string
+      siteAddress?: string
+    }
+  }
+  user?: {
+    id: string
+    name?: string
+    email?: string
+    profile?: string
+  }
   project?: {
     id: string
     estimateId: string
@@ -22,6 +46,16 @@ export interface ChangeOrder {
     clientId: string
     createdAt: string
     updatedAt: string
+    estimate?: {
+      projectName?: string
+      clientName?: string
+      phone?: string
+      email?: string
+      company?: string
+      siteAddress?: string
+      customerAddress?: string
+      customerEmail?: string
+    }
     estimates?: {
       projectName?: string
       clientName?: string
@@ -29,6 +63,8 @@ export interface ChangeOrder {
       email?: string
       company?: string
       siteAddress?: string
+      customerAddress?: string
+      customerEmail?: string
     }
   }
   // Legacy / derived properties for backward compatibility during transition
@@ -41,7 +77,6 @@ export interface ChangeOrder {
   contactNumber?: string
   newTotal?: number
   requestDate?: string
-  status?: string
   projectStartDate?: string
   amountSpent?: number
   totalBudget?: number
@@ -98,4 +133,48 @@ export const changeReasonOptions = [
   { value: 'site_condition', labelKey: 'changeOrders.reasonSiteCondition' as const },
   { value: 'client_request', labelKey: 'changeOrders.reasonClientRequest' as const },
 ]
+
+export function getChangeOrderEstimate(order: ChangeOrder) {
+  return (
+    order.estimateSchedule?.estimate ??
+    order.project?.estimates ??
+    order.project?.estimate ??
+    null
+  )
+}
+
+export function getChangeOrderProjectName(order: ChangeOrder): string {
+  return getChangeOrderEstimate(order)?.projectName ?? order.projectName ?? '—'
+}
+
+export function getChangeOrderStatus(order: ChangeOrder): string {
+  const raw = order.status ?? order.project?.status
+  if (!raw) return 'Pending'
+  const s = raw.toUpperCase()
+  if (s === 'PENDING') return 'Pending'
+  if (s === 'APPROVED') return 'Approved'
+  return raw
+}
+
+export function getChangeOrderSiteAddress(order: ChangeOrder): string {
+  const estimate = getChangeOrderEstimate(order)
+  return estimate?.siteAddress ?? estimate?.customerAddress ?? '—'
+}
+
+export function getChangeOrderCustomerName(order: ChangeOrder): string {
+  return getChangeOrderEstimate(order)?.clientName ?? '—'
+}
+
+export function getChangeOrderCustomerEmail(order: ChangeOrder): string {
+  const estimate = getChangeOrderEstimate(order)
+  return estimate?.email ?? estimate?.customerEmail ?? '—'
+}
+
+export function getChangeOrderCustomerPhone(order: ChangeOrder): string {
+  return getChangeOrderEstimate(order)?.phone ?? '—'
+}
+
+export function getChangeOrderCompany(order: ChangeOrder): string {
+  return getChangeOrderEstimate(order)?.company ?? '—'
+}
 

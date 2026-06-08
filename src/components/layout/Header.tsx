@@ -20,7 +20,7 @@ import type { Notification } from '@/types/notification'
 import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { useGetMyProfileQuery } from '@/redux/api/authApi'
-import { imageUrl } from '@/redux/baseApi'
+import { getImageUrl } from '@/utils/getImageUrl'
 
 const routeTitleKeys: Record<string, string> = {
   '/dashboard': 'header.routeTitles.dashboard',
@@ -190,7 +190,7 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={user?.profile ? imageUrl(user.profile) : undefined} />
+                  <AvatarImage src={user?.profile ? getImageUrl(user.profile) : undefined} />
                   <AvatarFallback className="text-white bg-primary" >
                     {user?.name?.charAt(0) ?? 'E'}
                   </AvatarFallback>

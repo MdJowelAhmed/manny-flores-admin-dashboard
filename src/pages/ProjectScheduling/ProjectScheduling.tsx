@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import {
   Calendar,
   Eye,
   Loader2,
-
+  MessageCircle,
   Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -34,6 +35,7 @@ import {
   useReScheduleProjectMutation,
 } from '@/redux/api/projectsApi'
 import { useGetTeamsQuery } from '@/redux/api/teamApi'
+import { useCreateGroupChatMutation } from '@/redux/slices/super-admin/chatApi'
 import { getProjectStatusClasses } from '@/pages/Estimate/estimateData'
 import { formatDateDisplay } from '@/utils/formatters'
 
@@ -62,6 +64,7 @@ function isProjectCompleted(schedule: ScheduledProject): boolean {
 
 export default function ProjectScheduling() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [pendingSchedules] = useState(() => consumePendingSchedules())
@@ -76,8 +79,10 @@ export default function ProjectScheduling() {
   const [reScheduleProject, { isLoading: isRescheduling }] = useReScheduleProjectMutation()
   const [assignProjectEmployee, { isLoading: isAssigning }] = useAssignProjectEmployeeMutation()
   const [completeRequest, { isLoading: isCompleting }] = useCompleteRequestMutation()
+  const [createGroupChat, { isLoading: isCreatingChat }] = useCreateGroupChatMutation()
 
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduledProject | null>(null)
+  const [messagingProjectId, setMessagingProjectId] = useState<string | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false)
   const [rescheduleTarget, setRescheduleTarget] = useState<ScheduledProject | null>(null)
@@ -178,6 +183,50 @@ export default function ProjectScheduling() {
         variant: 'destructive',
       })
       throw new Error('assign failed')
+    }
+  }
+
+  const handleProjectMessage = async (schedule: ScheduledProject) => {
+    const participants = schedule.assignedEmployeeIds.filter(Boolean)
+
+    if (participants.length === 0) {
+      toast({
+        title: t('common.error'),
+        description: t('projectScheduling.noTeamMembersForChat'),
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setMessagingProjectId(schedule.id)
+    try {
+      const response = await createGroupChat({
+        participants,
+        estimateId: schedule.estimateId,
+        groupName: schedule.projectTitle || schedule.project,
+      }).unwrap()
+
+      navigate(`/communication?chatId=${response.data.id}`, {
+        state: { pendingChat: response.data },
+      })
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('projectScheduling.groupChatFailed')
+      toast({
+        title: t('common.error'),
+        description: message,
+        variant: 'destructive',
+      })
+    } finally {
+      setMessagingProjectId(null)
     }
   }
 
@@ -440,6 +489,20 @@ export default function ProjectScheduling() {
 
                         <div className="flex flex-col w-full xl:w-[min(100%,280px)] shrink-0 xl:self-stretch">
                           <div className="mt-auto flex flex-wrap justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 rounded-lg border-gray-200 text-gray-900 hover:bg-muted/50"
+                              disabled={isCreatingChat && messagingProjectId === schedule.id}
+                              onClick={() => handleProjectMessage(schedule)}
+                              aria-label={t('projectScheduling.messageTeam')}
+                            >
+                              {isCreatingChat && messagingProjectId === schedule.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <MessageCircle className="h-4 w-4" />
+                              )}
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"

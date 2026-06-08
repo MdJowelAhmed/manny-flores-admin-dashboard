@@ -104,7 +104,7 @@ export interface EstimateMutationResponse {
   success: boolean
   statusCode?: number
   message: string
-  data: EstimateApiDoc
+  data?: EstimateApiDoc
 }
 
 export interface GetEstimatesParams {

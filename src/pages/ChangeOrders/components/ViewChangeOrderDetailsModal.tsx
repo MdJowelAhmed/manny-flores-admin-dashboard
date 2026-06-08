@@ -12,6 +12,15 @@ import {
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import type { ChangeOrder } from '../changeOrdersData'
+import {
+  getChangeOrderProjectName,
+  getChangeOrderStatus,
+  getChangeOrderSiteAddress,
+  getChangeOrderCustomerName,
+  getChangeOrderCustomerEmail,
+  getChangeOrderCustomerPhone,
+  getChangeOrderCompany,
+} from '../changeOrdersData'
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
@@ -85,15 +94,7 @@ export function ViewChangeOrderDetailsModal({
     })
   }
 
-  const getNormalizedStatus = (status: string | undefined) => {
-    if (!status) return 'Pending'
-    const s = status.toUpperCase()
-    if (s === 'PENDING') return 'Pending'
-    if (s === 'APPROVED') return 'Approved'
-    return status
-  }
-
-  const currentStatus = getNormalizedStatus(order.project?.status)
+  const currentStatus = getChangeOrderStatus(order)
 
   return (
     <ModalWrapper
@@ -121,10 +122,9 @@ export function ViewChangeOrderDetailsModal({
           <div className="rounded-xl bg-muted/20 px-4 py-1">
             <DetailRow
               label={t('changeOrders.projectName')}
-              value={order.project?.estimates?.projectName ?? "Project ID: " + (order.project?.id?.slice(0, 8) || "—")}
+              value={getChangeOrderProjectName(order)}
             />
-            <DetailRow label={t('changeOrders.projectId')} value={order.project?.id ?? order.projectId ?? "—"} />
-            <DetailRow label={t('changeOrders.siteAddress')} value={order.project?.estimates?.siteAddress ?? "—"} />
+            <DetailRow label={t('changeOrders.siteAddress')} value={getChangeOrderSiteAddress(order)} />
             <DetailRow
               label={t('changeOrders.requestDate')}
               value={
@@ -160,10 +160,10 @@ export function ViewChangeOrderDetailsModal({
         <div>
           <SectionHeader icon={User} title={t('changeOrders.sectionCustomerInfo')} />
           <div className="rounded-xl bg-muted/20 px-4 py-1">
-            <DetailRow label={t('changeOrders.customerName')} value={order.project?.estimates?.clientName ?? "—"} />
-            <DetailRow label={t('changeOrders.contactNumber')} value={order.project?.estimates?.phone ?? "—"} />
-            <DetailRow label={t('changeOrders.emailField')} value={order.project?.estimates?.email ?? "—"} />
-            <DetailRow label={t('changeOrders.company')} value={order.project?.estimates?.company ?? "—"} />
+            <DetailRow label={t('changeOrders.customerName')} value={getChangeOrderCustomerName(order)} />
+            <DetailRow label={t('changeOrders.contactNumber')} value={getChangeOrderCustomerPhone(order)} />
+            <DetailRow label={t('changeOrders.emailField')} value={getChangeOrderCustomerEmail(order)} />
+            <DetailRow label={t('changeOrders.company')} value={getChangeOrderCompany(order)} />
           </div>
         </div>
 

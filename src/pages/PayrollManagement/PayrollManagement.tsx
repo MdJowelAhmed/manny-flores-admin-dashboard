@@ -39,7 +39,7 @@ export default function PayrollManagement() {
   const [empPage, setEmpPage] = useState(1)
   const [empOptions, setEmpOptions] = useState<{ value: string; label: string }[]>([])
 
-  const { data: customersData, isFetching: empLoading } = useGetAllCustomersQuery({
+  const { data: customersData, isFetching: empLoading, refetch: refetchEmployees } = useGetAllCustomersQuery({
     search: empSearch,
     page: empPage,
   })
@@ -227,6 +227,7 @@ export default function PayrollManagement() {
         setEmpPage={setEmpPage}
         setEmpSearch={setEmpSearch}
         empLoading={empLoading}
+        refetchEmployees={refetchEmployees}
         refetch={refetch}
       />
 

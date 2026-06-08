@@ -61,13 +61,7 @@ const navItems: NavItem[] = [
   //   feature: 'recent-projects',
   // },
 
-  {
-    title: 'Customer Management',
-    titleKey: 'sidebar.customerManagement',
-    href: '/customer-management',
-    icon: UserCircle,
-    feature: 'customer-management',
-  },
+
   {
     title: 'Estimate',
     titleKey: 'sidebar.estimate',
@@ -200,6 +194,13 @@ const navItems: NavItem[] = [
     icon: ShieldCheck,
     feature: 'daily-safety-reports',
   },
+  {
+    title: 'Customer Management',
+    titleKey: 'sidebar.customerManagement',
+    href: '/customer-management',
+    icon: UserCircle,
+    feature: 'customer-management',
+  },
 ]
 
 const settingsItems: NavItem[] = [
@@ -319,7 +320,7 @@ export function Sidebar() {
           <div className="flex items-center gap-3">
             <div className="">
               <div className="text-primary text-white font-bold text-lg  w-72  mx-auto hidden lg:block">
-                <img src="/image3.svg" alt="manny Flores" className="" />
+                <img src="/logo3.png" alt="manny Flores" className=" h-28 w-28 " />
               </div>
             </div>
           </div>

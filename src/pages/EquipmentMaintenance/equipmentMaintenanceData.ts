@@ -1,6 +1,20 @@
 import type { Equipment, EquipmentStatus } from '@/types'
 import type { SelectOption } from '@/types'
 
+/** UI model aligned with `GET /equipment` response fields. */
+export interface EquipmentListItem {
+  id: string
+  equipmentName: string
+  categoryId: string
+  category: string
+  purchaseDate: string
+  purchaseCost: number
+  warrantyExpiryDate: string
+  createdAt?: string
+  updatedAt?: string
+  isDeleted?: boolean
+}
+
 export const EQUIPMENT_STATUS_COLORS: Record<EquipmentStatus, { bg: string; text: string }> = {
   Available: { bg: 'bg-green-100', text: 'text-green-600' },
   'In Use': { bg: 'bg-blue-100', text: 'text-blue-600' },

@@ -15,8 +15,8 @@ import {
   useGetCategoriesQuery,
   mapCategoryFromApi,
 } from '@/redux/api/categoryApi'
-import type { Equipment } from '@/types'
-import { parseFlexibleDate } from '@/utils/formatters'
+import type { EquipmentListItem } from '../equipmentMaintenanceData'
+import { parseISO } from 'date-fns'
 import { toast } from '@/utils/toast'
 
 export interface EquipmentFormSavePayload {
@@ -31,7 +31,7 @@ export interface EquipmentFormSavePayload {
 interface AddEditEquipmentModalProps {
   open: boolean
   onClose: () => void
-  equipment: Equipment | null
+  equipment: EquipmentListItem | null
   onSave: (data: EquipmentFormSavePayload) => void | Promise<void>
   isSaving?: boolean
 }
@@ -69,10 +69,13 @@ export function AddEditEquipmentModal({
     if (equipment) {
       setEquipmentName(equipment.equipmentName)
       setCategoryId(equipment.categoryId || firstId)
-      setPurchaseDate(parseFlexibleDate(equipment.purchaseDate) ?? undefined)
-      const costNum = parseFloat(String(equipment.purchaseCost).replace(/[^0-9.-]/g, ''))
-      setPurchaseCost(Number.isFinite(costNum) ? String(costNum) : '')
-      setWarrantyExpiry(parseFlexibleDate(equipment.warrantyExpiry) ?? undefined)
+      setPurchaseDate(
+        equipment.purchaseDate ? parseISO(equipment.purchaseDate) : undefined
+      )
+      setPurchaseCost(String(equipment.purchaseCost))
+      setWarrantyExpiry(
+        equipment.warrantyExpiryDate ? parseISO(equipment.warrantyExpiryDate) : undefined
+      )
     } else {
       setEquipmentName('')
       setCategoryId(firstId)
@@ -166,7 +169,7 @@ export function AddEditEquipmentModal({
           <div className="grid grid-cols-2 gap-4">
             <FormInput
               label={t('equipmentMaintenance.equipmentName')}
-              placeholder="Industrial Air Compressor"
+              placeholder="Enter equipment name"
               value={equipmentName}
               onChange={(e) => setEquipmentName(e.target.value)}
               required
@@ -205,7 +208,7 @@ export function AddEditEquipmentModal({
             />
             <FormInput
               label={t('equipmentMaintenance.purchaseCost')}
-              placeholder="18500"
+              placeholder="Enter purchase cost"
               value={purchaseCost}
               onChange={(e) => setPurchaseCost(e.target.value)}
               type="number"

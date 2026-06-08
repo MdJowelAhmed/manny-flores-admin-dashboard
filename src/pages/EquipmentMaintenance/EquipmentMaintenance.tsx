@@ -13,13 +13,10 @@ import {
   AddEditEquipmentModal,
   type EquipmentFormSavePayload,
 } from './components/AddEditEquipmentModal'
-import {
-  AssignEmployeeModal,
-  type AssignEmployeePayload,
-} from './components/AssignEmployeeModal'
 import { EquipmentCategoriesTable } from './components/EquipmentCategoriesTable'
 import { AddEditEquipmentCategoryModal } from './components/AddEditEquipmentCategoryModal'
-import type { Equipment, EquipmentCategory } from '@/types'
+import type { EquipmentCategory } from '@/types'
+import type { EquipmentListItem } from './equipmentMaintenanceData'
 import { toast } from '@/utils/toast'
 import { DEFAULT_PAGINATION } from '@/utils/constants'
 import {
@@ -42,13 +39,11 @@ export default function EquipmentMaintenance() {
   const [equipmentPage, setEquipmentPage] = useState(DEFAULT_PAGINATION.page)
   const [equipmentLimit, setEquipmentLimit] = useState(DEFAULT_PAGINATION.limit)
 
-  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null)
+  const [selectedEquipment, setSelectedEquipment] = useState<EquipmentListItem | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false)
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const [equipmentToDelete, setEquipmentToDelete] = useState<Equipment | null>(null)
-  const [localOverrides, setLocalOverrides] = useState<Record<string, Partial<Equipment>>>({})
+  const [equipmentToDelete, setEquipmentToDelete] = useState<EquipmentListItem | null>(null)
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
@@ -81,12 +76,13 @@ export default function EquipmentMaintenance() {
     return map
   }, [equipmentCategories])
 
-  const equipment = useMemo(() => {
-    const list = (equipmentResponse?.data ?? []).map((doc) =>
-      mapEquipmentFromApi(doc, categoryNameById)
-    )
-    return list.map((item) => ({ ...item, ...localOverrides[item.id] }))
-  }, [equipmentResponse, categoryNameById, localOverrides])
+  const equipment = useMemo(
+    () =>
+      (equipmentResponse?.data ?? []).map((doc) =>
+        mapEquipmentFromApi(doc, categoryNameById)
+      ),
+    [equipmentResponse, categoryNameById]
+  )
 
   const filteredEquipment = useMemo(() => {
     if (!searchQuery.trim()) return equipment
@@ -94,8 +90,7 @@ export default function EquipmentMaintenance() {
     return equipment.filter(
       (e) =>
         e.equipmentName.toLowerCase().includes(q) ||
-        e.category.toLowerCase().includes(q) ||
-        e.assignedTo.toLowerCase().includes(q)
+        e.category.toLowerCase().includes(q)
     )
   }, [equipment, searchQuery])
 
@@ -128,21 +123,16 @@ export default function EquipmentMaintenance() {
     setCategoryPage(1)
   }
 
-  const handleView = (item: Equipment) => {
+  const handleView = (item: EquipmentListItem) => {
     setSelectedEquipment(item)
     setIsViewModalOpen(true)
   }
 
-  const handleEdit = (item: Equipment, e: React.MouseEvent) => {
+  const handleEdit = (item: EquipmentListItem, e: React.MouseEvent) => {
     e?.stopPropagation?.()
     setSelectedEquipment(item)
     setIsViewModalOpen(false)
     setIsAddEditModalOpen(true)
-  }
-
-  const handleAssign = (item: Equipment) => {
-    setSelectedEquipment(item)
-    setIsAssignModalOpen(true)
   }
 
   const handleAdd = () => {
@@ -161,7 +151,7 @@ export default function EquipmentMaintenance() {
   const handleSave = async (data: EquipmentFormSavePayload) => {
     const body = {
       equipmentName: data.equipmentName,
-      category: data.categoryId,
+      categoryId: data.categoryId,
       purchaseDate: data.purchaseDate,
       purchaseCost: data.purchaseCost,
       warrantyExpiryDate: data.warrantyExpiryDate,
@@ -201,25 +191,7 @@ export default function EquipmentMaintenance() {
     }
   }
 
-  const handleAssignSave = (data: AssignEmployeePayload) => {
-    const patch = {
-      assignedTo: data.assignedTo,
-      assignedEmployee: data.assignedEmployee,
-      lastService: data.lastService || '—',
-      nextService: data.nextService || '—',
-      status: (data.assignedTo ? 'In Use' : 'Available') as Equipment['status'],
-    }
-    setLocalOverrides((prev) => ({
-      ...prev,
-      [data.equipmentId]: patch,
-    }))
-    setIsAssignModalOpen(false)
-    setSelectedEquipment((prev) =>
-      prev?.id === data.equipmentId ? { ...prev, ...patch } : prev
-    )
-  }
-
-  const handleDelete = (item: Equipment) => {
+  const handleDelete = (item: EquipmentListItem) => {
     setEquipmentToDelete(item)
     setIsConfirmOpen(true)
   }
@@ -245,11 +217,6 @@ export default function EquipmentMaintenance() {
       })
       setIsConfirmOpen(false)
       setEquipmentToDelete(null)
-      setLocalOverrides((prev) => {
-        const next = { ...prev }
-        delete next[equipmentToDelete.id]
-        return next
-      })
       if (selectedEquipment?.id === equipmentToDelete.id) {
         setSelectedEquipment(null)
         setIsViewModalOpen(false)
@@ -373,7 +340,6 @@ export default function EquipmentMaintenance() {
                 onView={handleView}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
-                onAssign={handleAssign}
               />
             )}
             <Pagination
@@ -430,7 +396,6 @@ export default function EquipmentMaintenance() {
         equipment={selectedEquipment}
         onEdit={handleOpenEditFromView}
         onDelete={handleDeleteFromView}
-        onAssign={() => selectedEquipment && handleAssign(selectedEquipment)}
       />
 
       <AddEditEquipmentModal
@@ -442,15 +407,6 @@ export default function EquipmentMaintenance() {
         equipment={selectedEquipment}
         onSave={handleSave}
         isSaving={isSavingEquipment}
-      />
-
-      <AssignEmployeeModal
-        open={isAssignModalOpen}
-        onClose={() => {
-          setIsAssignModalOpen(false)
-        }}
-        equipment={selectedEquipment}
-        onSave={handleAssignSave}
       />
 
       <AddEditEquipmentCategoryModal

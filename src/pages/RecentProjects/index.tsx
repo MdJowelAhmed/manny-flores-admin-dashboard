@@ -93,11 +93,12 @@ export default function RecentProjects() {
         status: mapStatus(item.projectStatus),
         progress: item.projectStatus === 'COMPLETED' ? 100 : item.projectStatus === 'IN_PROGRESS' ? 60 : item.projectStatus === 'PENDING' ? 15 : 0,
         value: item.totalCost ? `$${item.totalCost}` : '$0',
-        startDate: item.estimateStartDate ? new Date(item.estimateStartDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
-        endDate: item.estimateEndDate ? new Date(item.estimateEndDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
+        // startDate: item.estimateStartDate ? new Date(item.estimateStartDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
+        // endDate: item.estimateEndDate ? new Date(item.estimateEndDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
         email: item.customerEmail,
         company: item.customerName,
         projectName: item.projectName,
+        totalDays: item.totalDate,
         description: item.description,
         planFiles: [],
         originalId: item.id
@@ -173,16 +174,22 @@ export default function RecentProjects() {
                       <th className="px-6 py-4 text-left text-sm font-bold">
                         {t('recentProjectsPage.project')}
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold">
-                        {t('recentProjectsPage.startDate')}
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold">
-                        {t('recentProjectsPage.endDate')}
+
+                        {/* <th className="px-6 py-4 text-left text-sm font-bold">
+                          {t('recentProjectsPage.startDate')}
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-bold">
+                          {t('recentProjectsPage.endDate')}
+                        </th> */}
+                        <th className="px-6 py-4 text-left text-sm font-bold">
+                        {t('recentProjectsPage.totalDays')}
                       </th>
                       <th className="px-6 py-4 text-left text-sm font-bold">
                         {t('recentProjectsPage.status')}
                       </th>
-
+                      <th className="px-6 py-4 text-left text-sm font-bold">
+                        {t('recentProjectsPage.totalDays')}
+                      </th>
                       <th className="px-6 py-4 text-left text-sm font-bold">
                         {t('recentProjectsPage.action')}
                       </th>
@@ -201,11 +208,14 @@ export default function RecentProjects() {
                           {project.customerName}
                         </td>
                         <td className="px-6 py-5 text-sm">{project.project}</td>
-                        <td className="px-6 py-5 text-sm whitespace-nowrap">
+                        {/* <td className="px-6 py-5 text-sm whitespace-nowrap">
                           {project.startDate}
                         </td>
                         <td className="px-6 py-5 text-sm whitespace-nowrap">
                           {project.endDate}
+                        </td> */}
+                        <td className="px-6 py-5 text-sm whitespace-nowrap">
+                          {project.totalDays}
                         </td>
                         <td className="px-6 py-5">
                           <span

@@ -1,123 +1,185 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Pagination } from '@/components/common/Pagination'
-import { ConfirmDialog } from '@/components/common/ConfirmDialog'
-import { RequestTable } from './components/RequestTable'
-import { ReportTable } from './components/ReportTable'
+import { SearchInput } from '@/components/common/SearchInput'
+import { ResourceRequestTableSection } from './components/ResourceRequestTableSection'
 import { ViewRequestDetailsModal } from './components/ViewRequestDetailsModal'
-import { ViewReportDetailsModal } from './components/ViewReportDetailsModal'
 import {
-  mockResourceRequests,
-  mockResourceReports,
-  type ResourceRequest,
-  type ResourceReport,
-} from './resourceRequestsData'
+  useGetRequestedMaterialsQuery,
+  useUpdateRequestedMaterialStatusMutation,
+  useGetRequestedEquipmentsQuery,
+  useUpdateRequestedEquipmentStatusMutation,
+  useGetRequestedVehiclesQuery,
+  useUpdateRequestedVehicleStatusMutation,
+  mapMaterialRequestFromApi,
+  mapEquipmentRequestFromApi,
+  mapVehicleRequestFromApi,
+  type ResourceRequestStatusUpdate,
+} from '@/redux/api/resouceRequestApi'
+import { DEFAULT_PAGINATION } from '@/utils/constants'
 import { toast } from '@/utils/toast'
+import type {
+  ResourceRequestTab,
+  ViewableResourceRequest,
+} from './resourceRequestsData'
+
+const VALID_TABS: ResourceRequestTab[] = ['materials', 'equipment', 'vehicles']
+
+function parseTab(value: string | null): ResourceRequestTab {
+  if (value && VALID_TABS.includes(value as ResourceRequestTab)) {
+    return value as ResourceRequestTab
+  }
+  return 'materials'
+}
 
 export default function ResourceRequestsReport() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tabParam = searchParams.get('tab') || 'request'
+  const tabParam = parseTab(searchParams.get('tab'))
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
-  const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
+  const itemsPerPage =
+    Math.max(1, parseInt(searchParams.get('limit') || String(DEFAULT_PAGINATION.limit), 10)) ||
+    DEFAULT_PAGINATION.limit
 
-  const [requests, setRequests] = useState<ResourceRequest[]>(mockResourceRequests)
-  const [reports, setReports] = useState<ResourceReport[]>(mockResourceReports)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [viewRecord, setViewRecord] = useState<ViewableResourceRequest | null>(null)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
-  const [viewRequest, setViewRequest] = useState<ResourceRequest | null>(null)
-  const [viewReport, setViewReport] = useState<ResourceReport | null>(null)
-  const [requestToDelete, setRequestToDelete] = useState<ResourceRequest | null>(null)
-  const [reportToDelete, setReportToDelete] = useState<ResourceReport | null>(null)
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const queryParams = {
+    page: currentPage,
+    limit: itemsPerPage,
+    search: searchQuery,
+  }
 
-  const activeData = tabParam === 'report' ? reports : requests
-  const totalPages = Math.max(1, Math.ceil(activeData.length / itemsPerPage))
+  const {
+    data: materialsResponse,
+    isLoading: isMaterialsLoading,
+    isFetching: isMaterialsFetching,
+  } = useGetRequestedMaterialsQuery(queryParams, { skip: tabParam !== 'materials' })
+
+  const {
+    data: equipmentsResponse,
+    isLoading: isEquipmentsLoading,
+    isFetching: isEquipmentsFetching,
+  } = useGetRequestedEquipmentsQuery(queryParams, { skip: tabParam !== 'equipment' })
+
+  const {
+    data: vehiclesResponse,
+    isLoading: isVehiclesLoading,
+    isFetching: isVehiclesFetching,
+  } = useGetRequestedVehiclesQuery(queryParams, { skip: tabParam !== 'vehicles' })
+
+  const [updateMaterialStatus] = useUpdateRequestedMaterialStatusMutation()
+  const [updateEquipmentStatus] = useUpdateRequestedEquipmentStatusMutation()
+  const [updateVehicleStatus] = useUpdateRequestedVehicleStatusMutation()
+
+  const materials = useMemo(
+    () => (materialsResponse?.data ?? []).map(mapMaterialRequestFromApi),
+    [materialsResponse]
+  )
+  const equipments = useMemo(
+    () => (equipmentsResponse?.data ?? []).map(mapEquipmentRequestFromApi),
+    [equipmentsResponse]
+  )
+  const vehicles = useMemo(
+    () => (vehiclesResponse?.data ?? []).map(mapVehicleRequestFromApi),
+    [vehiclesResponse]
+  )
+
+  const activePagination =
+    tabParam === 'materials'
+      ? materialsResponse?.pagination
+      : tabParam === 'equipment'
+        ? equipmentsResponse?.pagination
+        : vehiclesResponse?.pagination
+
+  const totalPages = activePagination?.totalPage ?? 1
+  const totalItems = activePagination?.total ?? 0
+
+  const isLoading =
+    tabParam === 'materials'
+      ? isMaterialsLoading || isMaterialsFetching
+      : tabParam === 'equipment'
+        ? isEquipmentsLoading || isEquipmentsFetching
+        : isVehiclesLoading || isVehiclesFetching
 
   const setPage = (p: number) => {
     const next = new URLSearchParams(searchParams)
     p > 1 ? next.set('page', String(p)) : next.delete('page')
     setSearchParams(next, { replace: true })
   }
+
   const setLimit = (l: number) => {
     const next = new URLSearchParams(searchParams)
-    l !== 10 ? next.set('limit', String(l)) : next.delete('limit')
+    l !== DEFAULT_PAGINATION.limit ? next.set('limit', String(l)) : next.delete('limit')
     next.delete('page')
     setSearchParams(next, { replace: true })
   }
 
-  const setTab = (t: string) => {
+  const setTab = (tab: string) => {
     const next = new URLSearchParams(searchParams)
-    next.set('tab', t)
+    next.set('tab', tab)
     next.delete('page')
     setSearchParams(next, { replace: true })
   }
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
-  }, [totalPages, currentPage])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalPages])
 
-  const paginatedRequests = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return requests.slice(start, start + itemsPerPage)
-  }, [requests, currentPage, itemsPerPage])
-
-  const paginatedReports = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return reports.slice(start, start + itemsPerPage)
-  }, [reports, currentPage, itemsPerPage])
-
-  const handleDeleteRequest = (r: ResourceRequest) => {
-    setRequestToDelete(r)
-    setReportToDelete(null)
-    setIsConfirmOpen(true)
-  }
-
-  const handleDeleteReport = (r: ResourceReport) => {
-    setReportToDelete(r)
-    setRequestToDelete(null)
-    setIsConfirmOpen(true)
-  }
-
-  const handleConfirmDelete = async () => {
-    if (requestToDelete) {
-      setIsDeleting(true)
-      try {
-        await new Promise((res) => setTimeout(res, 300))
-        setRequests((prev) => prev.filter((rec) => rec.id !== requestToDelete.id))
-        toast({
-          variant: 'success',
-          title: t('resourceRequests.requestDeleted'),
-          description: t('resourceRequests.requestRemoved'),
-        })
-        setIsConfirmOpen(false)
-        setRequestToDelete(null)
-      } catch {
-        toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' })
-      } finally {
-        setIsDeleting(false)
-      }
+  const handleView = (id: string) => {
+    if (tabParam === 'materials') {
+      const record = materials.find((r) => r.id === id)
+      if (record) setViewRecord({ tab: 'materials', record })
+      return
     }
-    if (reportToDelete) {
-      setIsDeleting(true)
-      try {
-        await new Promise((res) => setTimeout(res, 300))
-        setReports((prev) => prev.filter((rec) => rec.id !== reportToDelete.id))
-        toast({
-          variant: 'success',
-          title: t('resourceRequests.reportDeleted'),
-          description: t('resourceRequests.reportRemoved'),
-        })
-        setIsConfirmOpen(false)
-        setReportToDelete(null)
-      } catch {
-        toast({ title: t('common.error'), description: t('common.error'), variant: 'destructive' })
-      } finally {
-        setIsDeleting(false)
+    if (tabParam === 'equipment') {
+      const record = equipments.find((r) => r.id === id)
+      if (record) setViewRecord({ tab: 'equipment', record })
+      return
+    }
+    const record = vehicles.find((r) => r.id === id)
+    if (record) setViewRecord({ tab: 'vehicles', record })
+  }
+
+  const handleStatusUpdate = async (id: string, status: ResourceRequestStatusUpdate) => {
+    setUpdatingId(id)
+    try {
+      if (tabParam === 'materials') {
+        await updateMaterialStatus({ id, status }).unwrap()
+      } else if (tabParam === 'equipment') {
+        await updateEquipmentStatus({ id, status }).unwrap()
+      } else {
+        await updateVehicleStatus({ id, status }).unwrap()
       }
+
+      toast({
+        variant: 'success',
+        title: t('common.success'),
+        description:
+          status === 'APPROVED'
+            ? t('resourceRequests.requestApproved')
+            : t('resourceRequests.requestRejected'),
+      })
+
+      setViewRecord(null)
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('resourceRequests.statusUpdateFailed')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -128,98 +190,78 @@ export default function ResourceRequestsReport() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="rounded-xl  overflow-hidden shadow-sm">
-        <Tabs
-          value={tabParam}
-          onValueChange={setTab}
-          className="w-full"
-        >
-          <div className="  pb-4">
+      <div className="flex items-center justify-end">
+        <SearchInput
+          value={searchQuery}
+          onChange={(value) => {
+            setSearchQuery(value)
+            setPage(1)
+          }}
+          placeholder={t('resourceRequests.searchRequests')}
+          className="w-[280px] bg-white"
+          debounceMs={300}
+        />
+      </div>
+
+      <div className="rounded-xl overflow-hidden shadow-sm">
+        <Tabs value={tabParam} onValueChange={setTab} className="w-full">
+          <div className="pb-4">
             <TabsList className="h-[40px] bg-gray-100 p-1">
-              <TabsTrigger value="request" className="px-5 py-2 text-sm data-[state=active]:bg-secondary data-[state=active]:text-white">
-                {t('resourceRequests.request')}
+              <TabsTrigger
+                value="materials"
+                className="px-5 py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-white rounded-l-sm"
+              >
+                {t('resourceRequests.materials')}
               </TabsTrigger>
-              <TabsTrigger value="report" className="px-5 py-2 text-sm data-[state=active]:bg-secondary data-[state=active]:text-white">
-                {t('resourceRequests.report')}
+              <TabsTrigger
+                value="equipment"
+                className="px-5 py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                {t('resourceRequests.equipment')}
+              </TabsTrigger>
+              <TabsTrigger
+                value="vehicles"
+                className="px-5 py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-white rounded-r-sm"
+              >
+                {t('resourceRequests.vehicles')}
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="request" className="mt-0 bg-white rounded-xl">
-            <RequestTable
-              records={paginatedRequests}
-              onView={setViewRequest}
-              onEdit={() => {}}
-              onDelete={handleDeleteRequest}
-            />
-            {requests.length > 0 && (
-              <div className="border-t border-gray-100 px-4 py-3">
-                <Pagination
+          {VALID_TABS.map((tab) => (
+            <TabsContent key={tab} value={tab} className="mt-0">
+              {isLoading ? (
+                <div className="bg-white rounded-xl px-5 py-10 text-center text-sm text-muted-foreground">
+                  {t('common.loading')}
+                </div>
+              ) : (
+                <ResourceRequestTableSection
+                  tab={tab}
+                  materials={tab === 'materials' ? materials : []}
+                  equipments={tab === 'equipment' ? equipments : []}
+                  vehicles={tab === 'vehicles' ? vehicles : []}
                   currentPage={currentPage}
-                  totalPages={Math.max(1, Math.ceil(requests.length / itemsPerPage))}
-                  totalItems={requests.length}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
                   itemsPerPage={itemsPerPage}
                   onPageChange={setPage}
                   onItemsPerPageChange={setLimit}
-                  showItemsPerPage
+                  onView={handleView}
+                  onStatusUpdate={handleStatusUpdate}
+                  updatingId={updatingId}
                 />
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="report" className="mt-0">
-            <ReportTable
-              records={paginatedReports}
-              onView={setViewReport}
-              onEdit={() => {}}
-              onDelete={handleDeleteReport}
-            />
-            {reports.length > 0 && (
-              <div className="border-t border-gray-100 px-4 py-3">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={Math.max(1, Math.ceil(reports.length / itemsPerPage))}
-                  totalItems={reports.length}
-                  itemsPerPage={itemsPerPage}
-                  onPageChange={setPage}
-                  onItemsPerPageChange={setLimit}
-                  showItemsPerPage
-                />
-              </div>
-            )}
-          </TabsContent>
+              )}
+            </TabsContent>
+          ))}
         </Tabs>
       </div>
 
       <ViewRequestDetailsModal
-        open={!!viewRequest}
-        onClose={() => setViewRequest(null)}
-        record={viewRequest}
-        onApproved={() =>
-          toast({ variant: 'success', title: t('resourceRequests.approved'), description: t('resourceRequests.requestApproved') })
-        }
-      />
-
-      <ViewReportDetailsModal
-        open={!!viewReport}
-        onClose={() => setViewReport(null)}
-        record={viewReport}
-      />
-
-      <ConfirmDialog
-        open={isConfirmOpen}
-        onClose={() => {
-          setIsConfirmOpen(false)
-          setRequestToDelete(null)
-          setReportToDelete(null)
-        }}
-        onConfirm={handleConfirmDelete}
-        title={requestToDelete ? t('resourceRequests.deleteRequest') : t('resourceRequests.deleteReport')}
-        description={requestToDelete ? t('resourceRequests.deleteRequestConfirm') : t('resourceRequests.deleteReportConfirm')}
-        confirmText={t('common.delete')}
-        cancelText={t('common.cancel')}
-        variant="danger"
-        isLoading={isDeleting}
+        open={!!viewRecord}
+        onClose={() => setViewRecord(null)}
+        viewRecord={viewRecord}
+        onStatusUpdate={handleStatusUpdate}
+        isUpdating={updatingId !== null}
       />
     </motion.div>
   )

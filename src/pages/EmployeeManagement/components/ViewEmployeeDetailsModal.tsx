@@ -87,9 +87,9 @@ export function ViewEmployeeDetailsModal({
         <div className="p-4 bg-white rounded-lg space-y-2">
           <h3 className="text-sm font-bold text-foreground mb-3">Organizational Details</h3>
           <DetailRow label="Joining Date" value={employee.joiningDate ? moment(employee.joiningDate).format('DD MMM, YYYY') : '-'} />
-          <DetailRow label="Department" value={employee.department} />
+          {/* <DetailRow label="Department" value={employee.department} /> */}
           <DetailRow label="Role" value={employee.role} />
-          <DetailRow label="Work Schedule" value={employee.workSchedule ? moment(employee.workSchedule).format('DD MMM, YYYY') : 'N/A'} />
+          {/* <DetailRow label="Work Schedule" value={employee.workSchedule ? moment(employee.workSchedule).format('DD MMM, YYYY') : 'N/A'} /> */}
         </div>
 
         {/* Project Details */}

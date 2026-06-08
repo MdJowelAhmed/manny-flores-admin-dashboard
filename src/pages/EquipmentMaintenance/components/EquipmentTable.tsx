@@ -1,17 +1,15 @@
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { Info, Pencil, Trash2, UserPlus, Wrench } from 'lucide-react'
+import { Info, Pencil, Trash2, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/utils/cn'
-import type { Equipment, EquipmentStatus } from '@/types'
-import { EQUIPMENT_STATUS_COLORS } from '../equipmentMaintenanceData'
+import type { EquipmentListItem } from '../equipmentMaintenanceData'
+import { formatCurrency, formatDate } from '@/utils/formatters'
 
 interface EquipmentTableProps {
-  equipment: Equipment[]
-  onView: (equipment: Equipment) => void
-  onEdit: (equipment: Equipment, e: React.MouseEvent) => void
-  onDelete: (equipment: Equipment) => void
-  onAssign: (equipment: Equipment) => void
+  equipment: EquipmentListItem[]
+  onView: (equipment: EquipmentListItem) => void
+  onEdit: (equipment: EquipmentListItem, e: React.MouseEvent) => void
+  onDelete: (equipment: EquipmentListItem) => void
 }
 
 export function EquipmentTable({
@@ -19,115 +17,103 @@ export function EquipmentTable({
   onView,
   onEdit,
   onDelete,
-  onAssign,
 }: EquipmentTableProps) {
   const { t } = useTranslation()
   return (
     <div className="w-full overflow-auto">
-      <table className="w-full min-w-[700px]">
+      <table className="w-full min-w-[720px] border-collapse">
         <thead>
-          <tr className="bg-secondary-foreground text-accent">
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('equipmentMaintenance.equipment')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('resourceRequests.type')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('equipmentMaintenance.assignTo')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('equipmentMaintenance.usage')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('equipmentMaintenance.nextService')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('common.status')}</th>
-            <th className="px-6 py-4 text-right text-sm font-bold">{t('common.actions')}</th>
+          <tr className="bg-secondary-foreground text-slate-800">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('equipmentMaintenance.equipmentName')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('equipmentMaintenance.category')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('equipmentMaintenance.purchaseDate')}
+            </th>
+            <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide">
+              {t('equipmentMaintenance.purchaseCost')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('equipmentMaintenance.warrantyExpiry')}
+            </th>
+            <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide">
+              {t('common.actions')}
+            </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100 bg-white">
+        <tbody className="bg-white">
           {equipment.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+              <td
+                colSpan={6}
+                className="px-5 py-10 text-center text-muted-foreground text-sm"
+              >
                 {t('equipmentMaintenance.noEquipmentFound')}
               </td>
             </tr>
           ) : (
-            equipment.map((item, index) => {
-              const statusColors =
-                EQUIPMENT_STATUS_COLORS[item.status as EquipmentStatus] ?? {
-                  bg: 'bg-gray-100',
-                  text: 'text-gray-800',
-                }
-              return (
-                <motion.tr
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 * index }}
-                  className="hover:bg-gray-50 transition-colors shadow-sm"
-                >
-                  <td className="px-6 py-3">
-                    <div className="flex items-center gap-2">
-                      <Wrench className="h-5 w-5 text-gray-500" />
-                      <span className="text-sm font-medium text-slate-800">
-                        {item.equipmentName || 'N/A'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{item.type || 'N/A'}</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{item.assignedTo || 'N/A'}</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{item.usage || 'N/A'}</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{item.nextService || 'N/A'}</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={cn(
-                        'inline-flex px-3 py-1 rounded text-xs font-medium',
-                        statusColors.text
-                      )}
-                    >
-                      {item.status}
+            equipment.map((item, index) => (
+              <motion.tr
+                key={item.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.02 * index }}
+                className="border-b border-gray-100/80 last:border-0 hover:bg-gray-50/40 transition-colors"
+              >
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="h-5 w-5 text-gray-500 shrink-0" />
+                    <span className="text-sm font-medium text-slate-800">
+                      {item.equipmentName}
                     </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={() => onView(item)}
-                        className="h-8 w-8 border-none text-blue-500 hover:bg-blue-50"
-                      >
-                        <Info className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={() => onAssign(item)}
-                        className="h-8 w-8 border-none text-violet-500 hover:bg-violet-50"
-                        title={t('equipmentMaintenance.assignEmployee')}
-                      >
-                        <UserPlus className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={(e) => onEdit(item, e)}
-                        className="h-8 w-8 border-none text-green-500 hover:bg-green-50"
-                      >
-                        <Pencil className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={() => onDelete(item)}
-                        className="h-8 w-8 border-none text-red-500 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </td>
-                </motion.tr>
-              )
-            })
+                  </div>
+                </td>
+                <td className="px-5 py-4 text-sm text-slate-600">{item.category || '—'}</td>
+                <td className="px-5 py-4 text-sm text-slate-600">
+                  {item.purchaseDate ? formatDate(item.purchaseDate) : '—'}
+                </td>
+                <td className="px-5 py-4 text-sm text-slate-700 text-right tabular-nums">
+                  {formatCurrency(item.purchaseCost)}
+                </td>
+                <td className="px-5 py-4 text-sm text-slate-600">
+                  {item.warrantyExpiryDate ? formatDate(item.warrantyExpiryDate) : '—'}
+                </td>
+                <td className="px-5 py-4">
+                  <div className="flex items-center justify-end gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onView(item)}
+                      className="h-9 w-9 text-slate-500 hover:bg-gray-100 hover:text-slate-700"
+                      aria-label={t('common.viewDetails')}
+                    >
+                      <Info className="h-5 w-5 stroke-[1.75]" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={(e) => onEdit(item, e)}
+                      className="h-9 w-9 text-emerald-600 hover:bg-emerald-50"
+                      aria-label={t('common.edit')}
+                    >
+                      <Pencil className="h-5 w-5 stroke-[1.75]" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onDelete(item)}
+                      className="h-9 w-9 text-red-500 hover:bg-red-50"
+                      aria-label={t('common.delete')}
+                    >
+                      <Trash2 className="h-5 w-5 stroke-[1.75]" />
+                    </Button>
+                  </div>
+                </td>
+              </motion.tr>
+            ))
           )}
         </tbody>
       </table>

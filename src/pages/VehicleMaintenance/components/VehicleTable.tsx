@@ -2,15 +2,18 @@ import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { Info, Pencil, Trash2, Truck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/utils/cn'
-import type { Vehicle, VehicleStatus } from '@/types'
-import { VEHICLE_STATUS_COLORS } from '../vehicleMaintenanceData'
+import type { VehicleListItem } from '../vehicleMaintenanceData'
+import { formatCurrency, formatDate } from '@/utils/formatters'
 
 interface VehicleTableProps {
-  vehicles: Vehicle[]
-  onView: (vehicle: Vehicle) => void
-  onEdit: (vehicle: Vehicle, e: React.MouseEvent) => void
-  onDelete: (vehicle: Vehicle) => void
+  vehicles: VehicleListItem[]
+  onView: (vehicle: VehicleListItem) => void
+  onEdit: (vehicle: VehicleListItem, e: React.MouseEvent) => void
+  onDelete: (vehicle: VehicleListItem) => void
+}
+
+function formatOptionalDate(value?: string) {
+  return value ? formatDate(value) : '—'
 }
 
 export function VehicleTable({
@@ -22,105 +25,123 @@ export function VehicleTable({
   const { t } = useTranslation()
   return (
     <div className="w-full overflow-auto">
-      <table className="w-full min-w-[700px]">
+      <table className="w-full min-w-[1100px] border-collapse">
         <thead>
-          <tr className="bg-secondary-foreground text-accent">
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.vehicle')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">Category</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('resourceRequests.type')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.assignTo')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.usage')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('vehicleMaintenance.nextService')}</th>
-            <th className="px-6 py-4 text-left text-sm font-bold">{t('common.status')}</th>
-            <th className="px-6 py-4 text-right text-sm font-bold">{t('common.actions')}</th>
+          <tr className="bg-secondary-foreground text-slate-800">
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('vehicleMaintenance.model')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('vehicleMaintenance.year')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('resourceRequests.type')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('vehicleMaintenance.category')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('vehicleMaintenance.purchaseDate')}
+            </th>
+            <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide">
+              {t('vehicleMaintenance.purchaseCost')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('vehicleMaintenance.insuranceExpiry')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('vehicleMaintenance.lastService')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('vehicleMaintenance.nextService')}
+            </th>
+            <th className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide">
+              {t('vehicleMaintenance.assignTo')}
+            </th>
+            <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide">
+              {t('common.actions')}
+            </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100 bg-white">
+        <tbody className="bg-white">
           {vehicles.length === 0 ? (
             <tr>
-              <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+              <td
+                colSpan={11}
+                className="px-5 py-10 text-center text-muted-foreground text-sm"
+              >
                 {t('vehicleMaintenance.noVehiclesFound')}
               </td>
             </tr>
           ) : (
-            vehicles.map((vehicle, index) => {
-              const statusColors =
-                VEHICLE_STATUS_COLORS[vehicle.status as VehicleStatus] ?? {
-                  bg: 'bg-gray-100',
-                  text: 'text-gray-800',
-                }
-              return (
-                <motion.tr
-                  key={vehicle.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 * index }}
-                  className="hover:bg-gray-50 transition-colors shadow-sm"
-                >
-                  <td className="px-6 py-3">
-                    <div className="flex items-center gap-2">
-                      <Truck className="h-5 w-5 text-gray-500" />
-                      <span className="text-sm font-medium text-slate-800">
-                        {vehicle.vehicleName}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{vehicle.category}</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{vehicle.type}</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{vehicle.assignedTo}</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{vehicle.usage}</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-slate-600">{vehicle.nextService}</span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span
-                      className={cn(
-                        'inline-flex px-3 py-1 rounded text-xs font-medium',
-                        statusColors.text
-                      )}
+            vehicles.map((vehicle, index) => (
+              <motion.tr
+                key={vehicle.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.02 * index }}
+                className="border-b border-gray-100/80 last:border-0 hover:bg-gray-50/40 transition-colors"
+              >
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-5 w-5 text-gray-500 shrink-0" />
+                    <span className="text-sm font-medium text-slate-800">{vehicle.model}</span>
+                  </div>
+                </td>
+                <td className="px-5 py-4 text-sm text-slate-600 tabular-nums">{vehicle.year}</td>
+                <td className="px-5 py-4 text-sm text-slate-600 capitalize">{vehicle.type || '—'}</td>
+                <td className="px-5 py-4 text-sm text-slate-600">{vehicle.category || '—'}</td>
+                <td className="px-5 py-4 text-sm text-slate-600">
+                  {formatOptionalDate(vehicle.purchaseDate)}
+                </td>
+                <td className="px-5 py-4 text-sm text-slate-700 text-right tabular-nums">
+                  {formatCurrency(vehicle.purchaseCost)}
+                </td>
+                <td className="px-5 py-4 text-sm text-slate-600">
+                  {formatOptionalDate(vehicle.insuranceExpires)}
+                </td>
+                <td className="px-5 py-4 text-sm text-slate-600">
+                  {formatOptionalDate(vehicle.maintenanceLastServiceDate)}
+                </td>
+                <td className="px-5 py-4 text-sm text-slate-600">
+                  {formatOptionalDate(vehicle.maintenanceNextServiceDate)}
+                </td>
+                <td className="px-5 py-4 text-sm text-slate-600">
+                  {vehicle.assignedEmployee?.name ?? '—'}
+                </td>
+                <td className="px-5 py-4">
+                  <div className="flex items-center justify-end gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onView(vehicle)}
+                      className="h-9 w-9 text-slate-500 hover:bg-gray-100 hover:text-slate-700"
+                      aria-label={t('common.viewDetails')}
                     >
-                      {vehicle.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={() => onView(vehicle)}
-                        className="h-8 w-8 border-none text-blue-500 hover:bg-blue-50"
-                      >
-                        <Info className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={(e) => onEdit(vehicle, e)}
-                        className="h-8 w-8 border-none text-green-500 hover:bg-green-50"
-                      >
-                        <Pencil className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        onClick={() => onDelete(vehicle)}
-                        className="h-8 w-8 border-none text-red-500 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  </td>
-                </motion.tr>
-              )
-            })
+                      <Info className="h-5 w-5 stroke-[1.75]" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={(e) => onEdit(vehicle, e)}
+                      className="h-9 w-9 text-emerald-600 hover:bg-emerald-50"
+                      aria-label={t('common.edit')}
+                    >
+                      <Pencil className="h-5 w-5 stroke-[1.75]" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onDelete(vehicle)}
+                      className="h-9 w-9 text-red-500 hover:bg-red-50"
+                      aria-label={t('common.delete')}
+                    >
+                      <Trash2 className="h-5 w-5 stroke-[1.75]" />
+                    </Button>
+                  </div>
+                </td>
+              </motion.tr>
+            ))
           )}
         </tbody>
       </table>

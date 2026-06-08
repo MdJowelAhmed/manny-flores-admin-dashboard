@@ -802,6 +802,7 @@ export type ReviewStatus = 'Pending' | 'Approved' | 'Rejected'
 
 export interface ReviewUI {
   id: string
+  userId?: string
   customerName: string
   avatarUrl?: string
   rating: number

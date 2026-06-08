@@ -15,6 +15,9 @@ import { ViewChangeOrderDetailsModal } from './components/ViewChangeOrderDetails
 import { NewChangeOrderModal } from './components/NewChangeOrderModal'
 import {
   statusFilterOptions,
+  getChangeOrderProjectName,
+  getChangeOrderStatus,
+  getChangeOrderCustomerEmail,
   type ChangeOrder,
 } from './changeOrdersData'
 import { formatCurrency } from '@/utils/formatters'
@@ -56,18 +59,10 @@ export default function ChangeOrders() {
     { page: projectPage, limit: 40 }
   )
 
-  const getNormalizedStatus = (status: string | undefined) => {
-    if (!status) return 'Pending'
-    const s = status.toUpperCase()
-    if (s === 'PENDING') return 'Pending'
-    if (s === 'APPROVED') return 'Approved'
-    return status
-  }
-
   const filteredOrders = useMemo(() => {
     const rawData = changeOrdersData?.data || []
     return rawData.filter((o: ChangeOrder) => {
-      const statusValue = getNormalizedStatus(o.project?.status)
+      const statusValue = getChangeOrderStatus(o)
       const matchesStatus = statusFilter === 'all' || statusValue.toLowerCase() === statusFilter.toLowerCase()
       return matchesStatus
     })
@@ -183,7 +178,9 @@ export default function ChangeOrders() {
                 year: 'numeric',
               })
               : '—'
-            const currentStatus = getNormalizedStatus(o.project?.status)
+            const currentStatus = getChangeOrderStatus(o)
+            const projectName = getChangeOrderProjectName(o)
+            const customerEmail = getChangeOrderCustomerEmail(o)
 
             return (
               <motion.div
@@ -196,11 +193,13 @@ export default function ChangeOrders() {
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                   <div>
                     <h2 className="font-bold text-foreground text-base">
-                      {o.project?.estimates?.clientName ?? "Client ID: " + (o.project?.clientId?.slice(0, 8) || "—")}
+                      {projectName}
                     </h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                      {o.project?.estimates?.projectName ?? "Project ID: " + (o.project?.id?.slice(0, 8) || "—")}
-                    </p>
+                    {customerEmail !== '—' && (
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {customerEmail}
+                      </p>
+                    )}
                   </div>
                   <span
                     className={cn(

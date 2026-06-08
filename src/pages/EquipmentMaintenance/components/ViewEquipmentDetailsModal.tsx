@@ -1,37 +1,28 @@
+import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
-import type { Equipment } from '@/types'
-import { cn } from '@/utils/cn'
+import type { EquipmentListItem } from '../equipmentMaintenanceData'
+import { formatCurrency, formatDate } from '@/utils/formatters'
 
 interface ViewEquipmentDetailsModalProps {
   open: boolean
   onClose: () => void
-  equipment: Equipment | null
+  equipment: EquipmentListItem | null
   onEdit: () => void
   onDelete: () => void
-  onAssign: () => void
 }
 
 function DetailRow({
   label,
   value,
-  highlight,
 }: {
   label: string
   value: string | number
-  highlight?: boolean
 }) {
   return (
     <div className="flex justify-between items-center py-2.5 px-4 bg-gray-100 rounded-md">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span
-        className={cn(
-          'text-sm font-medium text-foreground',
-          highlight && 'text-green-600 font-semibold'
-        )}
-      >
-        {value}
-      </span>
+      <span className="text-sm font-medium text-foreground">{value}</span>
     </div>
   )
 }
@@ -42,66 +33,54 @@ export function ViewEquipmentDetailsModal({
   equipment,
   onEdit,
   onDelete,
-  onAssign,
 }: ViewEquipmentDetailsModalProps) {
+  const { t } = useTranslation()
   if (!equipment) return null
-  const emp = equipment.assignedEmployee
 
   return (
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title="Equipment details"
+      title={t('equipmentMaintenance.equipment')}
       size="lg"
       className="max-w-xl bg-white rounded-xl"
     >
       <div className="space-y-5">
         <div className="p-4 bg-gray-100 rounded-lg space-y-2">
-          <h3 className="text-sm font-bold text-foreground mb-3">Basic Information</h3>
-          <DetailRow label="Equipment" value={equipment.equipmentName} />
-          <DetailRow label="Category" value={equipment.category} />
-          <DetailRow label="Purchase Date" value={equipment.purchaseDate} />
-          <DetailRow label="Purchase Cost" value={equipment.purchaseCost} />
-          <DetailRow label="Warranty Expiry" value={equipment.warrantyExpiry} />
-        </div>
-
-        {emp && (
-          <div className="p-4 bg-gray-100 rounded-lg space-y-2">
-            <h3 className="text-sm font-bold text-foreground mb-3">Assigned Employee</h3>
-            <DetailRow label="Name" value={emp.name} />
-            <DetailRow label="Project" value={emp.project} />
-            <DetailRow label="Start date" value={emp.startDate} />
-            <DetailRow label="Current Location" value={emp.location} />
-          </div>
-        )}
-
-        <div className="p-4 bg-gray-100 rounded-lg space-y-2">
-          <h3 className="text-sm font-bold text-foreground mb-3">Maintenance Information</h3>
-          <DetailRow label="Last Service" value={equipment.lastService} />
-          <DetailRow label="Next Service" value={equipment.nextService} highlight />
+          <h3 className="text-sm font-bold text-foreground mb-3">
+            {t('equipmentMaintenance.basicInformation')}
+          </h3>
+          <DetailRow label={t('equipmentMaintenance.equipmentName')} value={equipment.equipmentName} />
+          <DetailRow label={t('equipmentMaintenance.category')} value={equipment.category || '—'} />
+          <DetailRow
+            label={t('equipmentMaintenance.purchaseDate')}
+            value={equipment.purchaseDate ? formatDate(equipment.purchaseDate) : '—'}
+          />
+          <DetailRow
+            label={t('equipmentMaintenance.purchaseCost')}
+            value={formatCurrency(equipment.purchaseCost)}
+          />
+          <DetailRow
+            label={t('equipmentMaintenance.warrantyExpiry')}
+            value={
+              equipment.warrantyExpiryDate ? formatDate(equipment.warrantyExpiryDate) : '—'
+            }
+          />
         </div>
 
         <div className="flex flex-wrap gap-3 pt-2">
           <Button
-            type="button"
-            variant="outline"
-            onClick={onAssign}
-            className="flex-1 min-w-[120px] py-2.5 rounded-lg font-medium"
-          >
-            Assign Employee
-          </Button>
-          <Button
             onClick={onEdit}
             className="flex-1 min-w-[120px] bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg font-medium"
           >
-            Edit
+            {t('common.edit')}
           </Button>
           <Button
             onClick={onDelete}
             variant="destructive"
             className="flex-1 min-w-[120px] py-2.5 rounded-lg font-medium"
           >
-            Delete
+            {t('common.delete')}
           </Button>
         </div>
       </div>

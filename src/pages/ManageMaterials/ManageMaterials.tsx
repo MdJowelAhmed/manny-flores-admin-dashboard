@@ -135,7 +135,6 @@ export default function ManageMaterials() {
       category: data.categoryId,
       unitPrice: data.unitPrice,
       quantity: data.quantity,
-      stock: data.stock,
     }
 
     try {

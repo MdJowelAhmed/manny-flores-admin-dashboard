@@ -1,6 +1,33 @@
 import type { Vehicle, VehicleStatus } from '@/types'
 import type { SelectOption } from '@/types'
 
+export interface VehicleAssignedEmployeeItem {
+  id: string
+  name: string
+  email?: string
+  profile?: string
+}
+
+/** UI model aligned with `GET /vehicles` response fields. */
+export interface VehicleListItem {
+  id: string
+  model: string
+  year: number
+  type: string
+  categoryId: string
+  category: string
+  purchaseDate: string
+  purchaseCost: number
+  insuranceExpires: string
+  maintenanceLastServiceDate?: string
+  maintenanceNextServiceDate?: string
+  assignEmployeeId?: string | null
+  assignedEmployee?: VehicleAssignedEmployeeItem | null
+  createdAt?: string
+  updatedAt?: string
+  isDeleted?: boolean
+}
+
 export const VEHICLE_STATUS_COLORS: Record<VehicleStatus, { bg: string; text: string }> = {
   Available: { bg: 'bg-green-100', text: 'text-green-600' },
   'In Use': { bg: 'bg-blue-100', text: 'text-blue-600' },
@@ -8,11 +35,11 @@ export const VEHICLE_STATUS_COLORS: Record<VehicleStatus, { bg: string; text: st
 }
 
 export const vehicleTypeOptions: SelectOption[] = [
-  { value: 'Pickup Truck', label: 'Pickup Truck' },
-  { value: 'Truck', label: 'Truck' },
-  { value: 'Van', label: 'Van' },
-  { value: 'Sedan', label: 'Sedan' },
-  { value: 'SUV', label: 'SUV' },
+  { value: 'pickup Truck', label: 'Pickup Truck' },
+  { value: 'truck', label: 'Truck' },
+  { value: 'van', label: 'Van' },
+  { value: 'sedan', label: 'Sedan' },
+  { value: 'suv', label: 'SUV' },
 ]
 
 export const mockVehiclesData: Vehicle[] = [

@@ -25,9 +25,7 @@ const YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => ({
   label: String(currentYear - 5 + i),
 }))
 
-export function AddPayrollModal({ open, onClose, customersData, empPage, empOptions, setEmpOptions, setEmpPage, setEmpSearch, empLoading, refetch }: any) {
-
-  console.log(empOptions)
+export function AddPayrollModal({ open, onClose, customersData, empPage, empOptions, setEmpOptions, setEmpPage, setEmpSearch, empLoading, refetchEmployees, refetch }: any) {
 
   const [createPayroll, { isLoading }] = useCreatePayrollMutation()
 
@@ -71,9 +69,8 @@ export function AddPayrollModal({ open, onClose, customersData, empPage, empOpti
 
   const handleEmpSearch = useCallback((search: string) => {
     setEmpSearch(search)
-    setEmpPage(1)      // back to first page
-    setEmpOptions([])  // clear accumulated list so page-1 results replace old ones
-  }, [])
+    setEmpPage(1)
+  }, [setEmpSearch, setEmpPage])
 
   const handleEmpLoadMore = useCallback(() => {
     if (!empLoading && empHasMore) {
@@ -93,8 +90,6 @@ export function AddPayrollModal({ open, onClose, customersData, empPage, empOpti
       setEmpSearch('')
       setEmpPage(1)
 
-      // Re-populate from already-cached customersData instead of clearing to []
-      // (RTK Query won't refetch identical params, so the accumulation effect won't re-fire)
       if (customersData?.data) {
         const initial = customersData.data.map((c: any) => ({
           value: c.id,
@@ -104,6 +99,8 @@ export function AddPayrollModal({ open, onClose, customersData, empPage, empOpti
       } else {
         setEmpOptions([])
       }
+
+      refetchEmployees?.()
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
