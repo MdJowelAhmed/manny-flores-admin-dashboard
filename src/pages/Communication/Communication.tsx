@@ -5,7 +5,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import moment from "moment";
-import { Search, Send, Paperclip, ArrowLeft, FileText, X } from "lucide-react";
+import { Search, Send, Paperclip, ArrowLeft, FileText, X, Users } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -166,9 +166,13 @@ const Communication = () => {
   const [keyword, setKeyword] = useState("");
   const [messageList, setMessageList] = useState<TMessage[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showMembers, setShowMembers] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messageInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const isNearBottomRef = useRef(true);
 
   const { data: chatList } = useGetChatListQuery(keyword);
 
@@ -212,11 +216,6 @@ const Communication = () => {
       });
     }
 
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete("chatId");
-      return next;
-    }, { replace: true });
   }, [chatIdParam, chatList?.data, location.state, setSearchParams]);
 
   const { data: messageData, refetch: refetchMessages } = useGetMessageListQuery(
@@ -245,18 +244,50 @@ const Communication = () => {
     [messageList],
   );
 
+  const scrollToBottom = (behavior: ScrollBehavior = "auto") => {
+    const container = scrollRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
+  };
+
+  const updateIsNearBottom = () => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const threshold = 100;
+    isNearBottomRef.current =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      threshold;
+  };
+
   useEffect(() => {
     setMessageInput("");
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    isNearBottomRef.current = true;
+
+    if (!selectedConversation?.id) return;
+
+    const frame = requestAnimationFrame(() => {
+      scrollToBottom("auto");
+      messageInputRef.current?.focus();
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, [selectedConversation?.id]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
+    if (!selectedConversation?.id) return;
+
+    const frame = requestAnimationFrame(() => {
+      if (isNearBottomRef.current) {
+        scrollToBottom("auto");
+      }
     });
-  }, [sortedMessages]);
+
+    return () => cancelAnimationFrame(frame);
+  }, [sortedMessages, selectedConversation?.id]);
 
   useEffect(() => {
     if (!socket || !selectedConversation?.id) return;
@@ -310,7 +341,12 @@ const Communication = () => {
     if (res?.data?.success) {
       setMessageInput("");
       clearSelectedFile();
+      isNearBottomRef.current = true;
       await refetchMessages();
+      requestAnimationFrame(() => {
+        scrollToBottom("auto");
+        messageInputRef.current?.focus();
+      });
     }
   };
 
@@ -346,11 +382,23 @@ const Communication = () => {
               const active = selectedConversation?.id === conversation?.id;
               const title = getConversationTitle(conversation, currentUserId);
               const avatar = getConversationAvatar(conversation, currentUserId);
+              const isGroupConversation =
+                !!conversation.groupName ||
+                (conversation.participants?.length ?? 0) > 2;
+              const memberCount = conversation.participants?.length ?? 0;
 
               return (
                 <button
                   key={conversation?.id}
-                  onClick={() => setSelectedConversation(conversation)}
+                  onClick={() => {
+                    setSelectedConversation(conversation);
+                    setShowMembers(false);
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.set("chatId", conversation.id);
+                      return next;
+                    }, { replace: true });
+                  }}
                   className={cn(
                     "w-full flex items-start gap-3 p-3 rounded-xl transition-all text-left",
                     active
@@ -358,15 +406,21 @@ const Communication = () => {
                       : "bg-white hover:bg-gray-100",
                   )}
                 >
-                  <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden bg-gray-200">
-                    <img
-                      src={
-                        avatar ? getImageUrl(avatar) : "/default-image.png"
-                      }
-                      alt={title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  {isGroupConversation ? (
+                    <div className="h-12 w-12 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                  ) : (
+                    <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden bg-gray-200">
+                      <img
+                        src={
+                          avatar ? getImageUrl(avatar) : "/default-image.png"
+                        }
+                        alt={title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
@@ -386,6 +440,11 @@ const Communication = () => {
                     <p className="text-sm text-muted-foreground truncate mt-1">
                       {getLastMessagePreview(conversation.lastMessage)}
                     </p>
+                    {isGroupConversation && memberCount > 0 && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {memberCount} members
+                      </p>
+                    )}
                   </div>
                 </button>
               );
@@ -409,23 +468,30 @@ const Communication = () => {
                   </Button>
 
                   <div className="h-11 w-11 rounded-full overflow-hidden bg-white/20">
-                    <img
-                      src={
-                        getConversationAvatar(selectedConversation, currentUserId)
-                          ? getImageUrl(
-                              getConversationAvatar(
-                                selectedConversation,
-                                currentUserId,
-                              )!,
-                            )
-                          : "/default-image.png"
-                      }
-                      alt={getConversationTitle(
-                        selectedConversation,
-                        currentUserId,
-                      )}
-                      className="w-full h-full object-cover"
-                    />
+                    {selectedConversation.groupName ||
+                    (selectedConversation.participants?.length ?? 0) > 2 ? (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Users className="h-5 w-5 text-white" />
+                      </div>
+                    ) : (
+                      <img
+                        src={
+                          getConversationAvatar(selectedConversation, currentUserId)
+                            ? getImageUrl(
+                                getConversationAvatar(
+                                  selectedConversation,
+                                  currentUserId,
+                                )!,
+                              )
+                            : "/default-image.png"
+                        }
+                        alt={getConversationTitle(
+                          selectedConversation,
+                          currentUserId,
+                        )}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
 
                   <div>
@@ -437,12 +503,78 @@ const Communication = () => {
                     </p>
                   </div>
                 </div>
+                {(
+                  selectedConversation.groupName ||
+                  (selectedConversation.participants?.length ?? 0) > 2
+                ) && (
+                  <div className="ml-auto">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-white/40 text-white hover:bg-white/10 hover:text-white"
+                      onClick={() => setShowMembers(true)}
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      View members
+                    </Button>
+                  </div>
+                )}
               </div>
+
+              {showMembers && (
+                <div className="shrink-0 border-b bg-white px-5 py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-semibold text-gray-800">
+                      Members ({selectedConversation.participants?.length ?? 0})
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowMembers(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {selectedConversation.participants?.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center gap-3 text-sm text-gray-700"
+                      >
+                        <div className="h-8 w-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-xs font-semibold">
+                          {member.profile ? (
+                            <img
+                              src={getImageUrl(member.profile)}
+                              alt={member.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            (member.name || member.email)
+                              ?.split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .slice(0, 2)
+                              .toUpperCase()
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{member.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {member.email}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Messages */}
               <div
                 ref={scrollRef}
-                className="flex-1 min-h-0 overflow-y-auto px-5 py-6 bg-[#F7F7F7] space-y-4"
+                onScroll={updateIsNearBottom}
+                className="flex-1 min-h-0 overflow-y-auto px-5 py-6 bg-[#F7F7F7] space-y-4 flex flex-col"
               >
                 {sortedMessages.map((message) => {
                   const isMine =
@@ -546,6 +678,7 @@ const Communication = () => {
                     </div>
                   );
                 })}
+                <div ref={messagesEndRef} className="shrink-0 h-px" aria-hidden />
               </div>
 
               {/* Footer */}
@@ -598,6 +731,7 @@ const Communication = () => {
                   </Button>
 
                   <Input
+                    ref={messageInputRef}
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -608,6 +742,7 @@ const Communication = () => {
                     }}
                     placeholder="Type your message"
                     className="flex-1 min-w-0 h-11 sm:h-12 rounded-full bg-white px-4"
+                    autoFocus
                   />
 
                   <Button
