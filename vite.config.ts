@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
       host: true,
       
       open: true,
-      port: 5173,
+      port: 5175,
       strictPort: true,
       allowedHosts: [
         '193.46.198.251',
