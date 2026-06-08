@@ -355,7 +355,7 @@ const Communication = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="h-[calc(100vh-90px)] min-h-0 overflow-hidden rounded-2xl border bg-white"
+      className="h-[calc(100vh-85px)] min-h-0 overflow-hidden rounded-2xl border bg-white"
     >
       <div className="grid grid-cols-12 h-full min-h-0">
         {/* Left Sidebar */}

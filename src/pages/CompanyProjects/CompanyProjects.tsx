@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -14,17 +14,26 @@ import {
 } from '@/components/ui/select'
 import { projectStats, projectStatusFilterOptions } from './companyProjectsData'
 import { ViewProjectDetailsModal } from './components/ViewProjectDetailsModal'
+import { ViewTasksModal } from './components/ViewTasksModal'
 import { AddEditProjectModal } from './components/AddEditProjectModal'
+import { AssignTeamModal } from './components/AssignTeamModal'
+import { AddProjectTaskModal } from './components/AddProjectTaskModal'
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { STATUS_COLORS } from '@/utils/constants'
 import { useTranslation } from 'react-i18next'
-import { useCompanyProjectsOverviewQuery, useGetCompanyProjectsQuery } from '@/redux/slices/super-admin/company-projectsApi'
+import {
+  useCompanyProjectOverviewQuery,
+  useGetCompanyProjectsQuery,
+  useGetCompanyProjectEmployeesQuery,
+  type CompanyProjectApiDoc,
+  type CompanyProjectTaskApiDoc,
+} from '@/redux/api/companyProjectApi'
 import { useGetAllCustomersQuery } from '@/redux/slices/super-admin/payrollApi'
 import Spinner from '@/components/common/Spinner'
 import { differenceInWeeks, parseISO } from 'date-fns'
+import { projectCardActionClass } from './companyProjectsUi'
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 export const getProjectDuration = (start?: string, end?: string) => {
   if (!start || !end) return 'N/A'
   try {
@@ -40,11 +49,16 @@ export const getProjectDuration = (start?: string, end?: string) => {
 export const mapPaymentTypeToStatus = (paymentType?: string): string => {
   if (!paymentType) return 'Active'
   switch (paymentType.toUpperCase()) {
-    case 'ACTIVE': return 'Active'
-    case 'COMPLETED': return 'Completed'
-    case 'PENDING': return 'Pending'
-    case 'CANCELLED': return 'Cancelled'
-    default: return 'Active'
+    case 'ACTIVE':
+      return 'Active'
+    case 'COMPLETED':
+      return 'Completed'
+    case 'PENDING':
+      return 'Pending'
+    case 'CANCELLED':
+      return 'Cancelled'
+    default:
+      return 'Active'
   }
 }
 
@@ -58,31 +72,37 @@ export default function CompanyProjects() {
   const itemsPerPage = Math.max(1, parseInt(searchParams.get('limit') || '10', 10)) || 10
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  // API CALLS
-  const { data: companyOverviewRes, isLoading: companyOverviewLoading } = useCompanyProjectsOverviewQuery()
 
-  const { data: companyPorjectsApi, isLoading: companyProjectLoading, refetch } = useGetCompanyProjectsQuery({
-    status: statusFilter === 'all' ? '' : statusFilter.toUpperCase(),
-    page: currentPage,
-    limit: itemsPerPage,
-    search: searchQuery
-  })
+  const { data: companyOverviewRes, isLoading: companyOverviewLoading } =
+    useCompanyProjectOverviewQuery()
+
+  const { data: employeesRes } = useGetCompanyProjectEmployeesQuery({ limit: 200 })
+
+  const { data: companyPorjectsApi, isLoading: companyProjectLoading, refetch } =
+    useGetCompanyProjectsQuery({
+      status: statusFilter === 'all' ? '' : statusFilter.toUpperCase(),
+      page: currentPage,
+      limit: itemsPerPage,
+      search: searchQuery,
+    })
 
   const projects = companyPorjectsApi?.data || []
   const totalItems = companyPorjectsApi?.pagination?.total || 0
   const totalPages = companyPorjectsApi?.pagination?.totalPage || 1
 
-  // ── Customer infinite-scroll state ─────────────────────────────────────────
   const [custSearch, setCustSearch] = useState('')
   const [custPage, setCustPage] = useState(1)
   const [custOptions, setCustOptions] = useState<{ value: string; label: string }[]>([])
 
-  const { data: customersRes, isFetching: custLoading } = useGetAllCustomersQuery({
-    search: custSearch,
-    page: custPage,
-  }, {
-    skip: !(isAddModalOpen || isEditModalOpen)
-  })
+  const { data: customersRes, isFetching: custLoading } = useGetAllCustomersQuery(
+    {
+      search: custSearch,
+      page: custPage,
+    },
+    {
+      skip: !(isAddModalOpen || isEditModalOpen),
+    }
+  )
 
   const setSearch = (v: string) => {
     const next = new URLSearchParams(searchParams)
@@ -108,27 +128,64 @@ export default function CompanyProjects() {
     setSearchParams(next, { replace: true })
   }
 
-
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
-  const [selectedProject, setSelectedProject] = useState<any | null>(null)
+  const [isViewTasksModalOpen, setIsViewTasksModalOpen] = useState(false)
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<CompanyProjectTaskApiDoc | null>(null)
+  const [selectedProject, setSelectedProject] = useState<CompanyProjectApiDoc | null>(null)
+
+  const employeeOptions = useMemo(
+    () =>
+      employeesRes?.data?.map((emp) => ({
+        id: emp.id,
+        name: emp.name,
+        email: emp.email,
+        role: emp.role,
+      })) ?? [],
+    [employeesRes?.data]
+  )
+
+  const employeeNameById = useMemo(() => {
+    const map: Record<string, string> = {}
+    employeeOptions.forEach((emp) => {
+      map[emp.id] = emp.name
+    })
+    return map
+  }, [employeeOptions])
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
   }, [totalPages, currentPage])
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatus(value)
-  }
-  const handleSearchChange = (value: string) => {
-    setSearch(value)
-  }
-
-  const handleViewDetails = (project: any) => {
+  const handleViewDetails = (project: CompanyProjectApiDoc) => {
     setSelectedProject(project)
     setIsViewModalOpen(true)
   }
 
-  const handleEdit = (project: any, e: React.MouseEvent) => {
+  const handleViewTasks = (project: CompanyProjectApiDoc, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    setSelectedProject(project)
+    setIsViewTasksModalOpen(true)
+  }
+
+  const handleAssignTeam = (project: CompanyProjectApiDoc, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    setSelectedProject(project)
+    setIsAssignModalOpen(true)
+  }
+
+  const handleAddTask = () => {
+    setSelectedTask(null)
+    setIsTaskModalOpen(true)
+  }
+
+  const handleEditTask = (task: CompanyProjectTaskApiDoc) => {
+    setSelectedTask(task)
+    setIsTaskModalOpen(true)
+  }
+
+  const handleEdit = (project: CompanyProjectApiDoc, e: React.MouseEvent) => {
     e.stopPropagation()
     setSelectedProject(project)
     setIsEditModalOpen(true)
@@ -156,7 +213,6 @@ export default function CompanyProjects() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {projectStats?.map((stat, index) => {
           const Icon = stat.icon
@@ -178,7 +234,9 @@ export default function CompanyProjects() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-base font-medium text-muted-foreground">{t(stat.titleKey)}</p>
+                  <p className="text-base font-medium text-muted-foreground">
+                    {t(stat.titleKey)}
+                  </p>
                   <h3 className="text-3xl font-bold text-foreground mt-1">{value}</h3>
                 </div>
                 <div className={cn('p-3 rounded-lg', stat.iconBgColor)}>
@@ -190,22 +248,21 @@ export default function CompanyProjects() {
         })}
       </div>
 
-      {/* Project Status Section */}
-      <div className=" border-0 ">
-        <div className="flex flex-row items-center justify-between pb-6">
+      <div>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6">
           <h2 className="text-xl font-bold text-accent">{t('companyProjects.projectStatus')}</h2>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <SearchInput
               value={searchQuery}
-              onChange={handleSearchChange}
+              onChange={setSearch}
               placeholder={t('companyProjects.searchProject')}
               className="w-[280px] bg-white"
               debounceMs={150}
             />
 
             <div className="w-[120px]">
-              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                <SelectTrigger className="w-full bg-primary text-white hover:bg-primary/90">
+              <Select value={statusFilter} onValueChange={setStatus}>
+                <SelectTrigger className="w-full bg-primary text-white hover:bg-primary/90 border-0">
                   <SlidersHorizontal className="h-4 w-4 mr-2" />
                   <SelectValue placeholder={t('companyProjects.filter')} />
                 </SelectTrigger>
@@ -229,69 +286,105 @@ export default function CompanyProjects() {
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {projects.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">{t('companyProjects.noProjectsFound')}</div>
+            <div className="py-12 text-center text-muted-foreground">
+              {t('companyProjects.noProjectsFound')}
+            </div>
           ) : (
-            projects.map((project: any) => {
+            projects.map((project: CompanyProjectApiDoc) => {
               const uiStatus = mapPaymentTypeToStatus(project.paymentType)
-              const statusColors = STATUS_COLORS[uiStatus] ?? { bg: 'bg-gray-100', text: 'text-gray-800' }
+              const statusColors = STATUS_COLORS[uiStatus] ?? {
+                bg: 'bg-gray-100',
+                text: 'text-gray-800',
+              }
+
               return (
                 <motion.div
                   key={project.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg shadow-sm bg-white hover:shadow-sm transition-shadow"
+                  className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
                 >
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-accent truncate">{project.projectName}</h4>
-                    <p className="text-sm text-muted-foreground mt-0.5">{project.companyName || 'General'}</p>
-                    <div className="flex flex-wrap gap-4 mt-5">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-sm text-muted-foreground block">{t('companyProjects.budget')}</span>
-                        <span className=" font-bold text-accent">
-                          {formatCurrency(project.totalBudget)}
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex-1 min-w-0 space-y-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <h4 className="text-lg font-bold text-gray-900 truncate">
+                            {project.projectName}
+                          </h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {project.companyName || '—'}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            'shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold',
+                            statusColors.bg,
+                            statusColors.text
+                          )}
+                        >
+                          {uiStatus}
                         </span>
                       </div>
 
-                      <div className="flex flex-col gap-2">
-                        <span className="text-sm text-muted-foreground block">{t('companyProjects.timeline')}</span>
-                        <span className=" font-bold text-accent ">{getProjectDuration(project.startDate, project.endDate)}</span>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <span className="text-sm text-muted-foreground block">{t('companyProjects.amountDue')}</span>
-                        <span className=" font-bold text-accent">
-                          {formatCurrency(project.amountDue)}
-                        </span>
+                      <div className="flex flex-wrap gap-10">
+                        <div>
+                          <span className="text-sm text-muted-foreground block mb-1">
+                            {t('companyProjects.budget')}
+                          </span>
+                          <span className="text-lg font-bold text-gray-900">
+                            {formatCurrency(project.totalBudget)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-sm text-muted-foreground block mb-1">
+                            {t('companyProjects.timeline')}
+                          </span>
+                          <span className="text-lg font-bold text-gray-900">
+                            {getProjectDuration(project.startDate, project.endDate)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex flex-col items-end  justify-between h-full  gap-10">
-                    <div
-                      className={cn(
-                        'px-4 py-2 rounded-sm text-xs font-semibold bg-[#FF383C1A]',
 
-                        statusColors.text
-                      )}
-                    >
-                      {uiStatus}
-                    </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 lg:justify-end lg:max-w-[520px]">
                       <Button
+                        type="button"
                         variant="outline"
                         size="sm"
-                        onClick={(e) => handleEdit(project, e)}
-                        className="bg-[#FF383C1A] border   text-accent"
+                        onClick={(e) => handleViewTasks(project, e)}
+                        className={cn('h-9 rounded-lg border', projectCardActionClass.viewTask)}
                       >
-                        <Pencil className="h-4 w-4 mr-1" />
-                        {t('common.edit')}
+                        {t('companyProjects.viewTask')}
                       </Button>
                       <Button
                         type="button"
-                        onClick={() => handleViewDetails(project)}
-                        className="text-sm  bg-[#FF383C1A] border text-accent"
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => handleAssignTeam(project, e)}
+                        className={cn('h-9 rounded-lg border', projectCardActionClass.assignEmployee)}
                       >
-                        {t('companyProjects.viewDetails')}
+                        {t('companyProjects.assignEmployee')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDetails(project)}
+                        className={cn('h-9 rounded-lg border', projectCardActionClass.projectDetails)}
+                      >
+                        {t('companyProjects.projectDetails')}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => handleEdit(project, e)}
+                        className={cn('h-9 rounded-lg border', projectCardActionClass.edit)}
+                      >
+                        <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                        {t('common.edit')}
                       </Button>
                     </div>
                   </div>
@@ -300,7 +393,6 @@ export default function CompanyProjects() {
             })
           )}
 
-          {/* Pagination */}
           {projects.length > 0 && (
             <div className="border-t border-gray-100 pt-4">
               <Pagination
@@ -316,7 +408,6 @@ export default function CompanyProjects() {
         </div>
       </div>
 
-      {/* Modals */}
       <ViewProjectDetailsModal
         open={isViewModalOpen}
         onClose={() => {
@@ -324,6 +415,39 @@ export default function CompanyProjects() {
           setSelectedProject(null)
         }}
         project={selectedProject}
+        employeeNameById={employeeNameById}
+      />
+
+      <ViewTasksModal
+        open={isViewTasksModalOpen}
+        onClose={() => {
+          setIsViewTasksModalOpen(false)
+        }}
+        project={selectedProject}
+        onAddTask={handleAddTask}
+        onEditTask={handleEditTask}
+      />
+
+      <AssignTeamModal
+        open={isAssignModalOpen}
+        onClose={() => {
+          setIsAssignModalOpen(false)
+        }}
+        project={selectedProject}
+        employees={employeeOptions}
+        onAssigned={refetch}
+      />
+
+      <AddProjectTaskModal
+        open={isTaskModalOpen}
+        onClose={() => {
+          setIsTaskModalOpen(false)
+          setSelectedTask(null)
+        }}
+        project={selectedProject}
+        task={selectedTask}
+        employees={employeeOptions}
+        onSaved={refetch}
       />
 
       <AddEditProjectModal

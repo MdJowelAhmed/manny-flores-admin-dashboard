@@ -16,9 +16,9 @@ import {
 import { sonnerToast } from '@/utils/toast'
 import { InfiniteScrollSelect } from '@/components/common/InfiniteScrollSelect'
 import {
-  useCreateCompanyProjectsMutation,
-  useUpdateCompanyProjectsMutation,
-} from '@/redux/slices/super-admin/company-projectsApi'
+  useCreateCompanyProjectMutation,
+  useUpdateCompanyProjectMutation,
+} from '@/redux/api/companyProjectApi'
 import { mapPaymentTypeToStatus } from '../CompanyProjects'
 
 interface AddEditProjectModalProps {
@@ -57,10 +57,10 @@ export function AddEditProjectModal({
   const isEdit = !!project
 
   const [createProject, { isLoading: isCreating }] =
-    useCreateCompanyProjectsMutation()
+    useCreateCompanyProjectMutation()
 
   const [updateProject, { isLoading: isUpdating }] =
-    useUpdateCompanyProjectsMutation()
+    useUpdateCompanyProjectMutation()
 
   const isLoading = isCreating || isUpdating
 
