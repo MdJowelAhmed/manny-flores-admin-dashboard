@@ -23,7 +23,7 @@ import { useTranslation } from 'react-i18next'
 interface ChartDataPoint {
     month: string
     revenue: number
-    expenses: number
+    project: number
 }
 
 interface RevenueChartProps {
@@ -137,8 +137,8 @@ export function RevenueChart({ chartData, selectedYear, onYearChange }: RevenueC
                                     radius={[4, 4, 0, 0]} 
                                 />
                                 <Bar 
-                                    dataKey="expenses" 
-                                    name={t('dashboard.expenses')} 
+                                    dataKey="project" 
+                                    name={t('dashboard.project')} 
                                     fill="#FFB800" 
                                     radius={[4, 4, 0, 0]} 
                                 />

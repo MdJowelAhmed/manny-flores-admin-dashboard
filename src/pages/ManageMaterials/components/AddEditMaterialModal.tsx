@@ -24,7 +24,6 @@ export interface MaterialFormSavePayload {
   categoryId: string
   unitPrice: number
   quantity: number
-  stock: number
 }
 
 interface AddEditMaterialModalProps {
@@ -58,7 +57,6 @@ export function AddEditMaterialModal({
   const [materialName, setMaterialName] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [unitPrice, setUnitPrice] = useState('')
-  const [stock, setStock] = useState('')
   const [quantity, setQuantity] = useState('')
 
   useEffect(() => {
@@ -69,13 +67,11 @@ export function AddEditMaterialModal({
       setMaterialName(material.materialName)
       setCategoryId(material.categoryId || firstId)
       setUnitPrice(String(material.unitPrice ?? ''))
-      setStock(String(material.stock ?? ''))
       setQuantity(String(material.quantity ?? ''))
     } else {
       setMaterialName('')
       setCategoryId(firstId)
       setUnitPrice('')
-      setStock('')
       setQuantity('')
     }
   }, [material, open, materialCategories])
@@ -108,7 +104,6 @@ export function AddEditMaterialModal({
     }
 
     const price = parseFloat(unitPrice.replace(/[^0-9.-]/g, '')) || 0
-    const stockVal = parseInt(stock, 10) || 0
     const quantityVal = parseInt(quantity, 10) || 0
 
     await onSave({
@@ -117,7 +112,6 @@ export function AddEditMaterialModal({
       categoryId,
       unitPrice: price,
       quantity: quantityVal,
-      stock: stockVal,
     })
   }
 
@@ -196,14 +190,6 @@ export function AddEditMaterialModal({
               type="number"
               min={0}
               step="0.01"
-            />
-            <FormInput
-              label={t('manageMaterials.totalStockLabel')}
-              placeholder="520"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              type="number"
-              min={0}
             />
             <FormInput
               className="sm:col-span-2"

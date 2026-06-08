@@ -34,9 +34,9 @@ export function MaterialsTable({
             <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.unitPrice')}
             </th>
-            <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide">
+            {/* <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.quantity')}
-            </th>
+            </th> */}
             <th className="px-5 py-4 text-right text-xs font-bold uppercase tracking-wide">
               {t('manageMaterials.totalStock')}
             </th>
@@ -71,9 +71,9 @@ export function MaterialsTable({
                 <td className="px-5 py-4 text-sm text-slate-700 text-right tabular-nums">
                   {formatCurrency(item.unitPrice)}
                 </td>
-                <td className="px-5 py-4 text-sm text-slate-700 text-right tabular-nums">
+                {/* <td className="px-5 py-4 text-sm text-slate-700 text-right tabular-nums">
                   {item.quantity}
-                </td>
+                </td> */}
                 <td className="px-5 py-4 text-sm text-slate-700 text-right tabular-nums">
                   {item.stock}
                 </td>

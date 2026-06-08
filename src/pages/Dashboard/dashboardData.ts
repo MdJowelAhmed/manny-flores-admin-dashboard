@@ -12,7 +12,7 @@ export const generateYearData = (year: number) => {
         return {
             month,
             revenue: Math.round(baseRevenue * seasonMultiplier * randomVariation() * (1 + index * 0.02)),
-            expenses: Math.round(baseRevenue * 0.7 * seasonMultiplier * randomVariation() * (1 + index * 0.01)),
+            project: Math.round(baseRevenue * 0.7 * seasonMultiplier * randomVariation() * (1 + index * 0.01)),
             users: Math.round(baseUsers * randomVariation() * (1 + index * 0.05)),
             orders: Math.round(baseOrders * seasonMultiplier * randomVariation() * (1 + index * 0.03)),
         }

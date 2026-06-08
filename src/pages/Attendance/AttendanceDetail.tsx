@@ -55,7 +55,7 @@ export default function AttendanceDetail() {
           project: 'General',
           checkIn: item.checkInTime ? moment(item.checkInTime).format('hh:mm A') : '--:--',
           checkOut: item.checkOutTime ? moment(item.checkOutTime).format('hh:mm A') : '--:--',
-          totalHours: item.workingHours !== undefined ? `${item.workingHours}h` : '--:--',
+          totalHours: item.workingHours !== undefined ? `${item.workingHours} hours` : '--:--',
           status: mappedStatus,
           isActive: true,
           userId: item.userId || item.user?.id || '',

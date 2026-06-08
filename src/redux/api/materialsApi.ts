@@ -44,7 +44,6 @@ export interface MaterialPayload {
   category: string
   unitPrice: number
   quantity: number
-  stock: number
 }
 
 export function mapMaterialFromApi(doc: MaterialApiDoc): Material {

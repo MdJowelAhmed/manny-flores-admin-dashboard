@@ -61,13 +61,7 @@ const navItems: NavItem[] = [
   //   feature: 'recent-projects',
   // },
 
-  {
-    title: 'Customer Management',
-    titleKey: 'sidebar.customerManagement',
-    href: '/customer-management',
-    icon: UserCircle,
-    feature: 'customer-management',
-  },
+
   {
     title: 'Estimate',
     titleKey: 'sidebar.estimate',
@@ -199,6 +193,13 @@ const navItems: NavItem[] = [
     href: '/daily-safety-reports',
     icon: ShieldCheck,
     feature: 'daily-safety-reports',
+  },
+  {
+    title: 'Customer Management',
+    titleKey: 'sidebar.customerManagement',
+    href: '/customer-management',
+    icon: UserCircle,
+    feature: 'customer-management',
   },
 ]
 

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Switch } from '@/components/ui/switch'
 import type { AttendanceRecord, AttendanceStatus } from './attendanceData'
 import { STATUS_STYLES } from './attendanceData'
@@ -17,6 +18,8 @@ export function AttendanceDetailTable({
   records,
   onStatusChange,
 }: AttendanceDetailTableProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="w-full overflow-auto">
       <table className="w-full min-w-[600px]">
@@ -25,7 +28,7 @@ export function AttendanceDetailTable({
             <th className="px-4 py-4 text-left text-sm font-semibold">Date</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">Check In</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">Check Out</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Work hour</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.workingHours')}</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">Attendance</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
             {/* <th className="px-4 py-4 text-right text-sm font-semibold">Action</th> */}
