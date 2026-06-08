@@ -22,9 +22,14 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: true,
+      
       open: true,
       port: 5173,
       strictPort: true,
+      allowedHosts: [
+        '193.46.198.251',
+        "10.10.7.30",
+      ],
       proxy: {
         '/uploads': {
           target: apiTarget,
