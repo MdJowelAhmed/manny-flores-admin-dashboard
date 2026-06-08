@@ -54,11 +54,12 @@ export function RecentActivityCard() {
             status: mapStatus(item.projectStatus),
             progress: item.projectStatus === 'COMPLETED' ? 100 : item.projectStatus === 'IN_PROGRESS' ? 60 : item.projectStatus === 'PENDING' ? 15 : 0,
             value: item.totalCost ? `$${item.totalCost}` : '$0',
-            startDate: item.estimateStartDate ? new Date(item.estimateStartDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
-            endDate: item.estimateEndDate ? new Date(item.estimateEndDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
+                // startDate: item.estimateStartDate ? new Date(item.estimateStartDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
+                // endDate: item.estimateEndDate ? new Date(item.estimateEndDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.') : 'N/A',
             email: item.customerEmail,
             company: item.customerName,
             projectName: item.projectName,
+            totalDays: item.totalDate,
             description: item.description,
             planFiles: [],
             originalId: item.id
@@ -126,8 +127,7 @@ export function RecentActivityCard() {
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.id')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.customerName')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.project')}</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.startDate')}</th>
-                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.endDate')}</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.totalDays')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.status')}</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold">{t('dashboard.action')}</th>
                                 </tr>
@@ -151,11 +151,9 @@ export function RecentActivityCard() {
                                             {project.project}
                                         </td>
                                         <td className="px-6 py-5 text-sm whitespace-nowrap">
-                                            {project.startDate}
+                                            {project.totalDays}
                                         </td>
-                                        <td className="px-6 py-5 text-sm whitespace-nowrap">
-                                            {project.endDate}
-                                        </td>
+                                        
                                         <td className="px-6 py-5">
                                             <span
                                                 className="inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium"
