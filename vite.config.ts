@@ -46,6 +46,12 @@ export default defineConfig(({ mode }) => {
     preview: {
       host: true,
       port: 4175,
+      proxy: {
+        '/uploads': {
+          target: apiTarget,
+          changeOrigin: true,
+        },
+      },
       allowedHosts: [
         '193.46.198.251',
         "10.10.7.30",
