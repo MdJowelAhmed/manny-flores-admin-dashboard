@@ -1,20 +1,13 @@
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
-export const imageUrl = (path: string): string => {
-    if (!path || typeof path !== 'string') {
-        return ''
-    }
+export const imageUrl = (path?: string): string => {
+  if (!path) return ''
 
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-        try {
-            const { pathname } = new URL(path)
-            if (pathname.startsWith('/uploads')) {
-                return pathname
-            }
-        } catch {
-            return path
-        }
-        return path
-    }
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path
+  }
 
-    return path.startsWith('/') ? path : `/${path}`
+  const normalized = path.startsWith('/') ? path : `/${path}`
+
+  return `${API_BASE}${normalized}`
 }
