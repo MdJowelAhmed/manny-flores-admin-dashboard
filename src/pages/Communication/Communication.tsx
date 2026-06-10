@@ -19,7 +19,7 @@ import {
 } from "@/redux/slices/super-admin/chatApi";
 
 import { UserContext } from "@/provider/UserContext";
-import { getImageUrl } from "@/utils/getImageUrl";
+import { imageUrl, imageUrlAbsolute } from "@/components/common/getImageUrl";
 
 type TUserContext = {
   socket: any;
@@ -149,6 +149,51 @@ function isImageMessage(message: TMessage) {
 function sortMessagesAsc(messages: TMessage[]) {
   return [...messages].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+}
+
+function resolveAvatarSrc(profile: string | null | undefined): string {
+  if (!profile) return "";
+  return imageUrl(profile);
+}
+
+function AvatarCircle({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  const showImg = src && !failed;
+
+  return (
+    <div
+      className={cn(
+        "rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600",
+        className,
+      )}
+    >
+      {showImg ? (
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            const absolute = imageUrlAbsolute(src);
+            if (absolute && e.currentTarget.src !== absolute) {
+              e.currentTarget.src = absolute;
+              return;
+            }
+            setFailed(true);
+          }}
+        />
+      ) : (
+        <span>{alt.charAt(0).toUpperCase()}</span>
+      )}
+    </div>
   );
 }
 
@@ -411,15 +456,11 @@ const Communication = () => {
                       <Users className="h-6 w-6 text-primary" />
                     </div>
                   ) : (
-                    <div className="h-12 w-12 shrink-0 rounded-full overflow-hidden bg-gray-200">
-                      <img
-                        src={
-                          avatar ? getImageUrl(avatar) : "/default-image.png"
-                        }
-                        alt={title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                    <AvatarCircle
+                      src={resolveAvatarSrc(avatar)}
+                      alt={title}
+                      className="h-12 w-12 shrink-0"
+                    />
                   )}
 
                   <div className="flex-1 min-w-0">
@@ -474,22 +515,15 @@ const Communication = () => {
                         <Users className="h-5 w-5 text-white" />
                       </div>
                     ) : (
-                      <img
-                        src={
-                          getConversationAvatar(selectedConversation, currentUserId)
-                            ? getImageUrl(
-                                getConversationAvatar(
-                                  selectedConversation,
-                                  currentUserId,
-                                )!,
-                              )
-                            : "/default-image.png"
-                        }
+                      <AvatarCircle
+                        src={resolveAvatarSrc(
+                          getConversationAvatar(selectedConversation, currentUserId),
+                        )}
                         alt={getConversationTitle(
                           selectedConversation,
                           currentUserId,
                         )}
-                        className="w-full h-full object-cover"
+                        className="h-11 w-11 bg-white/20 text-white"
                       />
                     )}
                   </div>
@@ -542,22 +576,11 @@ const Communication = () => {
                         key={member.id}
                         className="flex items-center gap-3 text-sm text-gray-700"
                       >
-                        <div className="h-8 w-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-xs font-semibold">
-                          {member.profile ? (
-                            <img
-                              src={getImageUrl(member.profile)}
-                              alt={member.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            (member.name || member.email)
-                              ?.split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .slice(0, 2)
-                              .toUpperCase()
-                          )}
-                        </div>
+                        <AvatarCircle
+                          src={resolveAvatarSrc(member.profile)}
+                          alt={member.name || member.email}
+                          className="h-8 w-8 text-xs"
+                        />
                         <div className="min-w-0">
                           <p className="font-medium truncate">{member.name}</p>
                           <p className="text-xs text-muted-foreground truncate">
@@ -600,10 +623,16 @@ const Communication = () => {
                       >
                         {isImageMessage(message) && (
                           <img
-                            src={getImageUrl(message.resourceUrl!)}
+                            src={imageUrl(message.resourceUrl!)}
                             alt="chat attachment"
                             className="max-w-full w-full max-h-[320px] min-h-[120px] object-contain rounded-xl bg-black/5 mb-2"
                             loading="lazy"
+                            onError={(e) => {
+                              const absolute = imageUrlAbsolute(message.resourceUrl);
+                              if (absolute && e.currentTarget.src !== absolute) {
+                                e.currentTarget.src = absolute;
+                              }
+                            }}
                           />
                         )}
 
@@ -612,7 +641,8 @@ const Communication = () => {
                             type="button"
                             onClick={() =>
                               window.open(
-                                getImageUrl(message.resourceUrl!),
+                                imageUrlAbsolute(message.resourceUrl!) ||
+                                  imageUrl(message.resourceUrl!),
                                 "_blank",
                                 "noopener,noreferrer",
                               )

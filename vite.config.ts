@@ -50,6 +50,12 @@ export default defineConfig(({ mode }) => {
         '/uploads': {
           target: apiTarget,
           changeOrigin: true,
+          secure: false,
+        },
+        '/image': {
+          target: apiTarget,
+          changeOrigin: true,
+          secure: false,
         },
       },
       allowedHosts: [
