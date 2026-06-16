@@ -12,8 +12,26 @@ export interface AttendanceRecord {
   totalHours: string
   status: AttendanceStatus
   isActive?: boolean
-  userId?: string 
+  userId?: string
   profile?: string
+  checkInLatitude?: number | null
+  checkInLongitude?: number | null
+  checkOutLatitude?: number | null
+  checkOutLongitude?: number | null
+}
+
+export function hasValidCoordinates(
+  latitude?: number | null,
+  longitude?: number | null
+): boolean {
+  if (latitude == null || longitude == null) return false
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false
+  if (latitude === 0 && longitude === 0) return false
+  return true
+}
+
+export function getGoogleMapsUrl(latitude: number, longitude: number): string {
+  return `https://www.google.com/maps?q=${latitude},${longitude}`
 }
 
 

@@ -94,9 +94,13 @@ export default function Attendance() {
           checkOut: item.checkOutTime ? moment(item.checkOutTime).format('hh:mm A') : '--:--',
           totalHours: item.workingHours !== undefined ? `${item.workingHours} hours` : '--:--',
           status: mappedStatus,
-          isActive: true, 
+          isActive: true,
           userId: item.user?.id || null,
-        } 
+          checkInLatitude: item.checkInLatitude ?? null,
+          checkInLongitude: item.checkInLongitude ?? null,
+          checkOutLatitude: item.checkOutLatitude ?? null,
+          checkOutLongitude: item.checkOutLongitude ?? null,
+        }
       })
       setRecords(mapped)
     }

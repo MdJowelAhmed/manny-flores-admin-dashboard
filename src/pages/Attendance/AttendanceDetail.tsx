@@ -59,6 +59,10 @@ export default function AttendanceDetail() {
           status: mappedStatus,
           isActive: true,
           userId: item.userId || item.user?.id || '',
+          checkInLatitude: item.checkInLatitude ?? null,
+          checkInLongitude: item.checkInLongitude ?? null,
+          checkOutLatitude: item.checkOutLatitude ?? null,
+          checkOutLongitude: item.checkOutLongitude ?? null,
         }
       })
       setRecords(mapped)

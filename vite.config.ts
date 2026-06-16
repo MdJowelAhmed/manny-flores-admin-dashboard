@@ -7,6 +7,8 @@ import autoprefixer from 'autoprefixer'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const apiTarget = env.VITE_API_BASE_URL || 'http://10.10.7.28:5000'
+  /** Static files may be served by nginx while API runs on :5000 */
+  const uploadsProxyTarget = env.VITE_UPLOADS_PROXY_TARGET || apiTarget
 
   return {
     plugins: [react()],
@@ -32,12 +34,12 @@ export default defineConfig(({ mode }) => {
       ],
       proxy: {
         '/uploads': {
-          target: apiTarget,
+          target: uploadsProxyTarget,
           changeOrigin: true,
           secure: false,
         },
         '/image': {
-          target: apiTarget,
+          target: uploadsProxyTarget,
           changeOrigin: true,
           secure: false,
         },
@@ -48,12 +50,12 @@ export default defineConfig(({ mode }) => {
       port: 4175,
       proxy: {
         '/uploads': {
-          target: apiTarget,
+          target: uploadsProxyTarget,
           changeOrigin: true,
           secure: false,
         },
         '/image': {
-          target: apiTarget,
+          target: uploadsProxyTarget,
           changeOrigin: true,
           secure: false,
         },
