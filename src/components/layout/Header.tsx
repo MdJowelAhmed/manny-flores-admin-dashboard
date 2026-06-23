@@ -40,6 +40,7 @@ const routeTitleKeys: Record<string, string> = {
   '/payroll-management': 'header.routeTitles.payrollManagement',
   '/resource-requests-report': 'header.routeTitles.resourceRequestsReport',
   '/change-orders': 'header.routeTitles.changeOrders',
+  '/purchase-orders': 'header.routeTitles.purchaseOrders',
   '/vehicle-maintenance': 'header.routeTitles.vehicleMaintenance',
   '/equipment-maintenance': 'header.routeTitles.equipmentMaintenance',
   '/reviews': 'header.routeTitles.reviews',

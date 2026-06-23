@@ -50,6 +50,7 @@ export const FEATURE_ACCESS: Record<string, UserRole[]> = {
   'payroll-management': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'resource-requests-report': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'change-orders': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BUILDER],
+  'purchase-orders': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BUILDER],
   'daily-safety-reports': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'recent-projects': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   invoice: [UserRole.SUPER_ADMIN, UserRole.ADMIN],

@@ -43,6 +43,7 @@ import Attendance from './pages/Attendance/Attendance'
 import PayrollManagement from './pages/PayrollManagement/PayrollManagement'
 import ResourceRequestsReport from './pages/ResourceRequestsReport/ResourceRequestsReport'
 import ChangeOrders from './pages/ChangeOrders/ChangeOrders'
+import PurchaseOrders from './pages/PurchaseOrders/PurchaseOrders'
 import DailySafetyReports from './pages/DailySafetyReports/DailySafetyReports'
 import AttendanceDetail from './pages/Attendance/AttendanceDetail'
 import RecentProjects from './pages/RecentProjects'
@@ -343,6 +344,16 @@ function App() {
               element={
                 <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BUILDER]}>
                   <ChangeOrders />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Purchase Orders - Super Admin, Admin, Builder */}
+            <Route
+              path="purchase-orders"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BUILDER]}>
+                  <PurchaseOrders />
                 </RoleBasedRoute>
               }
             />

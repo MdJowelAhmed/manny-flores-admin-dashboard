@@ -25,6 +25,7 @@ import {
   DollarSign,
   FileBarChart,
   ClipboardList,
+  Receipt,
   // FolderKanban,
   Info,
   BadgeDollarSign,
@@ -186,6 +187,13 @@ const navItems: NavItem[] = [
     href: '/change-orders',
     icon: ClipboardList,
     feature: 'change-orders',
+  },
+  {
+    title: 'Purchase Orders',
+    titleKey: 'sidebar.purchaseOrders',
+    href: '/purchase-orders',
+    icon: Receipt,
+    feature: 'purchase-orders',
   },
 
   {
