@@ -20,6 +20,7 @@ import {
   getChangeOrderCustomerEmail,
   getChangeOrderCustomerPhone,
   getChangeOrderCompany,
+  getChangeOrderType,
 } from '../changeOrdersData'
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
@@ -95,6 +96,7 @@ export function ViewChangeOrderDetailsModal({
   }
 
   const currentStatus = getChangeOrderStatus(order)
+  const isCompanyOrder = getChangeOrderType(order) === 'company'
 
   return (
     <ModalWrapper
@@ -158,10 +160,27 @@ export function ViewChangeOrderDetailsModal({
         </div>
 
         <div>
-          <SectionHeader icon={User} title={t('changeOrders.sectionCustomerInfo')} />
+          <SectionHeader
+            icon={User}
+            title={
+              isCompanyOrder
+                ? t('changeOrders.sectionBuilderInfo')
+                : t('changeOrders.sectionCustomerInfo')
+            }
+          />
           <div className="rounded-xl bg-muted/20 px-4 py-1">
-            <DetailRow label={t('changeOrders.customerName')} value={getChangeOrderCustomerName(order)} />
-            <DetailRow label={t('changeOrders.contactNumber')} value={getChangeOrderCustomerPhone(order)} />
+            <DetailRow
+              label={
+                isCompanyOrder ? t('changeOrders.builderName') : t('changeOrders.customerName')
+              }
+              value={getChangeOrderCustomerName(order)}
+            />
+            {!isCompanyOrder ? (
+              <DetailRow
+                label={t('changeOrders.contactNumber')}
+                value={getChangeOrderCustomerPhone(order)}
+              />
+            ) : null}
             <DetailRow label={t('changeOrders.emailField')} value={getChangeOrderCustomerEmail(order)} />
             <DetailRow label={t('changeOrders.company')} value={getChangeOrderCompany(order)} />
           </div>

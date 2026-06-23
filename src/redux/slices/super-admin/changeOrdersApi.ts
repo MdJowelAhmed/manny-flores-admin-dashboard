@@ -2,13 +2,17 @@ import { baseApi } from "@/redux/baseApi";
 
 const changeOrdersApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        getChangeOrders: builder.query<any, { search?: string, page?: number, limit?: number }>({
-            query: ({ search, page = 1, limit = 10 }) => {
+        getChangeOrders: builder.query<
+            any,
+            { search?: string; page?: number; limit?: number; projectType?: string }
+        >({
+            query: ({ search, page = 1, limit = 10, projectType }) => {
                 return {
                     url: '/change-orders',
                     method: 'GET',
                     params: {
                         ...(search && search.trim().length > 0 && { search }),
+                        ...(projectType && { projectType }),
                         page: page,
                         limit: limit
                     }

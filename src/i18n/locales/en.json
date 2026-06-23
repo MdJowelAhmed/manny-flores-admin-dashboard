@@ -1012,7 +1012,17 @@
     "reasonMaterialUpgrade": "Material upgrade",
     "reasonSiteCondition": "Site condition",
     "reasonClientRequest": "Client request",
-    "pdfDownloadStarted": "Download started."
+    "pdfDownloadStarted": "Download started.",
+    "customerProjectsTab": "Customer Projects",
+    "companyProjectsTab": "Company Projects",
+    "selectCompanyProject": "Select Company Project",
+    "selectCompanyProjectPlaceholder": "Select company project",
+    "newChangeOrderCustomerDesc": "Create a change order for a customer project.",
+    "newChangeOrderCompanyDesc": "Create a change order for a company project.",
+    "noCompanyOrdersFound": "No company project change orders found",
+    "builderContact": "Builder",
+    "sectionBuilderInfo": "Builder Information",
+    "builderName": "Builder Name"
   },
   "purchaseOrders": {
     "totalOrders": "Total Purchase Orders",

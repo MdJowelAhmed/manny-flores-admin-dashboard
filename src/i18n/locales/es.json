@@ -1000,7 +1000,17 @@
     "reasonMaterialUpgrade": "Mejora de materiales",
     "reasonSiteCondition": "Condición del sitio",
     "reasonClientRequest": "Solicitud del cliente",
-    "pdfDownloadStarted": "Descarga iniciada."
+    "pdfDownloadStarted": "Descarga iniciada.",
+    "customerProjectsTab": "Proyectos de Clientes",
+    "companyProjectsTab": "Proyectos de Empresa",
+    "selectCompanyProject": "Seleccionar Proyecto de Empresa",
+    "selectCompanyProjectPlaceholder": "Seleccione proyecto de empresa",
+    "newChangeOrderCustomerDesc": "Crear una orden de cambio para un proyecto de cliente.",
+    "newChangeOrderCompanyDesc": "Crear una orden de cambio para un proyecto de empresa.",
+    "noCompanyOrdersFound": "No se encontraron órdenes de cambio de proyectos de empresa",
+    "builderContact": "Constructor",
+    "sectionBuilderInfo": "Información del Constructor",
+    "builderName": "Nombre del Constructor"
   },
   "purchaseOrders": {
     "totalOrders": "Total de Órdenes de Compra",
