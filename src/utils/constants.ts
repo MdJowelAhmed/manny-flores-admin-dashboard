@@ -54,6 +54,7 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   Failed: { bg: 'bg-red-100', text: 'text-red-800' },
   Cancelled: { bg: 'bg-gray-100', text: 'text-gray-800' },
   Active: { bg: 'bg-orange-100', text: 'text-orange-800' },
+  'In Progress': { bg: 'bg-blue-100', text: 'text-blue-800' },
   Leave: { bg: 'bg-orange-100', text: 'text-orange-600' },
   APPROVED: { bg: 'bg-green-100', text: 'text-green-700' },
   PENDING: { bg: 'bg-amber-100', text: 'text-amber-700' },

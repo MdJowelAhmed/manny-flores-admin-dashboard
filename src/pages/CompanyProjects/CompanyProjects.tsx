@@ -16,7 +16,6 @@ import {
 import { projectStats, projectStatusFilterOptions } from './companyProjectsData'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
-import { ViewProjectDetailsModal } from './components/ViewProjectDetailsModal'
 import { BuilderProjectDetailsModal } from './components/BuilderProjectDetailsModal'
 import { ViewTasksModal } from './components/ViewTasksModal'
 import { AddEditProjectModal } from './components/AddEditProjectModal'
@@ -85,6 +84,9 @@ export const mapPaymentTypeToStatus = (paymentType?: string): string => {
       return 'Active'
   }
 }
+
+export const isProjectInProgress = (projectStatus?: string): boolean =>
+  (projectStatus ?? '').toUpperCase() === 'IN_PROGRESS'
 
 export default function CompanyProjects() {
   const { t } = useTranslation()
@@ -177,14 +179,6 @@ export default function CompanyProjects() {
       })) ?? [],
     [employeesRes?.data]
   )
-
-  const employeeNameById = useMemo(() => {
-    const map: Record<string, string> = {}
-    employeeOptions.forEach((emp) => {
-      map[emp.id] = emp.name
-    })
-    return map
-  }, [employeeOptions])
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
@@ -469,16 +463,18 @@ export default function CompanyProjects() {
                           >
                             {t('companyProjects.projectDetails')}
                           </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => handleEdit(project, e)}
-                            className={cn('h-9 rounded-lg border', projectCardActionClass.edit)}
-                          >
-                            <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                            {t('common.edit')}
-                          </Button>
+                          {!isProjectInProgress(project.projectStatus) && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleEdit(project, e)}
+                              className={cn('h-9 rounded-lg border', projectCardActionClass.edit)}
+                            >
+                              <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                              {t('common.edit')}
+                            </Button>
+                          )}
                           <Button
                             type="button"
                             variant="outline"
@@ -513,28 +509,20 @@ export default function CompanyProjects() {
         </div>
       </div>
 
-      {isBuilder ? (
-        <BuilderProjectDetailsModal
-          open={isViewModalOpen}
-          onClose={() => {
-            setIsViewModalOpen(false)
-            setSelectedProject(null)
-          }}
-          projectId={selectedProject?.id ?? null}
-          onDecisionComplete={refetch}
-        />
-      ) : (
-        <>
-          <ViewProjectDetailsModal
-            open={isViewModalOpen}
-            onClose={() => {
-              setIsViewModalOpen(false)
-              setSelectedProject(null)
-            }}
-            project={selectedProject}
-            employeeNameById={employeeNameById}
-          />
+      <BuilderProjectDetailsModal
+        open={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false)
+          setSelectedProject(null)
+        }}
+        projectId={selectedProject?.id ?? null}
+        onDecisionComplete={refetch}
+        readOnly={!isBuilder}
+        showShareLink={!isBuilder}
+      />
 
+      {!isBuilder && (
+        <>
           <ViewTasksModal
             open={isViewTasksModalOpen}
             onClose={() => {

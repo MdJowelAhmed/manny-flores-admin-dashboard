@@ -36,11 +36,14 @@ function safeFormatSignedDate(iso?: string): string {
 interface CompanyPublicEstimateContentProps {
   projectId: string
   onDecisionComplete?: () => void
+  /** Admin view: same layout, no approve/reject actions */
+  readOnly?: boolean
 }
 
 export function CompanyPublicEstimateContent({
   projectId,
   onDecisionComplete,
+  readOnly = false,
 }: CompanyPublicEstimateContentProps) {
   const { t } = useTranslation()
 
@@ -61,7 +64,7 @@ export function CompanyPublicEstimateContent({
     projectStatus === 'COMPLETED'
   const isRejected = projectStatus === 'CANCELLED'
   const isPending = projectStatus === 'PENDING'
-  const showDecisionSection = isPending && !isApproved && !isRejected
+  const showDecisionSection = !readOnly && isPending && !isApproved && !isRejected
 
   const [mode, setMode] = useState<DecisionMode>('idle')
 
@@ -427,7 +430,7 @@ export function CompanyPublicEstimateContent({
       ) : null}
       </div>
 
-      {isApproved || isRejected ? (
+      {readOnly || isApproved || isRejected ? (
         <div className="flex justify-end">{downloadButton}</div>
       ) : showDecisionSection ? (
         <div className="rounded-xl border border-gray-200 bg-white p-4">
