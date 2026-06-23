@@ -2,7 +2,12 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
 
-const VALID_ROLES = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]
+const VALID_ROLES = [
+  UserRole.SUPER_ADMIN,
+  UserRole.ADMIN,
+  UserRole.MARKETING,
+  UserRole.BUILDER,
+]
 
 interface ProtectedRouteProps {
   children: React.ReactNode

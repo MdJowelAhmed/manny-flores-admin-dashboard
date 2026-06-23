@@ -6,7 +6,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthLayout from '@/components/layout/AuthLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute'
-import { UserRole } from '@/types/roles'
+import { UserRole, getHomeRouteForRole } from '@/types/roles'
 import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { loadUserFromStorage } from '@/redux/slices/authSlice'
 
@@ -30,6 +30,7 @@ import ControllerList from './pages/Controllers/ControllerList'
 import CompanyProjects from './pages/CompanyProjects/CompanyProjects'
 import CustomerManagement from './pages/CustomerManagement/CustomerManagement'
 import EmployeeManagement from './pages/EmployeeManagement/EmployeeManagement'
+import BuilderManagement from './pages/BuilderManagement/BuilderManagement'
 import VehicleMaintenance from './pages/VehicleMaintenance/VehicleMaintenance'
 import EquipmentMaintenance from './pages/EquipmentMaintenance/EquipmentMaintenance'
 import ReviewList from './pages/Reviews/ReviewList'
@@ -48,6 +49,7 @@ import RecentProjects from './pages/RecentProjects'
 import Notifications from './pages/Notifications/Notifications'
 import InvoicePage from './pages/Invoice'
 import EstimatePage from './pages/Estimate'
+import CompanyPublicEstimate from './pages/companyPublicEstimate'
 import Payments from './pages/Payments/Payments'
 import { UserProvider } from './provider/UserContext'
 
@@ -58,7 +60,7 @@ function AppEntryRedirect() {
     return <Navigate to="/auth/login" replace />
   }
 
-  return <Navigate to="/dashboard" replace />
+  return <Navigate to={getHomeRouteForRole(user.role as UserRole)} replace />
 }
 
 function App() {
@@ -167,11 +169,11 @@ function App() {
               }
             />
 
-            {/* Company & Projects - Super Admin, Admin */}
+            {/* Company & Projects - Super Admin, Admin, Builder */}
             <Route
               path="company-projects"
               element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BUILDER]}>
                   <CompanyProjects />
                 </RoleBasedRoute>
               }
@@ -193,6 +195,16 @@ function App() {
               element={
                 <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
                   <EmployeeManagement />
+                </RoleBasedRoute>
+              }
+            />
+
+            {/* Builder Management - Super Admin, Admin */}
+            <Route
+              path="builder-management"
+              element={
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                  <BuilderManagement />
                 </RoleBasedRoute>
               }
             />
@@ -245,11 +257,11 @@ function App() {
               }
             />
 
-            {/* Communication - Super Admin, Admin, Marketing */}
+            {/* Communication - Super Admin, Admin, Marketing, Builder */}
             <Route
               path="communication"
               element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING]}>
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING, UserRole.BUILDER]}>
                   <Communication />
                 </RoleBasedRoute>
               }
@@ -325,11 +337,11 @@ function App() {
               }
             />
 
-            {/* Change Orders - Super Admin, Admin */}
+            {/* Change Orders - Super Admin, Admin, Builder */}
             <Route
               path="change-orders"
               element={
-                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN]}>
+                <RoleBasedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BUILDER]}>
                   <ChangeOrders />
                 </RoleBasedRoute>
               }
@@ -431,6 +443,9 @@ function App() {
               />
             </Route>
           </Route>
+
+          {/* Public company project estimate — no auth required */}
+          <Route path="/company-estimate/:id" element={<CompanyPublicEstimate />} />
 
           {/* Catch all - 404 Not Found */}
           <Route path="*" element={<NotFound />} />

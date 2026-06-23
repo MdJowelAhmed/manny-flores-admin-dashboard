@@ -1,13 +1,16 @@
-import { FileText } from 'lucide-react'
+import { FileText, Link2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import type { ProjectLineItem } from '@/types'
 import { cn } from '@/utils/cn'
-import { getProjectDuration, mapPaymentTypeToStatus } from '../CompanyProjects'
+import { getProjectDuration, mapProjectStatusToUi } from '../CompanyProjects'
 import type { CompanyProjectApiDoc } from '@/redux/api/companyProjectApi'
+import { normalizeProjectDocumentation } from '@/redux/api/companyProjectApi'
+import { imageUrlAbsolute } from '@/components/common/getImageUrl'
 interface ViewProjectDetailsModalProps {
   open: boolean
   onClose: () => void
@@ -75,16 +78,15 @@ export function ViewProjectDetailsModal({
   const { t } = useTranslation()
   if (!project) return null
 
-  const customerName = project.customerName || 'N/A'
-  const customerEmail = project.customerEmail || 'N/A'
+  const customerEmail = project.builder?.email || project.customerEmail || 'N/A'
   const companyName = project.companyName || 'N/A'
   const startDateStr = project.startDate ? formatDate(project.startDate) : 'N/A'
   const endDateStr = project.endDate ? formatDate(project.endDate) : 'N/A'
-  const uiStatus = mapPaymentTypeToStatus(project.paymentType)
+  const uiStatus = mapProjectStatusToUi(project.projectStatus)
 
   const budget = project.totalBudget || 0
-  const remaining = project.amountDue ?? 0
-  const spent = Math.max(0, budget - remaining)
+  const paid = project.payAmount ?? 0
+  const due = project.amountDue ?? 0
 
   const teamMembers = (project.teamIds ?? [])
     .map((id) => employeeNameById[id] ?? id.slice(0, 8))
@@ -92,6 +94,18 @@ export function ViewProjectDetailsModal({
 
   const lineItems = (project as CompanyProjectApiDoc & { lineItems?: ProjectLineItem[] })
     .lineItems
+
+  const documents = normalizeProjectDocumentation(project.documentation)
+
+  const handleCopyApprovalLink = async () => {
+    const url = `${window.location.origin}/company-estimate/${project.id}`
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success(t('companyProjects.publicEstimate.shareLinkCopied'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
 
   return (
     <ModalWrapper
@@ -101,7 +115,16 @@ export function ViewProjectDetailsModal({
       size="lg"
       className="max-w-xl bg-white"
       footer={
-        <div className="flex justify-end">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:items-center">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCopyApprovalLink}
+            className="h-11 px-4"
+          >
+            <Link2 className="mr-2 h-4 w-4" />
+            {t('companyProjects.publicEstimate.shareLink')}
+          </Button>
           <Button onClick={onClose} className="bg-primary hover:bg-primary/90 text-white h-11 px-8">
             {t('common.close')}
           </Button>
@@ -118,11 +141,10 @@ export function ViewProjectDetailsModal({
               <FileText className="h-4 w-4 text-primary" />
             </div>
             <h3 className="text-sm font-semibold text-foreground">
-              {t('companyProjects.customerContact')}
+              {t('companyProjects.clientBuilderContact')}
             </h3>
           </div>
           <div className="pl-2">
-            <DetailRow label={t('companyProjects.customer')} value={customerName} />
             <DetailRow label={t('common.email')} value={customerEmail} />
           </div>
         </div>
@@ -149,12 +171,12 @@ export function ViewProjectDetailsModal({
               value={getProjectDuration(project.startDate, project.endDate)}
             />
             <DetailRow label={t('companyProjects.totalBudget')} value={formatCurrency(budget)} />
+            <DetailRow label={t('companyProjects.payAmount')} value={formatCurrency(paid)} />
             <DetailRow
               label={t('companyProjects.amountDue')}
-              value={formatCurrency(remaining)}
+              value={formatCurrency(due)}
               highlight
             />
-            <DetailRow label={t('companyProjects.amountSpent')} value={formatCurrency(spent)} />
             <DetailRow
               label={t('companyProjects.assignedTeam')}
               value={teamMembers || t('companyProjects.noTeamAssigned')}
@@ -186,6 +208,38 @@ export function ViewProjectDetailsModal({
                 title={t('estimate.vehicle')}
                 items={lineItems.filter((i) => i.lineType === 'vehicle')}
               />
+            </div>
+          </>
+        )}
+
+        {documents.length > 0 && (
+          <>
+            <Separator />
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-1.5 rounded bg-primary/10">
+                  <FileText className="h-4 w-4 text-primary" />
+                </div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  {t('companyProjects.projectDocuments')}
+                </h3>
+              </div>
+              <div className="pl-2 space-y-2">
+                {documents.map((doc) => (
+                  <a
+                    key={doc.id || doc.url}
+                    href={imageUrlAbsolute(doc.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0 text-sm font-medium text-primary hover:underline"
+                  >
+                    <span className="truncate">{doc.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {t('companyProjects.viewDocument')}
+                    </span>
+                  </a>
+                ))}
+              </div>
             </div>
           </>
         )}

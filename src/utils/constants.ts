@@ -70,6 +70,25 @@ export const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
 
+export const ACCEPTED_DOCUMENT_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'application/zip',
+  'application/x-zip-compressed',
+]
+export const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024 // 10MB
+
 
 
 

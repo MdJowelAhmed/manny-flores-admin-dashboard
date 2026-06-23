@@ -36,10 +36,10 @@ export const projectStats = [
 // Filter options for project status - labelKey is used for i18n
 export const projectStatusFilterOptions = [
   { value: 'all', labelKey: 'companyProjects.allStatus' as const },
-  { value: 'Active', labelKey: 'companyProjects.activeProject' as const },
-  { value: 'Completed', labelKey: 'companyProjects.completedProject' as const },
-  // { value: 'Pending', labelKey: 'companyProjects.pendingProject' as const },
-  { value: 'Cancelled', labelKey: 'companyProjects.cancelledProject' as const },
+  { value: 'PENDING', labelKey: 'companyProjects.pendingProject' as const },
+  { value: 'ACTIVE', labelKey: 'companyProjects.activeProject' as const },
+  { value: 'COMPLETED', labelKey: 'companyProjects.completedProject' as const },
+  { value: 'CANCELLED', labelKey: 'companyProjects.cancelledProject' as const },
 ]
 
 // Payment method options for edit form

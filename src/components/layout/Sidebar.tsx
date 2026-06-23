@@ -28,6 +28,7 @@ import {
   // FolderKanban,
   Info,
   BadgeDollarSign,
+  HardHat,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -97,6 +98,13 @@ const navItems: NavItem[] = [
     href: '/employee-management',
     icon: UserCog,
     feature: 'employee-management',
+  },
+  {
+    title: 'Builder Management',
+    titleKey: 'sidebar.builderManagement',
+    href: '/builder-management',
+    icon: HardHat,
+    feature: 'builder-management',
   },
   {
     title: 'Attendance',

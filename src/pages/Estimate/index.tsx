@@ -131,7 +131,7 @@ export default function EstimatePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight">{t('estimate.pageTitle')}</h1>
+        <h1 className="lg:text-xl font-bold text-gray-900 tracking-tight">{t('estimate.pageTitle')}</h1>
         {canCreate && (
           <Button
             type="button"

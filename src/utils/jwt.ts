@@ -29,6 +29,8 @@ function mapApiRoleToUserRole(apiRole?: string): UserRoleValue {
       return UserRole.ADMIN
     case 'MARKETING':
       return UserRole.MARKETING
+    case 'BUILDER':
+      return UserRole.BUILDER
     default:
       return UserRole.SUPER_ADMIN
   }

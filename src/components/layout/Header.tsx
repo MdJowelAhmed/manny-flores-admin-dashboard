@@ -29,6 +29,7 @@ const routeTitleKeys: Record<string, string> = {
   '/company-projects': 'header.routeTitles.companyProjects',
   '/customer-management': 'header.routeTitles.customerManagement',
   '/employee-management': 'header.routeTitles.employeeManagement',
+  '/builder-management': 'header.routeTitles.builderManagement',
   '/attendance': 'header.routeTitles.attendance',
   '/communication': 'header.routeTitles.communication',
   '/customer-finance': 'header.routeTitles.customerFinance',

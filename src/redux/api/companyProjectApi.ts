@@ -9,41 +9,109 @@ export interface CompanyProjectPagination {
 
 export type CompanyProjectPaymentMethod = 'ONLINE' | 'CASH' | 'CARD' | 'CHEQUE'
 export type CompanyProjectPaymentType = 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'PENDING'
+export type CompanyProjectStatus =
+  | 'PENDING'
+  | 'IN_PROGRESS'
+  | 'ACTIVE'
+  | 'COMPLETED'
+  | 'CANCELLED'
 export type CompanyProjectTaskPriority = 'LOW' | 'MEDIUM' | 'HIGH'
+
+export interface CompanyProjectBuilder {
+  id: string
+  name: string
+  email: string
+  contact?: string | null
+  profile?: string | null
+}
+
+export interface CompanyProjectDocument {
+  id?: string
+  url: string
+  name?: string
+  documentType?: string
+  createdAt?: string
+}
 
 export interface CompanyProjectApiDoc {
   id: string
   projectName: string
-  customerName: string
-  customerEmail: string
+  builderId?: string
+  builder?: CompanyProjectBuilder | null
+  customerEmail?: string
   paymentMethod: CompanyProjectPaymentMethod | string
   companyName: string
   paymentType: CompanyProjectPaymentType | string
+  projectStatus?: CompanyProjectStatus | string
   amountDue: number
+  payAmount?: number
   startDate: string
   endDate: string
   totalBudget: number
-  description: string | null
+  documentation?: string[]
+  description?: string | null
   teamIds: string[]
+  signatures?: string | null
   createdAt: string
   updatedAt: string
 }
 
 export interface CreateCompanyProjectPayload {
   projectName: string
+  builderId: string
   paymentMethod: string
   companyName: string
   paymentType: string
-  amountDue: number
   startDate: string | null
   endDate: string | null
   totalBudget: number
-  customerName: string
-  customerEmail: string
+  payAmount: number
   description?: string
 }
 
 export type UpdateCompanyProjectPayload = Partial<CreateCompanyProjectPayload>
+
+export function buildCompanyProjectFormData(
+  payload: CreateCompanyProjectPayload | Record<string, unknown>,
+  files: File[] = []
+): FormData {
+  const formData = new FormData()
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) return
+    formData.append(key, String(value))
+  })
+
+  files.forEach((file) => {
+    formData.append('documentation', file)
+  })
+
+  return formData
+}
+
+export function normalizeProjectDocumentation(
+  documentation?: CompanyProjectDocument[] | string[] | null
+): CompanyProjectDocument[] {
+  if (!documentation || !Array.isArray(documentation)) return []
+
+  return documentation.map((doc, index) => {
+    if (typeof doc === 'string') {
+      const fileName = doc.split('/').pop() || `Document ${index + 1}`
+      return { id: String(index), url: doc, name: fileName }
+    }
+
+    return {
+      id: doc.id || String(index),
+      url: doc.url,
+      name: doc.name || doc.url.split('/').pop() || `Document ${index + 1}`,
+      documentType: doc.documentType,
+      createdAt: doc.createdAt,
+    }
+  })
+}
+
+/** @deprecated use normalizeProjectDocumentation */
+export const normalizeCompanyProjectDocuments = normalizeProjectDocumentation
 
 export interface CompanyProjectsListResponse {
   success: boolean
@@ -133,6 +201,44 @@ export interface GetCompanyProjectTasksParams {
   limit?: number
 }
 
+export interface CompanyProjectResponse {
+  success: boolean
+  statusCode?: number
+  message: string
+  data: CompanyProjectApiDoc
+}
+
+export interface SubmitCompanyProjectDecisionPayload {
+  id: string
+  projectStatus: 'IN_PROGRESS' | 'CANCELLED'
+  signatureFile?: File
+}
+
+export function buildCompanyProjectDecisionFormData(
+  payload: SubmitCompanyProjectDecisionPayload
+): FormData {
+  const formData = new FormData()
+  formData.append('projectStatus', payload.projectStatus)
+  if (payload.signatureFile) {
+    formData.append('signatures', payload.signatureFile)
+  }
+  return formData
+}
+
+export function dataUrlToSignatureFile(
+  dataUrl: string,
+  filename = 'signature.png'
+): File {
+  const [header, base64] = dataUrl.split(',')
+  const mime = header.match(/:(.*?);/)?.[1] ?? 'image/png'
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return new File([bytes], filename, { type: mime })
+}
+
 export interface CompanyProjectEmployeesResponse {
   success: boolean
   statusCode?: number
@@ -179,7 +285,7 @@ const companyProjectApi = baseApi.injectEndpoints({
 
     createCompanyProject: builder.mutation<
       { success?: boolean; message?: string; data?: CompanyProjectApiDoc },
-      CreateCompanyProjectPayload
+      CreateCompanyProjectPayload | FormData
     >({
       query: (body) => ({
         url: '/company-projects',
@@ -191,7 +297,7 @@ const companyProjectApi = baseApi.injectEndpoints({
 
     updateCompanyProject: builder.mutation<
       { success?: boolean; message?: string; data?: CompanyProjectApiDoc },
-      { id: string; body: UpdateCompanyProjectPayload }
+      { id: string; body: UpdateCompanyProjectPayload | FormData }
     >({
       query: ({ id, body }) => ({
         url: `/company-projects/${id}`,
@@ -199,6 +305,24 @@ const companyProjectApi = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: ['CompanyProjects'],
+    }),
+    deleteCompanyProject: builder.mutation<
+      { success?: boolean; message?: string },
+      { id: string }
+    >({
+      query: ({ id }) => ({
+        url: `/company-projects/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['CompanyProjects'],
+    }),
+
+    getSinglePublicCompanyProject: builder.query<CompanyProjectResponse, string>({
+      query: (id) => ({
+        url: `/company-projects/${id}`,
+        method: 'GET',
+      }),
+      providesTags: (_result, _error, id) => [{ type: 'CompanyProjects', id }],
     }),
 
     assignCompanyProjectTeam: builder.mutation<
@@ -283,7 +407,19 @@ const companyProjectApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Employees'],
     }),
- 
+
+
+    submitCompanyProjectDecision: builder.mutation<
+      CompanyProjectResponse,
+      SubmitCompanyProjectDecisionPayload
+    >({
+      query: ({ id, ...payload }) => ({
+        url: `/company-projects/update/${id}`,
+        method: 'PATCH',
+        body: buildCompanyProjectDecisionFormData({ id, ...payload }),
+      }),
+      invalidatesTags: ['CompanyProjects'],
+    }),
   }),
 })
 
@@ -292,6 +428,7 @@ export const {
   useGetCompanyProjectsQuery,
   useCreateCompanyProjectMutation,
   useUpdateCompanyProjectMutation,
+  useDeleteCompanyProjectMutation,
   useAssignCompanyProjectTeamMutation,
   useGetCompanyProjectTasksQuery,
   useCreateCompanyProjectTaskMutation,
@@ -299,4 +436,6 @@ export const {
   useUpdateCompanyProjectTaskMutation,
   useGetCompanyProjectTaskQuery,
   useDeleteCompanyProjectTaskMutation,
+  useGetSinglePublicCompanyProjectQuery,
+  useSubmitCompanyProjectDecisionMutation,
 } = companyProjectApi

@@ -1,8 +1,9 @@
-// Role definitions: super-admin (full access), admin, marketing
+// Role definitions: super-admin (full access), admin, marketing, builder
 export enum UserRole {
   SUPER_ADMIN = 'super-admin',
   ADMIN = 'admin',
   MARKETING = 'marketing',
+  BUILDER = 'builder',
 }
 
 export type UserRoleType = (typeof UserRole)[keyof typeof UserRole]
@@ -31,14 +32,15 @@ export const FEATURE_ACCESS: Record<string, UserRole[]> = {
   'push-notification': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING],
   controllers: [UserRole.SUPER_ADMIN],
   profile: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  'company-projects': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  'company-projects': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BUILDER],
   'customer-management': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   estimate: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'employee-management': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  'builder-management': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'vehicle-maintenance': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'equipment-maintenance': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   reviews: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING],
-  communication: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING],
+  communication: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MARKETING, UserRole.BUILDER],
   'documents-approvals': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'project-scheduling': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'manage-materials': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
@@ -47,7 +49,7 @@ export const FEATURE_ACCESS: Record<string, UserRole[]> = {
   attendance: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'payroll-management': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'resource-requests-report': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  'change-orders': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  'change-orders': [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BUILDER],
   'daily-safety-reports': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   'recent-projects': [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   invoice: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
@@ -58,4 +60,10 @@ export type FeatureKey = keyof typeof FEATURE_ACCESS
 export const hasFeatureAccess = (userRole: UserRole, feature: FeatureKey): boolean => {
   const roles = FEATURE_ACCESS[feature]
   return roles ? roles.includes(userRole) : false
+}
+
+/** Default landing route after login or when a route is not allowed */
+export function getHomeRouteForRole(role: UserRole): string {
+  if (role === UserRole.BUILDER) return '/company-projects'
+  return '/dashboard'
 }

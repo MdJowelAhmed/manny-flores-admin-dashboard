@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
+import { ImageUploader } from '@/components/common/ImageUploader'
 import {
   FormInput,
   FormSelect,
@@ -8,18 +9,26 @@ import {
   DatePicker,
 } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
-import type { ProjectStatus } from '@/types'
-import {
-  projectStatusFilterOptions,
-  paymentMethodOptions,
-} from '../companyProjectsData'
+import { paymentMethodOptions } from '../companyProjectsData'
 import { sonnerToast } from '@/utils/toast'
 import { InfiniteScrollSelect } from '@/components/common/InfiniteScrollSelect'
 import {
   useCreateCompanyProjectMutation,
   useUpdateCompanyProjectMutation,
+  buildCompanyProjectFormData,
+  normalizeProjectDocumentation,
+  type CompanyProjectDocument,
 } from '@/redux/api/companyProjectApi'
-import { mapPaymentTypeToStatus } from '../CompanyProjects'
+import { ACCEPTED_DOCUMENT_TYPES, MAX_DOCUMENT_SIZE } from '@/utils/constants'
+import { imageUrlAbsolute } from '@/components/common/getImageUrl'
+import { FileText, X } from 'lucide-react'
+
+interface BuilderOption {
+  value: string
+  label: string
+  name: string
+  email: string
+}
 
 interface AddEditProjectModalProps {
   open: boolean
@@ -27,305 +36,220 @@ interface AddEditProjectModalProps {
   project: any | null
   refetch: () => void
 
-  customersRes: any
-  custPage: number
-  custOptions: any[]
-  setCustOptions: React.Dispatch<React.SetStateAction<any[]>>
-  setCustPage: React.Dispatch<React.SetStateAction<number>>
-  setCustSearch: (search: string) => void
-  custLoading: boolean
+  buildersRes: any
+  builderPage: number
+  builderOptions: BuilderOption[]
+  setBuilderOptions: React.Dispatch<React.SetStateAction<BuilderOption[]>>
+  setBuilderPage: React.Dispatch<React.SetStateAction<number>>
+  setBuilderSearch: (search: string) => void
+  builderLoading: boolean
 }
-
-
 
 export function AddEditProjectModal({
   open,
   onClose,
   project,
   refetch,
-
-  customersRes,
-  custPage,
-  custOptions,
-  setCustOptions,
-  setCustPage,
-  setCustSearch,
-  custLoading,
+  buildersRes,
+  builderPage,
+  builderOptions,
+  setBuilderOptions,
+  setBuilderPage,
+  setBuilderSearch,
+  builderLoading,
 }: AddEditProjectModalProps) {
   const { t } = useTranslation()
-
   const isEdit = !!project
 
   const [createProject, { isLoading: isCreating }] =
     useCreateCompanyProjectMutation()
-
   const [updateProject, { isLoading: isUpdating }] =
     useUpdateCompanyProjectMutation()
 
   const isLoading = isCreating || isUpdating
 
-  // ─────────────────────────────────────────────
-  // FORM STATES
-  // ─────────────────────────────────────────────
-
   const [projectName, setProjectName] = useState('')
-  const [customer, setCustomer] = useState('')
-  const [email, setEmail] = useState('')
+  const [builderId, setBuilderId] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('CASH')
   const [company, setCompany] = useState('')
-  const [status, setStatus] = useState<ProjectStatus | 'all'>('Active')
-  const [amountDue, setAmountDue] = useState('')
+  const [totalBudget, setTotalBudget] = useState('')
+  const [payAmount, setPayAmount] = useState('')
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
-  const [totalBudget, setTotalBudget] = useState('')
   const [description, setDescription] = useState('')
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [existingDocuments, setExistingDocuments] = useState<CompanyProjectDocument[]>([])
 
-  // ─────────────────────────────────────────────
-  // PAGINATION
-  // ─────────────────────────────────────────────
+  const dueAmount = useMemo(() => {
+    const total = parseFloat(totalBudget) || 0
+    const paid = payAmount.trim() === '' ? 0 : parseFloat(payAmount) || 0
+    return Math.max(0, total - paid)
+  }, [totalBudget, payAmount])
 
-  const custHasMore =
-    !!customersRes?.pagination &&
-    customersRes.pagination.page < customersRes.pagination.totalPage
-
-  // ─────────────────────────────────────────────
-  // RESET SEARCH + PAGE WHEN OPEN
-  // ─────────────────────────────────────────────
+  const builderHasMore =
+    !!buildersRes?.pagination &&
+    buildersRes.pagination.page < buildersRes.pagination.totalPage
 
   useEffect(() => {
     if (!open) return
-
-    setCustSearch('')
-    setCustPage(1)
-  }, [open, setCustPage, setCustSearch])
-
-  // ─────────────────────────────────────────────
-  // APPEND CUSTOMER OPTIONS
-  // ─────────────────────────────────────────────
+    setBuilderSearch('')
+    setBuilderPage(1)
+  }, [open, setBuilderPage, setBuilderSearch])
 
   useEffect(() => {
-    if (!customersRes?.data) return
+    if (!buildersRes?.data) return
 
-    setCustOptions((prev) => {
-      const existing = new Set(prev.map((o: any) => o.value))
+    setBuilderOptions((prev) => {
+      const existing = new Set(prev.map((o) => o.value))
 
-      const mapped = customersRes.data.map((c: any) => ({
-        value: c.email,
-        label: c.name ? `${c.name} — ${c.email}` : c.email,
+      const mapped: BuilderOption[] = buildersRes.data.map((b: any) => ({
+        value: b.id,
+        label: b.name ? `${b.name} — ${b.email}` : b.email,
+        name: b.name || '',
+        email: b.email || '',
       }))
 
-      const filtered = mapped.filter(
-        (item: any) => !existing.has(item.value)
-      )
+      const filtered = mapped.filter((item) => !existing.has(item.value))
 
-      if (custPage === 1) {
+      if (builderPage === 1) {
         return mapped
       }
 
       return [...prev, ...filtered]
     })
-  }, [customersRes, custPage, setCustOptions])
+  }, [buildersRes, builderPage, setBuilderOptions])
 
-  // ─────────────────────────────────────────────
-  // PRELOAD PROJECT DATA
-  // ─────────────────────────────────────────────
+  const ensureBuilderOption = useCallback(
+    (id: string, name: string, builderEmail: string) => {
+      if (!id) return
+
+      setBuilderOptions((prev) => {
+        if (prev.some((o) => o.value === id)) return prev
+
+        return [
+          {
+            value: id,
+            label: name ? `${name} — ${builderEmail}` : builderEmail,
+            name,
+            email: builderEmail,
+          },
+          ...prev,
+        ]
+      })
+    },
+    [setBuilderOptions]
+  )
 
   useEffect(() => {
     if (!open) return
 
     if (project) {
-      const projectEmail =
-        project.customerEmail || project.email || ''
-
+      const projectBuilderId = project.builderId || project.builder?.id || ''
       const projectCustomer =
-        project.customerName || project.customer || ''
+        project.builder?.name || project.customerName || project.customer || ''
+      const projectEmail =
+        project.builder?.email || project.customerEmail || project.email || ''
 
       setProjectName(project.projectName || '')
-      setCustomer(projectCustomer)
-      setEmail(projectEmail)
-
+      setBuilderId(projectBuilderId)
       setPaymentMethod(project.paymentMethod || 'CASH')
-
       setCompany(project.companyName || project.company || '')
-
-      setStatus(
-        mapPaymentTypeToStatus(
-          project.paymentType || project.status
-        ) as ProjectStatus
-      )
-
-      setAmountDue(
-        String(project.amountDue ?? project.remaining ?? '')
-      )
-      setStartDate(
-        project.startDate
-          ? new Date(project.startDate)
-          : undefined
-      )
-
-      setEndDate(
-        project.endDate
-          ? new Date(project.endDate)
-          : undefined
-      )
-
       setTotalBudget(String(project.totalBudget ?? ''))
+      setPayAmount(project.payAmount != null ? String(project.payAmount) : '')
+      setStartDate(project.startDate ? new Date(project.startDate) : undefined)
+      setEndDate(project.endDate ? new Date(project.endDate) : undefined)
+      setDescription(project.description || '')
+      setExistingDocuments(normalizeProjectDocumentation(project.documentation))
+      setSelectedFiles([])
 
-      setDescription(
-        project.description || project.projectDescription || ''
-      )
-
-      // ensure selected project customer exists in dropdown
-      if (projectEmail) {
-        setCustOptions((prev) => {
-          const exists = prev.some(
-            (o: any) => o.value === projectEmail
-          )
-
-          if (exists) return prev
-
-          return [
-            {
-              value: projectEmail,
-              label: projectCustomer
-                ? `${projectCustomer} — ${projectEmail}`
-                : projectEmail,
-            },
-            ...prev,
-          ]
-        })
+      if (projectBuilderId) {
+        ensureBuilderOption(projectBuilderId, projectCustomer, projectEmail)
       }
     } else {
       setProjectName('')
-      setCustomer('')
-      setEmail('')
+      setBuilderId('')
       setPaymentMethod('CASH')
       setCompany('')
-      setStatus('Active')
-      setAmountDue('')
+      setTotalBudget('')
+      setPayAmount('')
       setStartDate(undefined)
       setEndDate(undefined)
-      setTotalBudget('')
       setDescription('')
+      setExistingDocuments([])
+      setSelectedFiles([])
     }
-  }, [project, open, setCustOptions])
+  }, [project, open, ensureBuilderOption])
 
-  // ─────────────────────────────────────────────
-  // SEARCH
-  // ─────────────────────────────────────────────
-
-  const handleCustSearch = useCallback(
+  const handleBuilderSearch = useCallback(
     (search: string) => {
-      setCustPage(1)
-      setCustSearch(search)
+      setBuilderPage(1)
+      setBuilderSearch(search)
     },
-    [setCustPage, setCustSearch]
+    [setBuilderPage, setBuilderSearch]
   )
 
-  // ─────────────────────────────────────────────
-  // LOAD MORE
-  // ─────────────────────────────────────────────
+  const handleBuilderLoadMore = useCallback(() => {
+    if (builderLoading || !builderHasMore) return
+    setBuilderPage((prev) => prev + 1)
+  }, [builderLoading, builderHasMore, setBuilderPage])
 
-  const handleCustLoadMore = useCallback(() => {
-    if (custLoading || !custHasMore) return
+  const handleBuilderChange = (selectedBuilderId: string) => {
+    setBuilderId(selectedBuilderId)
 
-    setCustPage((prev) => prev + 1)
-  }, [custLoading, custHasMore, setCustPage])
+    if (!selectedBuilderId) return
 
-  // ─────────────────────────────────────────────
-  // CUSTOMER CHANGE
-  // ─────────────────────────────────────────────
-
-  const handleCustomerChange = (selectedEmail: string) => {
-    setEmail(selectedEmail)
-
-    if (!selectedEmail) {
-      setCustomer('')
-      return
-    }
-
-    const selected = custOptions.find(
-      (o: any) => o.value === selectedEmail
-    )
-
+    const selected = builderOptions.find((o) => o.value === selectedBuilderId)
     if (selected) {
-      const name = selected.label.split(' — ')[0]
-      setCustomer(name || '')
+      ensureBuilderOption(selected.value, selected.name, selected.email)
     }
   }
-
-  // ─────────────────────────────────────────────
-  // SUBMIT
-  // ─────────────────────────────────────────────
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const body = {
-      projectName: projectName.trim(),
-      customerName: customer.trim(),
-      customerEmail: email.trim(),
-
-      paymentMethod: paymentMethod,
-
-      companyName: company.trim(),
-
-      paymentType:
-        (status === 'all' ? 'ACTIVE' : status).toUpperCase(),
-
-      amountDue: parseFloat(amountDue) || 0,
-
-      startDate: startDate
-        ? startDate.toISOString()
-        : null,
-
-      endDate: endDate
-        ? endDate.toISOString()
-        : null,
-
-      totalBudget: parseFloat(totalBudget) || 0,
-
-      description:
-        description.trim() || undefined,
+    if (!builderId) {
+      sonnerToast.error(t('companyProjects.builderRequired'))
+      return
     }
+
+    const payload = {
+      projectName: projectName.trim(),
+      builderId,
+      paymentMethod,
+      companyName: company.trim(),
+      paymentType: project?.paymentType || 'ACTIVE',
+      startDate: startDate ? startDate.toISOString() : null,
+      endDate: endDate ? endDate.toISOString() : null,
+      totalBudget: parseFloat(totalBudget) || 0,
+      payAmount: payAmount.trim() === '' ? 0 : parseFloat(payAmount) || 0,
+      description: description.trim(),
+    }
+
+    const requestBody = buildCompanyProjectFormData(payload, selectedFiles)
 
     if (isEdit) {
       sonnerToast.promise(
-        updateProject({
-          id: project.id,
-          body,
-        }).unwrap(),
+        updateProject({ id: project.id, body: requestBody }).unwrap(),
         {
           loading: t('common.processing'),
-
           success: () => {
             refetch()
             onClose()
-
             return t('companyProjects.projectUpdated')
           },
-
-          error: (err: any) =>
-            err?.data?.message || t('common.error'),
+          error: (err: any) => err?.data?.message || t('common.error'),
         }
       )
     } else {
-      sonnerToast.promise(
-        createProject(body).unwrap(),
-        {
-          loading: t('common.processing'),
-
-          success: () => {
-            refetch()
-            onClose()
-
-            return t('companyProjects.projectCreated')
-          },
-
-          error: (err: any) =>
-            err?.data?.message || t('common.error'),
-        }
-      )
+      sonnerToast.promise(createProject(requestBody).unwrap(), {
+        loading: t('common.processing'),
+        success: () => {
+          refetch()
+          onClose()
+          return t('companyProjects.projectCreated')
+        },
+        error: (err: any) => err?.data?.message || t('common.error'),
+      })
     }
   }
 
@@ -333,19 +257,11 @@ export function AddEditProjectModal({
     <ModalWrapper
       open={open}
       onClose={onClose}
-      title={
-        isEdit
-          ? t('companyProjects.editProject')
-          : t('companyProjects.addProject')
-      }
+      title={isEdit ? t('companyProjects.editProject') : t('companyProjects.addProject')}
       size="xl"
       className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto"
     >
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6"
-      >
-        {/* BASIC INFO */}
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <h3 className="text-sm font-semibold mb-4 text-foreground">
             {t('companyProjects.basicInformation')}
@@ -354,28 +270,22 @@ export function AddEditProjectModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormInput
               label={t('companyProjects.projectName')}
-              placeholder={t(
-                'companyProjects.projectNamePlaceholder'
-              )}
+              placeholder={t('companyProjects.projectNamePlaceholder')}
               value={projectName}
-              onChange={(e) =>
-                setProjectName(e.target.value)
-              }
+              onChange={(e) => setProjectName(e.target.value)}
               required
             />
 
             <InfiniteScrollSelect
-              label={t('companyProjects.customer')}
-              value={email}
-              options={custOptions}
-              onChange={handleCustomerChange}
-              placeholder={t(
-                'companyProjects.customerPlaceholder'
-              )}
-              loading={custLoading}
-              hasMore={custHasMore}
-              onSearch={handleCustSearch}
-              onLoadMore={handleCustLoadMore}
+              label={t('companyProjects.selectClientBuilder')}
+              value={builderId}
+              options={builderOptions}
+              onChange={handleBuilderChange}
+              placeholder={t('companyProjects.selectClientBuilderPlaceholder')}
+              loading={builderLoading}
+              hasMore={builderHasMore}
+              onSearch={handleBuilderSearch}
+              onLoadMore={handleBuilderLoadMore}
             />
 
             <FormSelect
@@ -387,54 +297,19 @@ export function AddEditProjectModal({
 
             <FormInput
               label={t('companyProjects.company')}
-              placeholder={t(
-                'companyProjects.companyPlaceholder'
-              )}
+              placeholder={t('companyProjects.companyPlaceholder')}
               value={company}
-              onChange={(e) =>
-                setCompany(e.target.value)
-              }
-            />
-
-            <FormSelect
-              label={t('common.status')}
-              value={
-                status === 'all'
-                  ? 'Active'
-                  : status
-              }
-              options={projectStatusFilterOptions
-                .filter((o) => o.value !== 'all')
-                .map((o) => ({
-                  value: o.value,
-                  label: t(o.labelKey),
-                }))}
-              onChange={(v) =>
-                setStatus(v as ProjectStatus)
-              }
-            />
-
-            <FormInput
-              label={t('companyProjects.amountDue')}
-              placeholder={t(
-                'companyProjects.amountPlaceholder'
-              )}
-              type="number"
-              value={amountDue}
-              onChange={(e) =>
-                setAmountDue(e.target.value)
-              }
+              onChange={(e) => setCompany(e.target.value)}
             />
           </div>
         </div>
 
-        {/* TIMELINE */}
         <div>
           <h3 className="text-sm font-semibold mb-4 text-foreground">
             {t('companyProjects.timelineBudget')}
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <DatePicker
               label={t('companyProjects.startDate')}
               value={startDate}
@@ -446,81 +321,107 @@ export function AddEditProjectModal({
               value={endDate}
               onChange={setEndDate}
             />
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormInput
-              label={t('companyProjects.totalBudget')}
-              placeholder={t(
-                'companyProjects.totalBudgetPlaceholder'
-              )}
+              label={t('companyProjects.totalAmount')}
+              placeholder={t('companyProjects.totalBudgetPlaceholder')}
               type="number"
+              min="0"
               value={totalBudget}
-              onChange={(e) =>
-                setTotalBudget(e.target.value)
-              }
+              onChange={(e) => setTotalBudget(e.target.value)}
+            />
+
+            <FormInput
+              label={t('companyProjects.payAmount')}
+              placeholder={t('companyProjects.payAmountPlaceholder')}
+              type="number"
+              min="0"
+              value={payAmount}
+              onChange={(e) => setPayAmount(e.target.value)}
+            />
+
+            <FormInput
+              label={t('companyProjects.amountDue')}
+              type="number"
+              value={dueAmount.toFixed(2)}
+              disabled
+              className="opacity-60 cursor-not-allowed"
             />
           </div>
         </div>
 
-        {/* CUSTOMER INFO */}
-        <div>
-          <h3 className="text-sm font-semibold mb-4 text-foreground">
-            {t('companyProjects.customerContact')}
-          </h3>
+        <ImageUploader
+          multiple
+          label={t('companyProjects.uploadDocuments')}
+          hint={t('companyProjects.uploadDocumentsTypes')}
+          files={selectedFiles}
+          onFilesChange={setSelectedFiles}
+          acceptedTypes={ACCEPTED_DOCUMENT_TYPES}
+          maxSize={MAX_DOCUMENT_SIZE}
+        />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormInput
-              label={t('companyProjects.customer')}
-              placeholder={t(
-                'companyProjects.customerPlaceholder'
-              )}
-              value={customer}
-              onChange={(e) =>
-                setCustomer(e.target.value)
-              }
-            />
-
-            <FormInput
-              label={t('common.email')}
-              placeholder={t(
-                'companyProjects.emailPlaceholder'
-              )}
-              type="email"
-              value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
-            />
+        {existingDocuments.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              {t('companyProjects.existingDocuments')}
+            </p>
+            <div className="space-y-2">
+              {existingDocuments.map((doc) => (
+                <div
+                  key={doc.id || doc.url}
+                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-100 bg-muted/20"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText className="h-4 w-4 shrink-0 text-primary" />
+                    <a
+                      href={imageUrlAbsolute(doc.url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-primary hover:underline truncate"
+                    >
+                      {doc.name}
+                    </a>
+                  </div>
+                  {isEdit && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExistingDocuments((prev) =>
+                          prev.filter((item) => item.url !== doc.url)
+                        )
+                      }
+                      className="text-red-500 hover:text-red-700 shrink-0"
+                      aria-label={t('companyProjects.removeDocument')}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* DESCRIPTION */}
         <div>
           <FormTextarea
-            label={t(
-              'companyProjects.projectDescription'
-            )}
-            placeholder={t(
-              'companyProjects.projectDescriptionPlaceholder'
-            )}
+            label={t('companyProjects.projectDescription')}
+            placeholder={t('companyProjects.projectDescriptionPlaceholder')}
             value={description}
-            onChange={(e) =>
-              setDescription(e.target.value)
-            }
+            onChange={(e) => setDescription(e.target.value)}
             rows={4}
             className="resize-none"
           />
         </div>
 
-        {/* ACTIONS */}
         <div className="flex justify-end gap-3">
           <Button
             type="submit"
             disabled={isLoading}
             className="bg-primary hover:bg-primary/90 text-white"
           >
-            {isLoading
-              ? t('common.processing')
-              : t('companyProjects.saveProject')}
+            {isLoading ? t('common.processing') : t('companyProjects.saveProject')}
           </Button>
         </div>
       </form>
