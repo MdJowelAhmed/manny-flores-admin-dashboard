@@ -21,6 +21,20 @@ export interface PurchaseOrderProject {
   id: string
   projectName?: string
   companyName?: string
+  totalBudget?: number
+  payAmount?: number
+  amountDue?: number
+}
+
+export interface PurchaseOrderTransaction {
+  id: string
+  poId: string
+  poNumber: string
+  projectName: string
+  amount: number
+  paidAt: string
+  method?: string | null
+  note?: string | null
 }
 
 export interface PurchaseOrder {
@@ -49,6 +63,7 @@ export interface PurchaseOrdersOverview {
   totalAmount: number
   totalPaid: number
   totalOutstanding: number
+  transactions?: PurchaseOrderTransaction[]
 }
 
 export const purchaseOrderStats = [
@@ -139,3 +154,35 @@ export function getPurchaseOrderStatusClass(status?: string | null): string {
       return 'bg-amber-100 text-amber-800'
   }
 }
+
+export function getOrderAmountPaid(order: PurchaseOrder): number {
+  return (order.paymentHistory ?? []).reduce((sum, item) => sum + (item.amount ?? 0), 0)
+}
+
+export function getOrderRemainingDue(order: PurchaseOrder): number {
+  return Math.max(0, order.amount - getOrderAmountPaid(order))
+}
+
+export function flattenPaymentTransactions(orders: PurchaseOrder[]): PurchaseOrderTransaction[] {
+  return orders
+    .flatMap((order) =>
+      (order.paymentHistory ?? []).map((payment) => ({
+        id: payment.id,
+        poId: order.id,
+        poNumber: getPurchaseOrderNumber(order),
+        projectName: getPurchaseOrderProjectName(order),
+        amount: payment.amount,
+        paidAt: payment.paidAt,
+        method: payment.method,
+        note: payment.note,
+      }))
+    )
+    .sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime())
+}
+
+export const purchaseOrderPaymentMethods = [
+  { value: 'CASH', labelKey: 'purchaseOrders.methodCash' as const },
+  { value: 'CHEQUE', labelKey: 'purchaseOrders.methodCheque' as const },
+  { value: 'BANK_TRANSFER', labelKey: 'purchaseOrders.methodBankTransfer' as const },
+  { value: 'ONLINE', labelKey: 'purchaseOrders.methodOnline' as const },
+]

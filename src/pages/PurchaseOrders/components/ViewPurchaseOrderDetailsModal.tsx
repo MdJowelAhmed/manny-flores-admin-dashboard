@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Receipt, User, History } from 'lucide-react'
+import { Receipt, User, History, Wallet } from 'lucide-react'
 import { ModalWrapper } from '@/components/common'
+import { FormInput } from '@/components/common/Form'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -13,8 +14,13 @@ import {
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
-import { useUpdatePurchaseOrderStatusMutation } from '@/redux/slices/super-admin/purchaseOrdersApi'
 import {
+  useRecordPurchaseOrderPaymentMutation,
+  useUpdatePurchaseOrderStatusMutation,
+} from '@/redux/slices/super-admin/purchaseOrdersApi'
+import {
+  getOrderAmountPaid,
+  getOrderRemainingDue,
   getPurchaseOrderBuilderEmail,
   getPurchaseOrderBuilderName,
   getPurchaseOrderNumber,
@@ -22,6 +28,7 @@ import {
   getPurchaseOrderStatusClass,
   getPurchaseOrderStatusLabel,
   normalizePurchaseOrderStatus,
+  purchaseOrderPaymentMethods,
   statusUpdateOptions,
   type PurchaseOrder,
   type PurchaseOrderStatus,
@@ -32,6 +39,7 @@ interface ViewPurchaseOrderDetailsModalProps {
   onClose: () => void
   order: PurchaseOrder | null
   canManageStatus?: boolean
+  canRecordPayment?: boolean
   onUpdated?: () => void
 }
 
@@ -59,15 +67,26 @@ export function ViewPurchaseOrderDetailsModal({
   onClose,
   order,
   canManageStatus = false,
+  canRecordPayment = false,
   onUpdated,
 }: ViewPurchaseOrderDetailsModalProps) {
   const { t } = useTranslation()
   const [status, setStatus] = useState<PurchaseOrderStatus>('PENDING')
-  const [updateStatus, { isLoading }] = useUpdatePurchaseOrderStatusMutation()
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('BANK_TRANSFER')
+  const [paymentNote, setPaymentNote] = useState('')
+
+  const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdatePurchaseOrderStatusMutation()
+  const [recordPayment, { isLoading: isRecordingPayment }] =
+    useRecordPurchaseOrderPaymentMutation()
 
   useEffect(() => {
     if (open && order) {
       setStatus(normalizePurchaseOrderStatus(order.status))
+      const remaining = getOrderRemainingDue(order)
+      setPaymentAmount(remaining > 0 ? String(remaining) : '')
+      setPaymentMethod('BANK_TRANSFER')
+      setPaymentNote('')
     }
   }, [open, order])
 
@@ -75,7 +94,10 @@ export function ViewPurchaseOrderDetailsModal({
 
   const currentStatus = normalizePurchaseOrderStatus(order.status)
   const paymentHistory = order.paymentHistory ?? []
-  const totalPaid = paymentHistory.reduce((sum, item) => sum + (item.amount ?? 0), 0)
+  const totalPaid = getOrderAmountPaid(order)
+  const remainingDue = getOrderRemainingDue(order)
+  const showPaymentForm =
+    canRecordPayment && currentStatus === 'SENT' && remainingDue > 0
 
   const handleSaveStatus = async () => {
     if (status === currentStatus) return
@@ -102,6 +124,48 @@ export function ViewPurchaseOrderDetailsModal({
       toast({ title: t('common.error'), description: message, variant: 'destructive' })
     }
   }
+
+  const handleRecordPayment = async () => {
+    const parsedAmount = Number.parseFloat(paymentAmount.replace(/[^0-9.-]/g, '')) || 0
+    if (parsedAmount <= 0 || parsedAmount > remainingDue) {
+      toast({
+        title: t('common.error'),
+        description: t('purchaseOrders.invalidPaymentAmount'),
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      await recordPayment({
+        id: order.id,
+        amount: parsedAmount,
+        method: paymentMethod,
+        note: paymentNote.trim() || undefined,
+      }).unwrap()
+      toast({
+        title: t('common.success'),
+        description: t('purchaseOrders.paymentRecorded'),
+        variant: 'success',
+      })
+      onUpdated?.()
+      onClose()
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('purchaseOrders.paymentRecordFailed')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
+    }
+  }
+
+  const isLoading = isUpdatingStatus || isRecordingPayment
 
   return (
     <ModalWrapper
@@ -160,6 +224,12 @@ export function ViewPurchaseOrderDetailsModal({
           </div>
           <DetailRow label={t('purchaseOrders.poNumber')} value={getPurchaseOrderNumber(order)} />
           <DetailRow label={t('purchaseOrders.amount')} value={order.amount} valueClassName="text-primary" />
+          <DetailRow label={t('purchaseOrders.totalPaid')} value={totalPaid} />
+          <DetailRow
+            label={t('purchaseOrders.remainingDue')}
+            value={remainingDue}
+            valueClassName="text-amber-700"
+          />
           <DetailRow
             label={t('purchaseOrders.dueDate')}
             value={order.dueDate ? formatDate(order.dueDate) : '—'}
@@ -191,6 +261,7 @@ export function ViewPurchaseOrderDetailsModal({
         {canManageStatus ? (
           <div className="rounded-xl border border-gray-200 p-4">
             <label className="mb-2 block text-sm font-medium">{t('purchaseOrders.updateStatus')}</label>
+            <p className="mb-3 text-xs text-muted-foreground">{t('purchaseOrders.statusHint')}</p>
             <Select value={status} onValueChange={(v) => setStatus(v as PurchaseOrderStatus)}>
               <SelectTrigger className="h-11 rounded-lg">
                 <SelectValue />
@@ -203,6 +274,57 @@ export function ViewPurchaseOrderDetailsModal({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        ) : null}
+
+        {showPaymentForm ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <div className="rounded-lg bg-emerald-100 p-1.5">
+                <Wallet className="h-4 w-4 text-emerald-700" />
+              </div>
+              <h4 className="text-sm font-semibold text-emerald-900">
+                {t('purchaseOrders.recordPayment')}
+              </h4>
+            </div>
+            <p className="mb-4 text-xs text-emerald-800">{t('purchaseOrders.recordPaymentHint')}</p>
+            <div className="space-y-3">
+              <FormInput
+                label={t('purchaseOrders.paymentAmount')}
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                placeholder={formatCurrency(remainingDue)}
+              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('purchaseOrders.paymentMethod')}</label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger className="h-11 rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {purchaseOrderPaymentMethods.map((method) => (
+                      <SelectItem key={method.value} value={method.value}>
+                        {t(method.labelKey)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <FormInput
+                label={t('purchaseOrders.paymentNote')}
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+                placeholder={t('purchaseOrders.paymentNotePlaceholder')}
+              />
+              <Button
+                type="button"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={handleRecordPayment}
+                disabled={isRecordingPayment}
+              >
+                {t('purchaseOrders.submitPayment')}
+              </Button>
+            </div>
           </div>
         ) : null}
 

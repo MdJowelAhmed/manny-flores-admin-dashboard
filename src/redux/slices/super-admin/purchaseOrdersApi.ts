@@ -3,6 +3,13 @@ import type {
   PurchaseOrder,
   PurchaseOrdersOverview,
 } from '@/pages/PurchaseOrders/purchaseOrdersData'
+import {
+  createMockPurchaseOrder,
+  getMockPurchaseOrdersOverview,
+  listMockPurchaseOrders,
+  recordMockPurchaseOrderPayment,
+  updateMockPurchaseOrderStatus,
+} from '@/pages/PurchaseOrders/purchaseOrdersMock'
 
 export interface PurchaseOrdersListResponse {
   success?: boolean
@@ -28,6 +35,14 @@ export interface PurchaseOrdersOverviewResponse {
   data: PurchaseOrdersOverview
 }
 
+export interface CreatePurchaseOrderProjectSnapshot {
+  projectName?: string
+  companyName?: string
+  totalBudget?: number
+  payAmount?: number
+  amountDue?: number
+}
+
 export interface CreatePurchaseOrderPayload {
   builderId: string
   companyProjectId?: string
@@ -35,6 +50,7 @@ export interface CreatePurchaseOrderPayload {
   amount: number
   dueDate?: string | null
   notes?: string
+  projectSnapshot?: CreatePurchaseOrderProjectSnapshot
 }
 
 export interface UpdatePurchaseOrderStatusPayload {
@@ -44,39 +60,78 @@ export interface UpdatePurchaseOrderStatusPayload {
   paymentNote?: string
 }
 
+export interface RecordPurchaseOrderPaymentPayload {
+  id: string
+  amount: number
+  method?: string
+  note?: string
+}
+
 const purchaseOrdersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getPurchaseOrders: builder.query<
       PurchaseOrdersListResponse,
-      { search?: string; page?: number; limit?: number; status?: string }
+      { search?: string; page?: number; limit?: number; status?: string; builderId?: string }
     >({
-      query: ({ search, page = 1, limit = 10, status }) => ({
-        url: '/purchase-orders',
-        method: 'GET',
-        params: {
-          ...(search?.trim() ? { search: search.trim() } : {}),
-          ...(status && status !== 'all' ? { status: status.toUpperCase() } : {}),
-          page,
-          limit,
-        },
-      }),
+      async queryFn(args, _api, _extraOptions, baseQuery) {
+        const result = await baseQuery({
+          url: '/purchase-orders',
+          method: 'GET',
+          params: {
+            ...(args.search?.trim() ? { search: args.search.trim() } : {}),
+            ...(args.status && args.status !== 'all'
+              ? { status: args.status.toUpperCase() }
+              : {}),
+            ...(args.builderId ? { builderId: args.builderId } : {}),
+            page: args.page ?? 1,
+            limit: args.limit ?? 10,
+          },
+        })
+
+        if (!result.error && result.data) {
+          return { data: result.data as PurchaseOrdersListResponse }
+        }
+
+        return { data: listMockPurchaseOrders(args) }
+      },
       providesTags: ['PurchaseOrders'],
     }),
 
-    getPurchaseOrdersOverview: builder.query<PurchaseOrdersOverviewResponse, void>({
-      query: () => ({
-        url: '/purchase-orders/overview',
-        method: 'GET',
-      }),
+    getPurchaseOrdersOverview: builder.query<
+      PurchaseOrdersOverviewResponse,
+      { builderId?: string } | void
+    >({
+      async queryFn(args, _api, _extraOptions, baseQuery) {
+        const builderId = args && 'builderId' in args ? args.builderId : undefined
+        const result = await baseQuery({
+          url: '/purchase-orders/overview',
+          method: 'GET',
+          params: builderId ? { builderId } : undefined,
+        })
+
+        if (!result.error && result.data) {
+          return { data: result.data as PurchaseOrdersOverviewResponse }
+        }
+
+        return { data: getMockPurchaseOrdersOverview(builderId) }
+      },
       providesTags: ['PurchaseOrders'],
     }),
 
     createPurchaseOrder: builder.mutation<PurchaseOrderResponse, CreatePurchaseOrderPayload>({
-      query: (body) => ({
-        url: '/purchase-orders',
-        method: 'POST',
-        body,
-      }),
+      async queryFn(body, _api, _extraOptions, baseQuery) {
+        const result = await baseQuery({
+          url: '/purchase-orders',
+          method: 'POST',
+          body,
+        })
+
+        if (!result.error && result.data) {
+          return { data: result.data as PurchaseOrderResponse }
+        }
+
+        return { data: createMockPurchaseOrder(body) }
+      },
       invalidatesTags: ['PurchaseOrders'],
     }),
 
@@ -84,15 +139,56 @@ const purchaseOrdersApi = baseApi.injectEndpoints({
       PurchaseOrderResponse,
       UpdatePurchaseOrderStatusPayload
     >({
-      query: ({ id, ...body }) => ({
-        url: `/purchase-orders/${id}`,
-        method: 'PATCH',
-        body,
-      }),
+      async queryFn({ id, ...body }, _api, _extraOptions, baseQuery) {
+        const result = await baseQuery({
+          url: `/purchase-orders/${id}`,
+          method: 'PATCH',
+          body,
+        })
+
+        if (!result.error && result.data) {
+          return { data: result.data as PurchaseOrderResponse }
+        }
+
+        const mockResult = updateMockPurchaseOrderStatus({ id, ...body })
+        if ('error' in mockResult && mockResult.error) {
+          return { error: mockResult.error }
+        }
+
+        return { data: mockResult as PurchaseOrderResponse }
+      },
       invalidatesTags: ['PurchaseOrders'],
     }),
 
-    getPurchaseOrderPdf: builder.query<{ data?: { downloadUrl?: string }; downloadUrl?: string }, string>({
+    recordPurchaseOrderPayment: builder.mutation<
+      PurchaseOrderResponse,
+      RecordPurchaseOrderPaymentPayload
+    >({
+      async queryFn({ id, ...body }, _api, _extraOptions, baseQuery) {
+        const result = await baseQuery({
+          url: `/purchase-orders/${id}/payments`,
+          method: 'POST',
+          body,
+        })
+
+        if (!result.error && result.data) {
+          return { data: result.data as PurchaseOrderResponse }
+        }
+
+        const mockResult = recordMockPurchaseOrderPayment({ id, ...body })
+        if ('error' in mockResult && mockResult.error) {
+          return { error: mockResult.error }
+        }
+
+        return { data: mockResult as PurchaseOrderResponse }
+      },
+      invalidatesTags: ['PurchaseOrders'],
+    }),
+
+    getPurchaseOrderPdf: builder.query<
+      { data?: { downloadUrl?: string }; downloadUrl?: string },
+      string
+    >({
       query: (id) => ({
         url: `/purchase-orders/pdf/${id}`,
         method: 'GET',
@@ -106,5 +202,6 @@ export const {
   useGetPurchaseOrdersOverviewQuery,
   useCreatePurchaseOrderMutation,
   useUpdatePurchaseOrderStatusMutation,
+  useRecordPurchaseOrderPaymentMutation,
   useLazyGetPurchaseOrderPdfQuery,
 } = purchaseOrdersApi

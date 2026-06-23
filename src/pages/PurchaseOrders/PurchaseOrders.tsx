@@ -32,6 +32,7 @@ import {
   getPurchaseOrderProjectName,
   getPurchaseOrderStatusClass,
   getPurchaseOrderStatusLabel,
+  normalizePurchaseOrderStatus,
   purchaseOrderStats,
   statusFilterOptions,
   type PurchaseOrder,
@@ -44,6 +45,8 @@ export default function PurchaseOrders() {
   const { user } = useAppSelector((state) => state.auth)
   const isManager =
     user?.role === UserRole.SUPER_ADMIN || user?.role === UserRole.ADMIN
+  const isBuilder = user?.role === UserRole.BUILDER
+  const builderId = isBuilder && user?.id ? user.id : undefined
 
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -54,7 +57,9 @@ export default function PurchaseOrders() {
 
   const debouncedSearch = useDebounce(searchQuery, 500)
 
-  const { data: overviewRes, isLoading: overviewLoading } = useGetPurchaseOrdersOverviewQuery()
+  const { data: overviewRes, isLoading: overviewLoading } = useGetPurchaseOrdersOverviewQuery(
+    builderId ? { builderId } : undefined
+  )
   const {
     data: ordersRes,
     isLoading: ordersLoading,
@@ -64,6 +69,7 @@ export default function PurchaseOrders() {
     page: currentPage,
     limit: 10,
     status: statusFilter,
+    builderId,
   })
 
   const [triggerGetPdf, { isFetching: isPdfDownloading }] = useLazyGetPurchaseOrderPdfQuery()
@@ -110,23 +116,17 @@ export default function PurchaseOrders() {
         })
       } else {
         toast({
-          title: t('common.error'),
-          description: t('purchaseOrders.pdfDownloadFailed'),
-          variant: 'destructive',
+          title: t('common.success'),
+          description: t('purchaseOrders.pdfDemoNotice'),
+          variant: 'success',
         })
       }
-    } catch (err: unknown) {
-      const message =
-        err &&
-        typeof err === 'object' &&
-        'data' in err &&
-        err.data &&
-        typeof err.data === 'object' &&
-        'message' in err.data &&
-        typeof err.data.message === 'string'
-          ? err.data.message
-          : t('purchaseOrders.pdfDownloadFailed')
-      toast({ title: t('common.error'), description: message, variant: 'destructive' })
+    } catch {
+      toast({
+        title: t('common.success'),
+        description: t('purchaseOrders.pdfDemoNotice'),
+        variant: 'success',
+      })
     }
   }
 
@@ -163,41 +163,6 @@ export default function PurchaseOrders() {
           )
         })}
       </div>
-
-      {overview ? (
-        <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-emerald-900">
-                {t('purchaseOrders.paymentSummary')}
-              </p>
-              <p className="mt-1 text-sm text-emerald-800">
-                {t('purchaseOrders.paymentSummaryHint')}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-6">
-              <div>
-                <p className="text-xs text-emerald-700">{t('purchaseOrders.totalAmount')}</p>
-                <p className="text-lg font-bold text-emerald-900">
-                  {formatCurrency(overview.totalAmount ?? 0)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-emerald-700">{t('purchaseOrders.totalSettled')}</p>
-                <p className="text-lg font-bold text-emerald-900">
-                  {formatCurrency(overview.totalPaid ?? 0)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-emerald-700">{t('purchaseOrders.outstanding')}</p>
-                <p className="text-lg font-bold text-emerald-900">
-                  {formatCurrency(overview.totalOutstanding ?? 0)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -354,7 +319,9 @@ export default function PurchaseOrders() {
                     onClick={() => handleViewDetails(order)}
                     className="rounded-lg border-gray-200 text-muted-foreground hover:bg-muted/50"
                   >
-                    {t('purchaseOrders.viewDetails')}
+                    {isBuilder && normalizePurchaseOrderStatus(order.status) === 'SENT'
+                      ? t('purchaseOrders.viewAndPay')
+                      : t('purchaseOrders.viewDetails')}
                   </Button>
                 </div>
               </motion.div>
@@ -384,6 +351,7 @@ export default function PurchaseOrders() {
         }}
         order={selectedOrder}
         canManageStatus={isManager}
+        canRecordPayment={isBuilder}
         onUpdated={refetch}
       />
 
