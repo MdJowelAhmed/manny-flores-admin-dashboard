@@ -246,25 +246,25 @@ export function CompanyPublicEstimateContent({
     )
   }
 
+  const downloadButton = (
+    <Button
+      type="button"
+      variant="outline"
+      className="h-10 rounded-lg border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+      onClick={handleDownloadPdf}
+      disabled={isDownloading || isSubmitting}
+    >
+      {isDownloading ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <Download className="mr-2 h-4 w-4" />
+      )}
+      {t('companyProjects.publicEstimate.downloadPdf')}
+    </Button>
+  )
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-10 rounded-lg border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
-          onClick={handleDownloadPdf}
-          disabled={isDownloading || isSubmitting}
-        >
-          {isDownloading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 h-4 w-4" />
-          )}
-          {t('companyProjects.publicEstimate.downloadPdf')}
-        </Button>
-      </div>
-
       <div ref={printableRef} className="space-y-6 bg-white p-1 text-gray-900">
       <div className="grid gap-8 sm:grid-cols-2">
         <div className="space-y-3">
@@ -427,7 +427,9 @@ export function CompanyPublicEstimateContent({
       ) : null}
       </div>
 
-      {showDecisionSection ? (
+      {isApproved || isRejected ? (
+        <div className="flex justify-end">{downloadButton}</div>
+      ) : showDecisionSection ? (
         <div className="rounded-xl border border-gray-200 bg-white p-4">
           {mode === 'idle' ? (
             <>
@@ -438,12 +440,13 @@ export function CompanyPublicEstimateContent({
                 {t('companyProjects.publicEstimate.reviewDecisionHint')}
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                {downloadButton}
                 <Button
                   type="button"
                   variant="outline"
                   className="h-10 rounded-lg border-red-200 bg-white px-6 font-semibold text-red-600 hover:bg-red-50"
                   onClick={() => setMode('rejecting')}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isDownloading}
                 >
                   <XCircle className="mr-2 h-4 w-4" />
                   {t('companyProjects.publicEstimate.rejectProject')}
@@ -452,7 +455,7 @@ export function CompanyPublicEstimateContent({
                   type="button"
                   className="h-10 rounded-lg bg-[#22c55e] px-6 font-semibold text-white hover:bg-[#16a34a]"
                   onClick={() => setMode('approving')}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isDownloading}
                 >
                   <CheckCircle2 className="mr-2 h-4 w-4" />
                   {t('companyProjects.publicEstimate.approveProject')}
