@@ -3,7 +3,6 @@ import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import type { RecentProject } from '../recentProjectsData'
 import { cn } from '@/utils/cn'
-import { formatProjectDetailDate } from '../formatProjectDates'
 import { downloadProjectPlanFile } from '../downloadPlanFile'
 import { useTranslation } from 'react-i18next'
 
@@ -89,12 +88,12 @@ export function ProjectViewDetailsModal({
             <DetailRow label={t('projectDetailsModal.projectName')} value={projectName} />
             <DetailRow label={t('projectDetailsModal.totalBudget')} value={project.value} />
             <DetailRow
-              label={t('projectDetailsModal.startDate')}
-              value={formatProjectDetailDate(project.startDate)}
-            />
-            <DetailRow
-              label={t('projectDetailsModal.endDate')}
-              value={formatProjectDetailDate(project.endDate)}
+              label={t('projectDetailsModal.totalDays')}
+              value={
+                project.totalDays !== undefined && project.totalDays !== null && project.totalDays !== ''
+                  ? project.totalDays
+                  : '—'
+              }
             />
             <DetailRow
               label={t('projectDetailsModal.progress')}
