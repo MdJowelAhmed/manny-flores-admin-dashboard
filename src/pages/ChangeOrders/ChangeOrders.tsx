@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { SlidersHorizontal, FileDown, Plus } from 'lucide-react'
@@ -31,9 +31,13 @@ import Spinner from '@/components/common/Spinner'
 import { useDebounce } from '@/hooks/useDebounce'
 import { imageUrl } from '@/redux/baseApi'
 import { Pagination } from '@/components/common/Pagination'
+import { useAppSelector } from '@/redux/hooks'
+import { UserRole } from '@/types/roles'
 
 export default function ChangeOrders() {
   const { t } = useTranslation()
+  const { user } = useAppSelector((state) => state.auth)
+  const isBuilder = user?.role === UserRole.BUILDER
   const [activeTab, setActiveTab] = useState<ChangeOrderProjectType>('customer')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -41,6 +45,14 @@ export default function ChangeOrders() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    if (isBuilder) {
+      setActiveTab('company')
+      setCurrentPage(1)
+      setStatusFilter('all')
+    }
+  }, [isBuilder])
 
   const debouncedSearch = useDebounce(searchQuery, 500)
 
@@ -152,14 +164,16 @@ export default function ChangeOrders() {
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {t('changeOrders.allChangeOrders')}
             </h1>
-            <TabsList className="grid w-full max-w-xl grid-cols-2 bg-white p-1 h-auto rounded-lg border border-gray-200">
-              <TabsTrigger value="customer" className="rounded-md">
-                {t('changeOrders.customerProjectsTab')}
-              </TabsTrigger>
-              <TabsTrigger value="company" className="rounded-md">
-                {t('changeOrders.companyProjectsTab')}
-              </TabsTrigger>
-            </TabsList>
+            {!isBuilder && (
+              <TabsList className="grid w-full max-w-xl grid-cols-2 bg-white p-1 h-auto rounded-lg border border-gray-200">
+                <TabsTrigger value="customer" className="rounded-md">
+                  {t('changeOrders.customerProjectsTab')}
+                </TabsTrigger>
+                <TabsTrigger value="company" className="rounded-md">
+                  {t('changeOrders.companyProjectsTab')}
+                </TabsTrigger>
+              </TabsList>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
@@ -194,14 +208,16 @@ export default function ChangeOrders() {
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              type="button"
-              onClick={() => setIsNewOrderOpen(true)}
-              className="h-11 rounded-lg bg-primary hover:bg-primary/90 text-white gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              {t('changeOrders.newOrder')}
-            </Button>
+            {!isBuilder && (
+              <Button
+                type="button"
+                onClick={() => setIsNewOrderOpen(true)}
+                className="h-11 rounded-lg bg-primary hover:bg-primary/90 text-white gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                {t('changeOrders.newOrder')}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -348,12 +364,14 @@ export default function ChangeOrders() {
         order={selectedOrder}
       />
 
-      <NewChangeOrderModal
-        open={isNewOrderOpen}
-        onClose={() => setIsNewOrderOpen(false)}
-        onCreate={handleCreateOrder}
-        projectType={activeTab}
-      />
+      {!isBuilder && (
+        <NewChangeOrderModal
+          open={isNewOrderOpen}
+          onClose={() => setIsNewOrderOpen(false)}
+          onCreate={handleCreateOrder}
+          projectType={activeTab}
+        />
+      )}
     </motion.div>
   )
 }
