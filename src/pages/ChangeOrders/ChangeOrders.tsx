@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { SlidersHorizontal, FileDown, Plus } from 'lucide-react'
@@ -26,7 +26,7 @@ import {
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
-import { useGetChangeOrdersQuery, useLazyGetOrderPdfByIdQuery } from '@/redux/slices/super-admin/changeOrdersApi'
+import { useGetChangeOrdersQuery, useGetCompanyChangeOrdersQuery, useLazyGetOrderPdfByIdQuery } from '@/redux/slices/super-admin/changeOrdersApi'
 import Spinner from '@/components/common/Spinner'
 import { useDebounce } from '@/hooks/useDebounce'
 import { imageUrl } from '@/redux/baseApi'
@@ -44,26 +44,34 @@ export default function ChangeOrders() {
 
   const debouncedSearch = useDebounce(searchQuery, 500)
 
-  const { data: changeOrdersData, isLoading: isChangeOrdersLoading, refetch: refetchChangeOrders } =
-    useGetChangeOrdersQuery({
-      search: debouncedSearch,
-      page: currentPage,
-      limit: 10,
-      projectType: activeTab,
-    })
+  const isCustomerTab = activeTab === 'customer'
+  const queryParams = {
+    search: debouncedSearch,
+    page: currentPage,
+    limit: 10,
+    status: statusFilter,
+  }
+
+  const {
+    data: customerOrdersData,
+    isLoading: isCustomerLoading,
+    isFetching: isCustomerFetching,
+    refetch: refetchCustomerOrders,
+  } = useGetChangeOrdersQuery(queryParams, { skip: !isCustomerTab })
+
+  const {
+    data: companyOrdersData,
+    isLoading: isCompanyLoading,
+    isFetching: isCompanyFetching,
+    refetch: refetchCompanyOrders,
+  } = useGetCompanyChangeOrdersQuery(queryParams, { skip: isCustomerTab })
+
+  const changeOrdersData = isCustomerTab ? customerOrdersData : companyOrdersData
+  const isChangeOrdersLoading = isCustomerTab ? isCustomerLoading : isCompanyLoading
+  const isChangeOrdersFetching = isCustomerTab ? isCustomerFetching : isCompanyFetching
+  const orders = changeOrdersData?.data ?? []
 
   const [triggerGetPdf, { isFetching: isPdfDownloading }] = useLazyGetOrderPdfByIdQuery()
-
-  const filteredOrders = useMemo(() => {
-    const rawData = changeOrdersData?.data || []
-    return rawData.filter((o: ChangeOrder) => {
-      const matchesTab = getChangeOrderType(o) === activeTab
-      const statusValue = getChangeOrderStatus(o)
-      const matchesStatus =
-        statusFilter === 'all' || statusValue.toLowerCase() === statusFilter.toLowerCase()
-      return matchesTab && matchesStatus
-    })
-  }, [changeOrdersData?.data, statusFilter, activeTab])
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as ChangeOrderProjectType)
@@ -116,7 +124,11 @@ export default function ChangeOrders() {
   }
 
   const handleCreateOrder = () => {
-    refetchChangeOrders()
+    if (isCustomerTab) {
+      refetchCustomerOrders()
+    } else {
+      refetchCompanyOrders()
+    }
   }
 
   const totalItems = changeOrdersData?.pagination?.total || 0
@@ -124,6 +136,8 @@ export default function ChangeOrders() {
   const limit = changeOrdersData?.pagination?.limit || 10
 
   if (isChangeOrdersLoading) return <Spinner />
+
+  const isListLoading = isChangeOrdersFetching && !isChangeOrdersLoading
 
   return (
     <motion.div
@@ -160,7 +174,13 @@ export default function ChangeOrders() {
               debounceMs={150}
             />
             <div className="w-full sm:w-[140px] shrink-0">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  setStatusFilter(value)
+                  setCurrentPage(1)
+                }}
+              >
                 <SelectTrigger className="w-full h-11 bg-primary text-white hover:bg-primary/90 border-0 [&_svg]:text-white">
                   <SlidersHorizontal className="h-4 w-4 mr-2 shrink-0" />
                   <SelectValue placeholder={t('changeOrders.filter')} />
@@ -185,15 +205,20 @@ export default function ChangeOrders() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          {filteredOrders.length === 0 ? (
+        <div className="space-y-4 relative">
+          {isListLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/60">
+              <Spinner />
+            </div>
+          )}
+          {orders.length === 0 ? (
             <div className="py-16 text-center text-muted-foreground text-sm rounded-xl border border-dashed bg-white/80">
               {activeTab === 'company'
                 ? t('changeOrders.noCompanyOrdersFound')
                 : t('changeOrders.noOrdersFound')}
             </div>
           ) : (
-            filteredOrders.map((o: ChangeOrder, index: number) => {
+            orders.map((o: ChangeOrder, index: number) => {
               const formattedDate = o.createdAt
                 ? new Date(o.createdAt).toLocaleDateString('en-US', {
                     month: 'short',
