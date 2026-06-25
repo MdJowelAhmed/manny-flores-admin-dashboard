@@ -1,8 +1,41 @@
 import { baseApi } from "@/redux/baseApi";
 
+export interface OverviewStatsData {
+    estimateProjectCountLength: number;
+    activeProjectCountLength: number;
+    allUsersCount: number;
+    totalRevenue: number;
+}
+
+export interface OverviewStatsResponse {
+    success: boolean;
+    statusCode: number;
+    message: string;
+    data: OverviewStatsData;
+}
+
+export interface RevenueExpenseMonth {
+    month: string;
+    revenue: number;
+    project: number;
+}
+
+export interface RevenueExpenseResponse {
+    success: boolean;
+    statusCode: number;
+    message: string;
+    data: {
+        months: RevenueExpenseMonth[];
+    };
+}
+
+export interface OverviewQueryParams {
+    year?: string;
+}
+
 const overviewApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        overviewStats: builder.query<any, void>({
+        overviewStats: builder.query<OverviewStatsResponse, void>({
             query: () => {
                 return {
                     url: '/dashboard/admin/overview/count',
@@ -18,11 +51,14 @@ const overviewApi = baseApi.injectEndpoints({
                 }
             },
         }),
-        overviewRevenueExpense: builder.query<any, void>({
-            query: () => {
+        overviewRevenueExpense: builder.query<RevenueExpenseResponse, OverviewQueryParams>({
+            query: ({ year } = {}) => {
                 return {
                     url: '/dashboard/admin/overview/revenue-and-expense',
                     method: 'GET',
+                    params: {
+                        ...(year && { year }),
+                    },
                 }
             },
         }),

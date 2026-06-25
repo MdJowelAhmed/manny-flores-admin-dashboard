@@ -32,12 +32,7 @@ interface RevenueChartProps {
     onYearChange: (year: string) => void
 }
 
-const strKFormatter = (num: number) => {
-    if (num >= 1000) {
-        return '$' + (num / 1000).toFixed(0) + 'k'
-    }
-    return '$' + num.toString()
-}
+const formatChartValue = (value: number) => String(value)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload }: any) => {
@@ -50,7 +45,7 @@ const CustomTooltip = ({ active, payload }: any) => {
                     <div key={index} className="flex items-center gap-2 mb-1 last:mb-0">
                         <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: entry.color }}></div>
                         <p>
-                            {entry.name}: <span className="font-bold">{strKFormatter(entry.value)}</span>
+                            {entry.name}: <span className="font-bold">{formatChartValue(entry.value)}</span>
                         </p>
                     </div>
                 ))}
@@ -125,7 +120,7 @@ export function RevenueChart({ chartData, selectedYear, onYearChange }: RevenueC
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fill: '#6B7280', fontSize: 12 }}
-                                    tickFormatter={(value) => strKFormatter(value)}
+                                    tickFormatter={(value) => formatChartValue(value)}
                                     allowDataOverflow={false}
                                 />
                                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
