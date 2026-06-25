@@ -14,6 +14,7 @@ export function PieChartComponent({ projectStatusApi }: any) {
 
     const statusConfig: Record<string, { name: string; color: string }> = {
         COMPLETED: { name: t('dashboard.completed'), color: '#10B981' },
+        COMPLETED_REQUESTED: { name: t('dashboard.completedRequested'), color: '#14B8A6' },
         IN_PROGRESS: { name: t('dashboard.inProgress'), color: '#3B82F6' },
         SCHEDULED: { name: t('dashboard.scheduled'), color: '#A855F7' },
         PENDING: { name: t('dashboard.pending'), color: '#F59E0B' },
@@ -21,17 +22,25 @@ export function PieChartComponent({ projectStatusApi }: any) {
     }
 
     const apiData = projectStatusApi?.data || []
-    const statusOrder = ['COMPLETED', 'IN_PROGRESS', 'SCHEDULED', 'PENDING', 'CANCELLED']
+    const statusOrder = [
+        'COMPLETED',
+        'COMPLETED_REQUESTED',
+        'IN_PROGRESS',
+        'SCHEDULED',
+        'PENDING',
+        'CANCELLED',
+    ]
 
     const projectStatusData = statusOrder.map((status) => {
         const item = apiData.find((d: any) => d.status === status)
         const config = statusConfig[status]
+        if (!config) return null
         return {
             name: config.name,
             value: Number(item?.percentage || 0),
             color: config.color,
         }
-    })
+    }).filter(Boolean) as { name: string; value: number; color: string }[]
 
     const chartData = projectStatusData.filter(item => item.value > 0)
     const hasData = chartData.length > 0

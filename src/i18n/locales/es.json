@@ -181,6 +181,7 @@
     "projectStatus": "Estado del Proyecto",
     "currentDistribution": "Distribución actual",
     "completed": "Completado",
+    "completedRequested": "Finalización solicitada",
     "inProgress": "En Progreso",
     "scheduled": "Programado",
     "pending": "Pendiente",
