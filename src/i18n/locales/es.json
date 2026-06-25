@@ -1448,7 +1448,8 @@
       "status": "Estado",
       "receivedAt": "Recibido en",
       "createdAt": "Creado en",
-      "trxId": "ID de transacción"
+      "trxId": "ID de transacción",
+      "loanId": "ID de préstamo"
     },
     "noCheckImage": "No hay imagen de cheque disponible.",
     "status": {

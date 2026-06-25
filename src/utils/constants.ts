@@ -42,7 +42,7 @@ export const DEFAULT_PAGINATION = {
 export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   active: { bg: 'bg-success/10', text: 'text-success' },
   blocked: { bg: 'bg-destructive/10', text: 'text-destructive' },
-  pending: { bg: 'bg-warning/10', text: 'text-warning' },
+  pending: { bg: 'bg-amber-100', text: 'text-amber-700' },
   completed: { bg: 'bg-green-100', text: 'text-green-700' },
   rejected: { bg: 'bg-red-100', text: 'text-red-700' },
   request_for_complete: { bg: 'bg-amber-100', text: 'text-amber-700' },

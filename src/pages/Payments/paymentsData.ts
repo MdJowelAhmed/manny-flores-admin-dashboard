@@ -19,6 +19,8 @@ export interface PaymentListItem {
   createdAt: string
   updatedAt: string
   resolverId: string | null
+  financeCompanyName: string | null
+  loanId: string | null
   projectName: string
   estimateTotalCost: number
   customerName: string
@@ -71,7 +73,13 @@ export function formatPaymentMethod(method: string): string {
       return 'Cheque'
     case 'CARD':
       return 'Card'
+    case 'FINANCE':
+      return 'Finance'
     default:
       return method || '—'
   }
+}
+
+export function isFinancePayment(method: string): boolean {
+  return method?.toUpperCase() === 'FINANCE'
 }

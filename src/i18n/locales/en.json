@@ -1559,7 +1559,8 @@
       "status": "Status",
       "receivedAt": "Received at",
       "createdAt": "Created at",
-      "trxId": "Transaction ID"
+      "trxId": "Transaction ID",
+      "loanId": "Loan ID"
     },
     "noCheckImage": "No check image available.",
     "status": {
