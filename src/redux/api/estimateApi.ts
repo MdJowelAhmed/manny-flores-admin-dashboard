@@ -110,6 +110,8 @@ export interface EstimateMutationResponse {
 export interface GetEstimatesParams {
   page?: number
   limit?: number
+  search?: string
+  status?: string
 }
 
 export function buildEstimatePayload(item: EstimateRecord): EstimatePayload {
@@ -278,6 +280,8 @@ const estimateApi = baseApi.injectEndpoints({
         params: {
           page: params?.page ?? 1,
           limit: params?.limit ?? 10,
+          ...(params?.search && params.search.trim().length > 0 && { search: params.search }),
+          ...(params?.status && params.status.trim().length > 0 && { status: params.status }),
         },
       }),
       providesTags: ['Estimate'],

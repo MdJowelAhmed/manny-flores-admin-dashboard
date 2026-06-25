@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import {  SlidersHorizontal } from 'lucide-react'
 import { Pagination } from '@/components/common/Pagination'
+import { SearchInput } from '@/components/common/SearchInput'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { cn } from '@/utils/cn'
 import { formatCurrency, formatDate } from '@/utils/formatters'
-import { getProjectStatusClasses } from '@/pages/Estimate/estimateData'
+import { estimateStatusFilterOptions, getProjectStatusClasses } from '@/pages/Estimate/estimateData'
 import { useGetInvoicesQuery, mapInvoiceFromApi } from '@/redux/api/invoiceApi'
 import { consumePendingInvoices } from '@/pages/Estimate/estimateBridge'
 import { computeInvoiceTotals, type InvoiceRecord } from './invoiceData'
@@ -15,6 +24,8 @@ import { CreateInvoiceModal } from './CreateInvoiceModal'
 export default function InvoicePage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const searchQuery = searchParams.get('search') ?? ''
+  const statusFilter = searchParams.get('status') ?? 'all'
   const itemsPerPage = parseInt(searchParams.get('limit') || '10', 10) || 10
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
 
@@ -22,9 +33,13 @@ export default function InvoicePage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [localExtras, setLocalExtras] = useState<InvoiceRecord[]>(() => consumePendingInvoices())
 
+  const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== 'all'
+
   const { data: invoiceData, isLoading, isFetching } = useGetInvoicesQuery({
     page: currentPage,
     limit: itemsPerPage,
+    search: searchQuery,
+    status: statusFilter === 'all' ? '' : statusFilter,
   })
 
   const apiInvoices = useMemo(
@@ -33,10 +48,11 @@ export default function InvoicePage() {
   )
 
   const invoices = useMemo(() => {
+    if (hasActiveFilters) return apiInvoices
     const apiIds = new Set(apiInvoices.map((inv) => inv.id))
     const extras = localExtras.filter((inv) => !apiIds.has(inv.id))
     return [...extras, ...apiInvoices]
-  }, [apiInvoices, localExtras])
+  }, [apiInvoices, localExtras, hasActiveFilters])
 
   const totalItems = invoiceData?.pagination?.total ?? invoices.length
   const totalPages = Math.max(
@@ -48,6 +64,26 @@ export default function InvoicePage() {
     (p: number) => {
       const next = new URLSearchParams(searchParams)
       p > 1 ? next.set('page', String(p)) : next.delete('page')
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
+
+  const setSearch = useCallback(
+    (value: string) => {
+      const next = new URLSearchParams(searchParams)
+      value ? next.set('search', value) : next.delete('search')
+      next.delete('page')
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
+
+  const setStatus = useCallback(
+    (value: string) => {
+      const next = new URLSearchParams(searchParams)
+      value && value !== 'all' ? next.set('status', value) : next.delete('status')
+      next.delete('page')
       setSearchParams(next, { replace: true })
     },
     [searchParams, setSearchParams]
@@ -71,6 +107,35 @@ export default function InvoicePage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <h1 className="lg:text-xl font-bold text-gray-900 tracking-tight">{t('invoice.pageTitle')}</h1>
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearch}
+            placeholder={t('invoice.searchPlaceholder')}
+            className="w-full sm:w-[280px] bg-white rounded-lg border-gray-200"
+            debounceMs={500}
+          />
+          <div className="w-full sm:w-[140px] shrink-0">
+            <Select value={statusFilter} onValueChange={setStatus}>
+              <SelectTrigger className="w-full h-11 bg-primary text-white hover:bg-primary/90 border-0 [&_svg]:text-white">
+                <SlidersHorizontal className="h-4 w-4 mr-2 shrink-0" />
+                <SelectValue placeholder={t('invoice.filter')} />
+              </SelectTrigger>
+              <SelectContent>
+                {estimateStatusFilterOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {t(opt.labelKey)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+        </div>
+      </div>
+
       <div className={cn('bg-white shadow-sm', 'text-gray-900')}>
 
 

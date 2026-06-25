@@ -1286,6 +1286,8 @@
   "estimate": {
     "pageTitle": "Estimate Item",
     "addNew": "Add New Estimate",
+    "searchPlaceholder": "Search estimates...",
+    "filter": "Filter",
     "addModalTitle": "Add new estimate",
     "addModalDescription": "Create an estimate and add it to the list.",
     "editModalTitle": "Edit estimate",
@@ -1462,6 +1464,8 @@
   },
   "invoice": {
     "pageTitle": "Invoice",
+    "searchPlaceholder": "Search invoices...",
+    "filter": "Filter",
     "detailModalTitle": "Invoice details",
     "create": {
       "addNew": "Add New Invoice",

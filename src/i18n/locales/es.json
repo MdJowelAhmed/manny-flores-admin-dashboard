@@ -1205,6 +1205,8 @@
   "estimate": {
     "pageTitle": "Partida de estimación",
     "addNew": "Agregar nueva estimación",
+    "searchPlaceholder": "Buscar estimaciones...",
+    "filter": "Filtrar",
     "addModalTitle": "Agregar nueva estimación",
     "addModalDescription": "Crea una estimación y agrégala a la lista.",
     "editModalTitle": "Editar estimación",
@@ -1381,6 +1383,8 @@
   },
   "invoice": {
     "pageTitle": "Factura",
+    "searchPlaceholder": "Buscar facturas...",
+    "filter": "Filtrar",
     "detailModalTitle": "Detalle de factura",
     "details": "Detalles",
     "customer": "Cliente",

@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Info, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Info, Pencil, Plus, SlidersHorizontal, Trash2 } from 'lucide-react'
 import { Pagination } from '@/components/common/Pagination'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
+import { SearchInput } from '@/components/common/SearchInput'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
@@ -20,12 +28,14 @@ import {
 } from '@/redux/api/estimateApi'
 import { EstimateItemModal } from './components/EstimateItemModal'
 import { AddEstimateModal } from './components/AddEstimateModal'
-import { getProjectStatusClasses, type EstimateRecord } from './estimateData'
+import { estimateStatusFilterOptions, getProjectStatusClasses, type EstimateRecord } from './estimateData'
 import { formatCurrency } from '@/utils/formatters'
 
 export default function EstimatePage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const searchQuery = searchParams.get('search') ?? ''
+  const statusFilter = searchParams.get('status') ?? 'all'
   const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
   const itemsPerPage = parseInt(searchParams.get('limit') || '10', 10) || 10
 
@@ -34,6 +44,8 @@ export default function EstimatePage() {
   const { data: estimateData, isLoading } = useGetEstimatesQuery({
     page: currentPage,
     limit: itemsPerPage,
+    search: searchQuery,
+    status: statusFilter === 'all' ? '' : statusFilter,
   })
   const [addEstimate] = useAddEstimateMutation()
   const [updateEstimate] = useUpdateEstimateMutation()
@@ -57,6 +69,26 @@ export default function EstimatePage() {
     (p: number) => {
       const next = new URLSearchParams(searchParams)
       p > 1 ? next.set('page', String(p)) : next.delete('page')
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
+
+  const setSearch = useCallback(
+    (value: string) => {
+      const next = new URLSearchParams(searchParams)
+      value ? next.set('search', value) : next.delete('search')
+      next.delete('page')
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams]
+  )
+
+  const setStatus = useCallback(
+    (value: string) => {
+      const next = new URLSearchParams(searchParams)
+      value && value !== 'all' ? next.set('status', value) : next.delete('status')
+      next.delete('page')
       setSearchParams(next, { replace: true })
     },
     [searchParams, setSearchParams]
@@ -130,18 +162,42 @@ export default function EstimatePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <h1 className="lg:text-xl font-bold text-gray-900 tracking-tight">{t('estimate.pageTitle')}</h1>
-        {canCreate && (
-          <Button
-            type="button"
-            className="bg-[#00AB41] hover:bg-[#009638] text-white font-semibold"
-            onClick={() => setAddOpen(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {t('estimate.addNew')}
-          </Button>
-        )}
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearch}
+            placeholder={t('estimate.searchPlaceholder')}
+            className="w-full sm:w-[280px] bg-white rounded-lg border-gray-200"
+            debounceMs={500}
+          />
+          <div className="w-full sm:w-[140px] shrink-0">
+            <Select value={statusFilter} onValueChange={setStatus}>
+              <SelectTrigger className="w-full h-11 bg-primary text-white hover:bg-primary/90 border-0 [&_svg]:text-white">
+                <SlidersHorizontal className="h-4 w-4 mr-2 shrink-0" />
+                <SelectValue placeholder={t('estimate.filter')} />
+              </SelectTrigger>
+              <SelectContent>
+                {estimateStatusFilterOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {t(opt.labelKey)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {canCreate && (
+            <Button
+              type="button"
+              className="h-11 bg-[#00AB41] hover:bg-[#009638] text-white font-semibold"
+              onClick={() => setAddOpen(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('estimate.addNew')}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm overflow-hidden">
