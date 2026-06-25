@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { startOfDay } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { ModalWrapper } from '@/components/common'
 import { ImageUploader } from '@/components/common/ImageUploader'
@@ -180,6 +181,13 @@ export function AddEditProjectModal({
     }
   }, [project, open, ensureBuilderOption])
 
+  useEffect(() => {
+    if (!startDate || !endDate) return
+    if (startOfDay(endDate) < startOfDay(startDate)) {
+      setEndDate(undefined)
+    }
+  }, [startDate, endDate])
+
   const handleBuilderSearch = useCallback(
     (search: string) => {
       setBuilderPage(1)
@@ -320,12 +328,15 @@ export function AddEditProjectModal({
               label={t('companyProjects.startDate')}
               value={startDate}
               onChange={setStartDate}
+              disablePast
             />
 
             <DatePicker
               label={t('companyProjects.endDate')}
               value={endDate}
               onChange={setEndDate}
+              disablePast
+              minDate={startDate}
             />
           </div>
 
