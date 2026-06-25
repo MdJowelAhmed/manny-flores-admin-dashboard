@@ -31,7 +31,9 @@ export function BuilderTable({
   const handleChat = async (id: string) => {
     await createInitialChat(id).then((res) => {
       if (res?.data?.success) {
-        navigate('/communication')
+        navigate(`/communication?chatId=${res.data.data.id}`, {
+          state: { pendingChat: res.data.data },
+        })
       }
     })
   }
