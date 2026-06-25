@@ -149,7 +149,7 @@ export function ResourceRequestTableSection({
               transition={{ delay: 0.02 * index }}
               className="hover:bg-gray-50/50 transition-colors shadow-sm"
             >
-              <td className="px-4 py-3 text-sm text-slate-700 font-medium">{r.materialName}</td>
+              <td className="px-4 py-3 text-sm text-slate-700 font-medium">{r.material?.name ?? r.materialName}</td>
               <td className="px-4 py-3 text-sm text-slate-700">{r.quantityNeeded}</td>
               <td className="px-4 py-3">
                 <UrgencyCell level={r.urgencyLevel} />
