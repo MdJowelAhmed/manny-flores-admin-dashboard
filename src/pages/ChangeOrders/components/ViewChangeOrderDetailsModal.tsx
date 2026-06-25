@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CalendarDays,
@@ -25,12 +26,17 @@ import {
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
-import { imageUrl } from '@/redux/baseApi'
+import { imageUrl } from '@/components/common/getImageUrl'
+import { useCompanyProjectBuilderSignatureMutation } from '@/redux/slices/super-admin/changeOrdersApi'
+import { dataUrlToSignatureFile } from '@/redux/api/companyProjectApi'
+import { SignatureCanvas, type SignatureCanvasHandle } from '@/components/common/SignatureCanvas'
 
 interface ViewChangeOrderDetailsModalProps {
   open: boolean
   onClose: () => void
   order: ChangeOrder | null
+  reviewMode?: boolean
+  onReviewComplete?: () => void
 }
 
 function DetailRow({
@@ -67,8 +73,14 @@ export function ViewChangeOrderDetailsModal({
   open,
   onClose,
   order,
+  reviewMode = false,
+  onReviewComplete,
 }: ViewChangeOrderDetailsModalProps) {
   const { t } = useTranslation()
+  const [submitReview, { isLoading: isReviewSubmitting }] = useCompanyProjectBuilderSignatureMutation()
+  const [showSignaturePad, setShowSignaturePad] = useState(false)
+  const [hasSignatureStroke, setHasSignatureStroke] = useState(false)
+  const signatureCanvasRef = useRef<SignatureCanvasHandle>(null)
   if (!order) return null
 
   const handleSendToClient = () => {
@@ -81,7 +93,7 @@ export function ViewChangeOrderDetailsModal({
   }
 
   const downloadFile = (filePath: string) => {
-    const fullUrl = filePath.startsWith('http') ? filePath : `${imageUrl}${filePath}`
+    const fullUrl = imageUrl(filePath)
     const fileName = filePath.split('/').pop() || 'attachment'
     const a = document.createElement('a')
     a.href = fullUrl
@@ -97,6 +109,71 @@ export function ViewChangeOrderDetailsModal({
 
   const currentStatus = getChangeOrderStatus(order)
   const isCompanyOrder = getChangeOrderType(order) === 'company'
+  const canReview = reviewMode && isCompanyOrder && currentStatus === 'Pending'
+
+  const handleReject = async () => {
+    try {
+      const formData = new FormData()
+      formData.append('status', 'REJECTED')
+      await submitReview({ id: order.id, data: formData }).unwrap()
+      toast({
+        title: t('common.success'),
+        description: t('companyProjects.publicEstimate.rejectSuccess'),
+        variant: 'success',
+      })
+      onReviewComplete?.()
+      onClose()
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('companyProjects.publicEstimate.rejectError')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
+    }
+  }
+
+  const handleApproveWithSignature = async () => {
+    const signatureDataUrl = signatureCanvasRef.current?.getDataUrl()
+    if (!signatureDataUrl) {
+      toast({
+        title: t('common.error'),
+        description: t('companyProjects.publicEstimate.signatureRequired'),
+        variant: 'destructive',
+      })
+      return
+    }
+    try {
+      const formData = new FormData()
+      formData.append('status', 'APPROVED')
+      formData.append('signature', dataUrlToSignatureFile(signatureDataUrl))
+      await submitReview({ id: order.id, data: formData }).unwrap()
+      toast({
+        title: t('common.success'),
+        description: t('companyProjects.publicEstimate.approveSuccess'),
+        variant: 'success',
+      })
+      onReviewComplete?.()
+      onClose()
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : t('companyProjects.publicEstimate.approveError')
+      toast({ title: t('common.error'), description: message, variant: 'destructive' })
+    }
+  }
 
   return (
     <ModalWrapper
@@ -108,13 +185,49 @@ export function ViewChangeOrderDetailsModal({
       className="max-w-3xl bg-white "
       footer={
         <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full">
-          <Button
-            type="button"
-            className="rounded-lg bg-primary hover:bg-primary/90 text-white"
-            onClick={handleSendToClient}
-          >
-            {t('changeOrders.sendToClient')}
-          </Button>
+          {canReview ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-lg border-red-200 text-red-600 hover:bg-red-50"
+                onClick={handleReject}
+                disabled={isReviewSubmitting}
+              >
+                {t('companyProjects.publicEstimate.rejectProject')}
+              </Button>
+              {showSignaturePad ? (
+                <Button
+                  type="button"
+                  className="rounded-lg bg-primary hover:bg-primary/90 text-white"
+                  onClick={handleApproveWithSignature}
+                  disabled={isReviewSubmitting || !hasSignatureStroke}
+                >
+                  {t('companyProjects.publicEstimate.approveProject')}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className="rounded-lg bg-primary hover:bg-primary/90 text-white"
+                  onClick={() => {
+                    setHasSignatureStroke(false)
+                    setShowSignaturePad(true)
+                  }}
+                  disabled={isReviewSubmitting}
+                >
+                  {t('companyProjects.publicEstimate.approveProject')}
+                </Button>
+              )}
+            </>
+          ) : (
+            <Button
+              type="button"
+              className="rounded-lg bg-primary hover:bg-primary/90 text-white"
+              onClick={handleSendToClient}
+            >
+              {t('changeOrders.sendToClient')}
+            </Button>
+          )}
         </div>
       }
     >
@@ -247,8 +360,45 @@ export function ViewChangeOrderDetailsModal({
                 <p className="text-sm font-semibold text-primary">{t('changeOrders.authorized')}</p>
               </div>
             )}
+            {!!order.signature && (
+              <div className="mt-3 rounded-xl border border-gray-200 bg-white p-3">
+                <p className="mb-2 text-xs font-semibold text-muted-foreground">
+                  {t('companyProjects.publicEstimate.signature')}
+                </p>
+                <img
+                  src={imageUrl(order.signature)}
+                  alt={t('companyProjects.publicEstimate.signature')}
+                  className="mx-auto max-h-28 w-full object-contain"
+                />
+              </div>
+            )}
           </div>
         </div>
+
+        {canReview && showSignaturePad && (
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <SignatureCanvas
+              ref={signatureCanvasRef}
+              label={t('companyProjects.publicEstimate.signature')}
+              helperText={t('companyProjects.publicEstimate.signatureHint')}
+              clearLabel={t('companyProjects.publicEstimate.clearSignature')}
+              onChange={setHasSignatureStroke}
+            />
+            <div className="mt-2 flex justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 rounded-lg text-gray-600"
+                onClick={() => {
+                  setShowSignaturePad(false)
+                  setHasSignatureStroke(false)
+                }}
+              >
+                {t('common.cancel')}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </ModalWrapper>
   )

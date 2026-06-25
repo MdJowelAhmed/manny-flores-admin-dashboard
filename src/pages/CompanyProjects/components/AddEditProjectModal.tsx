@@ -15,7 +15,7 @@ import { InfiniteScrollSelect } from '@/components/common/InfiniteScrollSelect'
 import {
   useCreateCompanyProjectMutation,
   useUpdateCompanyProjectMutation,
-  buildCompanyProjectFormData,
+  buildCompanyProjectRequestBody,
   normalizeProjectDocumentation,
   type CompanyProjectDocument,
 } from '@/redux/api/companyProjectApi'
@@ -222,10 +222,16 @@ export function AddEditProjectModal({
       endDate: endDate ? endDate.toISOString() : null,
       totalBudget: parseFloat(totalBudget) || 0,
       payAmount: payAmount.trim() === '' ? 0 : parseFloat(payAmount) || 0,
+      amountDue: dueAmount,
       description: description.trim(),
     }
 
-    const requestBody = buildCompanyProjectFormData(payload, selectedFiles)
+    const existingDocumentation = existingDocuments.map((doc) => doc.url)
+    const requestBody = buildCompanyProjectRequestBody(payload, {
+      newFiles: selectedFiles,
+      existingDocumentation: isEdit ? existingDocumentation : [],
+      preferJson: isEdit,
+    })
 
     if (isEdit) {
       sonnerToast.promise(
@@ -241,7 +247,7 @@ export function AddEditProjectModal({
         }
       )
     } else {
-      sonnerToast.promise(createProject(requestBody).unwrap(), {
+      sonnerToast.promise(createProject(requestBody as FormData).unwrap(), {
         loading: t('common.processing'),
         success: () => {
           refetch()

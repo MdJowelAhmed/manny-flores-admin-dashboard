@@ -66,20 +66,28 @@ export interface CreateCompanyProjectPayload {
   endDate: string | null
   totalBudget: number
   payAmount: number
+  amountDue?: number
   description?: string
+  documentation?: string[]
 }
 
 export type UpdateCompanyProjectPayload = Partial<CreateCompanyProjectPayload>
 
 export function buildCompanyProjectFormData(
   payload: CreateCompanyProjectPayload | Record<string, unknown>,
-  files: File[] = []
+  files: File[] = [],
+  existingDocumentation: string[] = []
 ): FormData {
   const formData = new FormData()
 
   Object.entries(payload).forEach(([key, value]) => {
     if (value === undefined || value === null) return
+    if (key === 'documentation' && Array.isArray(value)) return
     formData.append(key, String(value))
+  })
+
+  existingDocumentation.forEach((url) => {
+    if (url) formData.append('documentation', url)
   })
 
   files.forEach((file) => {
@@ -87,6 +95,23 @@ export function buildCompanyProjectFormData(
   })
 
   return formData
+}
+
+export function buildCompanyProjectRequestBody(
+  payload: CreateCompanyProjectPayload,
+  options?: { newFiles?: File[]; existingDocumentation?: string[]; preferJson?: boolean }
+): CreateCompanyProjectPayload | FormData {
+  const newFiles = options?.newFiles ?? []
+  const existingDocumentation = options?.existingDocumentation ?? []
+
+  if (options?.preferJson && newFiles.length === 0) {
+    return {
+      ...payload,
+      ...(existingDocumentation.length > 0 ? { documentation: existingDocumentation } : {}),
+    }
+  }
+
+  return buildCompanyProjectFormData(payload, newFiles, existingDocumentation)
 }
 
 export function normalizeProjectDocumentation(

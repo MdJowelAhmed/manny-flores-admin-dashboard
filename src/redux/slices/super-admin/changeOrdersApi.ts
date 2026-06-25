@@ -78,6 +78,16 @@ const changeOrdersApi = baseApi.injectEndpoints({
                 }
             },
         }),
+
+        companyProjectBuilderSignature: builder.mutation<any, { id: string; data: FormData }>({
+            query: ({ id, data }) => {
+                return {
+                    url: `/change-orders/company-project/signature/${id}`,
+                    method: 'PATCH',
+                    body: data
+                }
+            },
+        }),
     })
 })
 
@@ -87,4 +97,5 @@ export const {
     useCreateChangeOrderMutation,
     useGetOrderPdfByIdQuery,
     useLazyGetOrderPdfByIdQuery,
+    useCompanyProjectBuilderSignatureMutation,
 } = changeOrdersApi

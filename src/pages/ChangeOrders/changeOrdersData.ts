@@ -69,6 +69,7 @@ export interface ChangeOrder {
   additionalCost: number
   totalCost: number
   status?: string
+  signature?: string | null
   documentation: string[]
   createdAt: string
   updatedAt: string
@@ -123,6 +124,7 @@ export interface ChangeOrder {
   requestDate?: string
   projectStartDate?: string
   amountSpent?: number
+  
   totalBudget?: number
   duration?: string
   remaining?: number

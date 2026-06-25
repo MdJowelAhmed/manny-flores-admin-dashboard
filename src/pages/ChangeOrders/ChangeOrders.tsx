@@ -42,6 +42,7 @@ export default function ChangeOrders() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [selectedOrder, setSelectedOrder] = useState<ChangeOrder | null>(null)
+  const [isReviewMode, setIsReviewMode] = useState(false)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -94,6 +95,13 @@ export default function ChangeOrders() {
 
   const handleViewDetails = (o: ChangeOrder) => {
     setSelectedOrder(o)
+    setIsReviewMode(false)
+    setIsViewModalOpen(true)
+  }
+
+  const handleReviewOrder = (o: ChangeOrder) => {
+    setSelectedOrder(o)
+    setIsReviewMode(true)
     setIsViewModalOpen(true)
   }
 
@@ -284,7 +292,7 @@ export default function ChangeOrders() {
                         {t('changeOrders.originalCost')}
                       </span>
                       <span className="text-sm font-bold text-foreground">
-                        {formatCurrency(o.originalCost ?? 0)}
+                        {formatCurrency(o.companyProject?.totalBudget ?? 0)}
                       </span>
                     </div>
                     <div>
@@ -314,6 +322,17 @@ export default function ChangeOrders() {
                   </div>
 
                   <div className="flex flex-wrap justify-end gap-2 pt-1">
+                    {isCompanyOrder && currentStatus === 'Pending' && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleReviewOrder(o)}
+                        className="rounded-lg border-primary/25 text-primary hover:bg-primary/10"
+                      >
+                        Review
+                      </Button>
+                    )}
                     <Button
                       type="button"
                       size="sm"
@@ -359,9 +378,12 @@ export default function ChangeOrders() {
         open={isViewModalOpen}
         onClose={() => {
           setIsViewModalOpen(false)
+          setIsReviewMode(false)
           setSelectedOrder(null)
         }}
         order={selectedOrder}
+        reviewMode={isReviewMode}
+        onReviewComplete={handleCreateOrder}
       />
 
       {!isBuilder && (
