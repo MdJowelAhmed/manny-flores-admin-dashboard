@@ -256,11 +256,11 @@ export default function ChangePassword() {
                 <p className="text-xs text-muted-foreground font-medium">
                   {t('settings.passwordRequirements')}
                 </p>
-                <div className="grid grid-cols-2 gap-1.5">
+                {/* <div className="grid grid-cols-2 gap-1.5">
                   {requirements.map((r) => (
                     <Requirement key={r.label} label={r.label} met={r.met} />
                   ))}
-                </div>
+                </div> */}
               </div>
             </div>
           </motion.div>

@@ -286,73 +286,75 @@ export default function ChangeOrders() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-1">
-                        {t('changeOrders.originalCost')}
-                      </span>
-                      <span className="text-sm font-bold text-foreground">
-                        {formatCurrency(o.companyProject?.totalBudget ?? 0)}
-                      </span>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">
+                          {t('changeOrders.originalCost')}
+                        </span>
+                        <span className="text-sm font-bold text-foreground">
+                          {formatCurrency(o.companyProject?.totalBudget || o.originalCost || 0)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">
+                          {t('changeOrders.additionalCost')}
+                        </span>
+                        <span className="text-sm font-bold text-orange-600">
+                          +{formatCurrency(o.additionalCost ?? 0)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">
+                          {t('changeOrders.newTotal')}
+                        </span>
+                        <span className="text-sm font-bold text-primary">
+                          {formatCurrency(
+                            o.totalCost ?? (o.originalCost ?? 0) + (o.additionalCost ?? 0)
+                          )}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">
+                          {t('changeOrders.requestDate')}
+                        </span>
+                        <span className="text-sm font-bold text-foreground">{formattedDate}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-1">
-                        {t('changeOrders.additionalCost')}
-                      </span>
-                      <span className="text-sm font-bold text-orange-600">
-                        +{formatCurrency(o.additionalCost ?? 0)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-1">
-                        {t('changeOrders.newTotal')}
-                      </span>
-                      <span className="text-sm font-bold text-primary">
-                        {formatCurrency(
-                          o.totalCost ?? (o.originalCost ?? 0) + (o.additionalCost ?? 0)
-                        )}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground block mb-1">
-                        {t('changeOrders.requestDate')}
-                      </span>
-                      <span className="text-sm font-bold text-foreground">{formattedDate}</span>
-                    </div>
-                  </div>
 
-                  <div className="flex flex-wrap justify-end gap-2 pt-1">
-                    {isCompanyOrder && currentStatus === 'Pending' && (
+                    <div className="flex flex-wrap justify-end gap-2 shrink-0">
+                      {isCompanyOrder && currentStatus === 'Pending' && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleReviewOrder(o)}
+                          className="rounded-lg border-primary/25 text-primary hover:bg-primary/10"
+                        >
+                          Review
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => handleReviewOrder(o)}
-                        className="rounded-lg border-primary/25 text-primary hover:bg-primary/10"
+                        disabled={isPdfDownloading}
+                        onClick={() => handleDownloadPdf(o)}
+                        className="rounded-lg border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 disabled:opacity-50"
                       >
-                        Review
+                        <FileDown className="h-4 w-4 mr-1" />
+                        {t('changeOrders.downloadPdf')}
                       </Button>
-                    )}
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={isPdfDownloading}
-                      onClick={() => handleDownloadPdf(o)}
-                      className="rounded-lg border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 disabled:opacity-50"
-                    >
-                      <FileDown className="h-4 w-4 mr-1" />
-                      {t('changeOrders.downloadPdf')}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleViewDetails(o)}
-                      className="rounded-lg border-gray-200 text-muted-foreground hover:bg-muted/50"
-                    >
-                      {t('changeOrders.viewDetails')}
-                    </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewDetails(o)}
+                        className="rounded-lg border-gray-200 text-muted-foreground hover:bg-muted/50"
+                      >
+                        {t('changeOrders.viewDetails')}
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               )

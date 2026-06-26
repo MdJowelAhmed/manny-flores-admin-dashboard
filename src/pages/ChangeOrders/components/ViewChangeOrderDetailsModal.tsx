@@ -219,15 +219,7 @@ export function ViewChangeOrderDetailsModal({
                 </Button>
               )}
             </>
-          ) : (
-            <Button
-              type="button"
-              className="rounded-lg bg-primary hover:bg-primary/90 text-white"
-              onClick={handleSendToClient}
-            >
-              {t('changeOrders.sendToClient')}
-            </Button>
-          )}
+        ) : null}
         </div>
       }
     >
