@@ -1624,7 +1624,9 @@
       "placeholder": "Escriba el contenido de Sobre Nosotros aquí...",
       "saveChanges": "Guardar Cambios",
       "updated": "Sobre Nosotros Actualizado",
-      "updatedDesc": "El contenido de Sobre Nosotros ha sido actualizado exitosamente."
+      "updatedDesc": "El contenido de Sobre Nosotros ha sido actualizado exitosamente.",
+      "loadFailed": "Error al cargar el contenido de Sobre Nosotros.",
+      "updateFailed": "Error al actualizar el contenido de Sobre Nosotros."
     },
     "termsPage": {
       "title": "Términos y Condiciones",
@@ -1634,7 +1636,9 @@
       "placeholder": "Escriba sus términos y condiciones aquí...",
       "saveChanges": "Guardar Cambios",
       "updated": "Términos Actualizados",
-      "updatedDesc": "Los Términos y Condiciones han sido actualizados exitosamente."
+      "updatedDesc": "Los Términos y Condiciones han sido actualizados exitosamente.",
+      "loadFailed": "Error al cargar los Términos y Condiciones.",
+      "updateFailed": "Error al actualizar los Términos y Condiciones."
     },
     "privacyPage": {
       "title": "Política de Privacidad",
@@ -1644,7 +1648,9 @@
       "placeholder": "Escriba su política de privacidad aquí...",
       "saveChanges": "Guardar Cambios",
       "updated": "Política de Privacidad Actualizada",
-      "updatedDesc": "La Política de Privacidad ha sido actualizada exitosamente."
+      "updatedDesc": "La Política de Privacidad ha sido actualizada exitosamente.",
+      "loadFailed": "Error al cargar la Política de Privacidad.",
+      "updateFailed": "Error al actualizar la Política de Privacidad."
     }
   }
 }
