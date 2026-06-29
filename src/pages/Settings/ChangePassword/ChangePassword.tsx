@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, ShieldCheck, KeyRound, Check, X } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -79,31 +79,31 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
 PasswordInput.displayName = 'PasswordInput'
 
 // ── Requirement pill ────────────────────────────────────────────────────────
-function Requirement({ label, met }: { label: string; met: boolean }) {
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border transition-all duration-200',
-        met
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-          : 'border-gray-100 bg-gray-50 text-muted-foreground'
-      )}
-    >
-      <span
-        className={cn(
-          'flex items-center justify-center w-3.5 h-3.5 rounded-full shrink-0 transition-colors',
-          met ? 'bg-emerald-500' : 'bg-gray-200'
-        )}
-      >
-        {met
-          ? <Check className="w-2 h-2 text-white" strokeWidth={3} />
-          : <X className="w-2 h-2 text-gray-400" strokeWidth={3} />
-        }
-      </span>
-      {label}
-    </div>
-  )
-}
+// function Requirement({ label, met }: { label: string; met: boolean }) {
+//   return (
+//     <div
+//       className={cn(
+//         'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border transition-all duration-200',
+//         met
+//           ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+//           : 'border-gray-100 bg-gray-50 text-muted-foreground'
+//       )}
+//     >
+//       <span
+//         className={cn(
+//           'flex items-center justify-center w-3.5 h-3.5 rounded-full shrink-0 transition-colors',
+//           met ? 'bg-emerald-500' : 'bg-gray-200'
+//         )}
+//       >
+//         {met
+//           ? <Check className="w-2 h-2 text-white" strokeWidth={3} />
+//           : <X className="w-2 h-2 text-gray-400" strokeWidth={3} />
+//         }
+//       </span>
+//       {label}
+//     </div>
+//   )
+// }
 
 // ── Strength bar ────────────────────────────────────────────────────────────
 function StrengthBar({ password }: { password: string }) {
@@ -166,13 +166,13 @@ export default function ChangePassword() {
 
   const newPassword = watch('newPassword', '')
 
-  const requirements = [
-    { label: t('auth.atLeast8Chars'),    met: newPassword.length >= 8           },
-    { label: t('auth.oneUppercase'),      met: /[A-Z]/.test(newPassword)         },
-    { label: t('auth.oneLowercase'),      met: /[a-z]/.test(newPassword)         },
-    { label: t('auth.oneNumber'),         met: /[0-9]/.test(newPassword)         },
-    { label: t('auth.oneSpecialChar'),    met: /[^A-Za-z0-9]/.test(newPassword) },
-  ]
+  // const requirements = [
+  //   { label: t('auth.atLeast8Chars'),    met: newPassword.length >= 8           },
+  //   { label: t('auth.oneUppercase'),      met: /[A-Z]/.test(newPassword)         },
+  //   { label: t('auth.oneLowercase'),      met: /[a-z]/.test(newPassword)         },
+  //   { label: t('auth.oneNumber'),         met: /[0-9]/.test(newPassword)         },
+  //   { label: t('auth.oneSpecialChar'),    met: /[^A-Za-z0-9]/.test(newPassword) },
+  // ]
 
   const onSubmit = async (data: PasswordFormData) => {
     sonnerToast.promise(

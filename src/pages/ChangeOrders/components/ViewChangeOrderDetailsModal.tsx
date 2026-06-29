@@ -83,14 +83,14 @@ export function ViewChangeOrderDetailsModal({
   const signatureCanvasRef = useRef<SignatureCanvasHandle>(null)
   if (!order) return null
 
-  const handleSendToClient = () => {
-    toast({
-      title: t('common.success'),
-      description: t('changeOrders.sentToClient'),
-      variant: 'success',
-    })
-    onClose()
-  }
+  // const handleSendToClient = () => {
+  //   toast({
+  //     title: t('common.success'),
+  //     description: t('changeOrders.sentToClient'),
+  //     variant: 'success',
+  //   })
+  //   onClose()
+  // }
 
   const downloadFile = (filePath: string) => {
     const fullUrl = imageUrl(filePath)

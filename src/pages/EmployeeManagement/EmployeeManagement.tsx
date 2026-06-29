@@ -116,6 +116,7 @@ export default function EmployeeManagement() {
         contact: employee.contact,
         verified: employee.verified,
         profile: employee.profile,
+        isBanned: employee.isBanned ?? false,
       })) || []
     )
   }, [allEmployeeManage])
