@@ -21,6 +21,14 @@ export const ESTIMATE_PROJECT_STATUSES: EstimateProjectStatus[] = [
   'CANCELLED',
 ]
 
+export const estimateStatusFilterOptions = [
+  { value: 'all', labelKey: 'common.all' as const },
+  ...ESTIMATE_PROJECT_STATUSES.map((status) => ({
+    value: status,
+    labelKey: `estimate.projectStatus.${status}` as const,
+  })),
+]
+
 export function normalizeProjectStatus(value?: string): EstimateProjectStatus {
   const upper = (value ?? 'PENDING').toUpperCase()
   if (ESTIMATE_PROJECT_STATUSES.includes(upper as EstimateProjectStatus)) {

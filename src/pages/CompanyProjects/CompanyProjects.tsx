@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Plus, Pencil, SlidersHorizontal } from 'lucide-react'
+import { Plus, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react'
 import { SearchInput } from '@/components/common/SearchInput'
 import { Pagination } from '@/components/common/Pagination'
+import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import {
   Select,
   SelectContent,
@@ -13,7 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { projectStats, projectStatusFilterOptions } from './companyProjectsData'
-import { ViewProjectDetailsModal } from './components/ViewProjectDetailsModal'
+import { useAppSelector } from '@/redux/hooks'
+import { UserRole } from '@/types/roles'
+import { BuilderProjectDetailsModal } from './components/BuilderProjectDetailsModal'
 import { ViewTasksModal } from './components/ViewTasksModal'
 import { AddEditProjectModal } from './components/AddEditProjectModal'
 import { AssignTeamModal } from './components/AssignTeamModal'
@@ -26,13 +29,15 @@ import {
   useCompanyProjectOverviewQuery,
   useGetCompanyProjectsQuery,
   useGetCompanyProjectEmployeesQuery,
+  useDeleteCompanyProjectMutation,
   type CompanyProjectApiDoc,
   type CompanyProjectTaskApiDoc,
 } from '@/redux/api/companyProjectApi'
-import { useGetAllCustomersQuery } from '@/redux/slices/super-admin/payrollApi'
+import { useGetBuildersQuery } from '@/redux/slices/super-admin/employeeManagement'
 import Spinner from '@/components/common/Spinner'
 import { differenceInWeeks, parseISO } from 'date-fns'
 import { projectCardActionClass } from './companyProjectsUi'
+import { sonnerToast } from '@/utils/toast'
 
 export const getProjectDuration = (start?: string, end?: string) => {
   if (!start || !end) return 'N/A'
@@ -43,6 +48,24 @@ export const getProjectDuration = (start?: string, end?: string) => {
     return `${weeks} ${weeks === 1 ? 'week' : 'weeks'}`
   } catch {
     return 'N/A'
+  }
+}
+
+export const mapProjectStatusToUi = (projectStatus?: string): string => {
+  if (!projectStatus) return 'Pending'
+  switch (projectStatus.toUpperCase()) {
+    case 'PENDING':
+      return 'Pending'
+    case 'IN_PROGRESS':
+      return 'In Progress'
+    case 'ACTIVE':
+      return 'Active'
+    case 'COMPLETED':
+      return 'Completed'
+    case 'CANCELLED':
+      return 'Cancelled'
+    default:
+      return projectStatus
   }
 }
 
@@ -62,8 +85,13 @@ export const mapPaymentTypeToStatus = (paymentType?: string): string => {
   }
 }
 
+export const isProjectInProgress = (projectStatus?: string): boolean =>
+  (projectStatus ?? '').toUpperCase() === 'IN_PROGRESS'
+
 export default function CompanyProjects() {
   const { t } = useTranslation()
+  const { user } = useAppSelector((state) => state.auth)
+  const isBuilder = user?.role === UserRole.BUILDER
   const [searchParams, setSearchParams] = useSearchParams()
 
   const searchQuery = searchParams.get('search') ?? ''
@@ -90,14 +118,17 @@ export default function CompanyProjects() {
   const totalItems = companyPorjectsApi?.pagination?.total || 0
   const totalPages = companyPorjectsApi?.pagination?.totalPage || 1
 
-  const [custSearch, setCustSearch] = useState('')
-  const [custPage, setCustPage] = useState(1)
-  const [custOptions, setCustOptions] = useState<{ value: string; label: string }[]>([])
+  const [builderSearch, setBuilderSearch] = useState('')
+  const [builderPage, setBuilderPage] = useState(1)
+  const [builderOptions, setBuilderOptions] = useState<
+    { value: string; label: string; name: string; email: string }[]
+  >([])
 
-  const { data: customersRes, isFetching: custLoading } = useGetAllCustomersQuery(
+  const { data: buildersRes, isFetching: builderLoading } = useGetBuildersQuery(
     {
-      search: custSearch,
-      page: custPage,
+      search: builderSearch,
+      page: builderPage,
+      limit: 10,
     },
     {
       skip: !(isAddModalOpen || isEditModalOpen),
@@ -134,6 +165,9 @@ export default function CompanyProjects() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<CompanyProjectTaskApiDoc | null>(null)
   const [selectedProject, setSelectedProject] = useState<CompanyProjectApiDoc | null>(null)
+  const [projectToDelete, setProjectToDelete] = useState<CompanyProjectApiDoc | null>(null)
+
+  const [deleteProject, { isLoading: isDeletingProject }] = useDeleteCompanyProjectMutation()
 
   const employeeOptions = useMemo(
     () =>
@@ -145,14 +179,6 @@ export default function CompanyProjects() {
       })) ?? [],
     [employeesRes?.data]
   )
-
-  const employeeNameById = useMemo(() => {
-    const map: Record<string, string> = {}
-    employeeOptions.forEach((emp) => {
-      map[emp.id] = emp.name
-    })
-    return map
-  }, [employeeOptions])
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages >= 1) setPage(1)
@@ -196,10 +222,44 @@ export default function CompanyProjects() {
     setIsAddModalOpen(true)
   }
 
-  const resetCustomerStates = () => {
-    setCustSearch('')
-    setCustPage(1)
-    setCustOptions([])
+  const handleDelete = (project: CompanyProjectApiDoc, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setProjectToDelete(project)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!projectToDelete) return
+
+    try {
+      await sonnerToast.promise(
+        deleteProject({ id: projectToDelete.id }).unwrap(),
+        {
+          loading: t('common.processing'),
+          success: () => {
+            if (selectedProject?.id === projectToDelete.id) {
+              setSelectedProject(null)
+              setIsViewModalOpen(false)
+              setIsEditModalOpen(false)
+              setIsViewTasksModalOpen(false)
+              setIsAssignModalOpen(false)
+            }
+            setProjectToDelete(null)
+            refetch()
+            return t('companyProjects.projectDeleted')
+          },
+          error: (err: { data?: { message?: string } }) =>
+            err?.data?.message || t('companyProjects.projectDeleteFailed'),
+        }
+      )
+    } catch {
+      // handled by sonnerToast
+    }
+  }
+
+  const resetBuilderStates = () => {
+    setBuilderSearch('')
+    setBuilderPage(1)
+    setBuilderOptions([])
   }
 
   if (companyProjectLoading || companyOverviewLoading) {
@@ -276,13 +336,15 @@ export default function CompanyProjects() {
               </Select>
             </div>
 
-            <Button
-              onClick={handleAddProject}
-              className="bg-primary hover:bg-primary/90 text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t('companyProjects.addProject')}
-            </Button>
+            {!isBuilder && (
+              <Button
+                onClick={handleAddProject}
+                className="bg-primary hover:bg-primary/90 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {t('companyProjects.addProject')}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -293,7 +355,7 @@ export default function CompanyProjects() {
             </div>
           ) : (
             projects.map((project: CompanyProjectApiDoc) => {
-              const uiStatus = mapPaymentTypeToStatus(project.paymentType)
+              const uiStatus = mapProjectStatusToUi(project.projectStatus)
               const statusColors = STATUS_COLORS[uiStatus] ?? {
                 bg: 'bg-gray-100',
                 text: 'text-gray-800',
@@ -314,8 +376,13 @@ export default function CompanyProjects() {
                             {project.projectName}
                           </h4>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {project.companyName || '—'}
+                            {project.builder?.name || project.companyName || '—'}
                           </p>
+                          {(project.builder?.email || project.customerEmail) && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {project.builder?.email || project.customerEmail}
+                            </p>
+                          )}
                         </div>
                         <span
                           className={cn(
@@ -339,53 +406,87 @@ export default function CompanyProjects() {
                         </div>
                         <div>
                           <span className="text-sm text-muted-foreground block mb-1">
-                            {t('companyProjects.timeline')}
+                            {t('companyProjects.payAmount')}
                           </span>
                           <span className="text-lg font-bold text-gray-900">
-                            {getProjectDuration(project.startDate, project.endDate)}
+                            {formatCurrency(project.payAmount ?? 0)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-sm text-muted-foreground block mb-1">
+                            {t('companyProjects.amountDue')}
+                          </span>
+                          <span className="text-lg font-bold text-gray-900">
+                            {formatCurrency(project.amountDue ?? 0)}
                           </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 lg:justify-end lg:max-w-[520px]">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => handleViewTasks(project, e)}
-                        className={cn('h-9 rounded-lg border', projectCardActionClass.viewTask)}
-                      >
-                        {t('companyProjects.viewTask')}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => handleAssignTeam(project, e)}
-                        className={cn('h-9 rounded-lg border', projectCardActionClass.assignEmployee)}
-                      >
-                        {t('companyProjects.assignEmployee')}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetails(project)}
-                        className={cn('h-9 rounded-lg border', projectCardActionClass.projectDetails)}
-                      >
-                        {t('companyProjects.projectDetails')}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => handleEdit(project, e)}
-                        className={cn('h-9 rounded-lg border', projectCardActionClass.edit)}
-                      >
-                        <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                        {t('common.edit')}
-                      </Button>
+                      {isBuilder ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDetails(project)}
+                          className={cn('h-9 rounded-lg border', projectCardActionClass.projectDetails)}
+                        >
+                          {t('companyProjects.viewDetails')}
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleViewTasks(project, e)}
+                            className={cn('h-9 rounded-lg border', projectCardActionClass.viewTask)}
+                          >
+                            {t('companyProjects.viewTask')}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleAssignTeam(project, e)}
+                            className={cn('h-9 rounded-lg border', projectCardActionClass.assignEmployee)}
+                          >
+                            {t('companyProjects.assignEmployee')}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetails(project)}
+                            className={cn('h-9 rounded-lg border', projectCardActionClass.projectDetails)}
+                          >
+                            {t('companyProjects.projectDetails')}
+                          </Button>
+                          {!isProjectInProgress(project.projectStatus) && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleEdit(project, e)}
+                              className={cn('h-9 rounded-lg border', projectCardActionClass.edit)}
+                            >
+                              <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                              {t('common.edit')}
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleDelete(project, e)}
+                            className={cn('h-9 rounded-lg border', projectCardActionClass.delete)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                            {t('common.delete')}
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -408,66 +509,85 @@ export default function CompanyProjects() {
         </div>
       </div>
 
-      <ViewProjectDetailsModal
+      <BuilderProjectDetailsModal
         open={isViewModalOpen}
         onClose={() => {
           setIsViewModalOpen(false)
           setSelectedProject(null)
         }}
-        project={selectedProject}
-        employeeNameById={employeeNameById}
+        projectId={selectedProject?.id ?? null}
+        onDecisionComplete={refetch}
+        readOnly={!isBuilder}
+        showShareLink={!isBuilder}
       />
 
-      <ViewTasksModal
-        open={isViewTasksModalOpen}
-        onClose={() => {
-          setIsViewTasksModalOpen(false)
-        }}
-        project={selectedProject}
-        onAddTask={handleAddTask}
-        onEditTask={handleEditTask}
-      />
+      {!isBuilder && (
+        <>
+          <ViewTasksModal
+            open={isViewTasksModalOpen}
+            onClose={() => {
+              setIsViewTasksModalOpen(false)
+            }}
+            project={selectedProject}
+            onAddTask={handleAddTask}
+            onEditTask={handleEditTask}
+          />
 
-      <AssignTeamModal
-        open={isAssignModalOpen}
-        onClose={() => {
-          setIsAssignModalOpen(false)
-        }}
-        project={selectedProject}
-        employees={employeeOptions}
-        onAssigned={refetch}
-      />
+          <AssignTeamModal
+            open={isAssignModalOpen}
+            onClose={() => {
+              setIsAssignModalOpen(false)
+            }}
+            project={selectedProject}
+            employees={employeeOptions}
+            onAssigned={refetch}
+          />
 
-      <AddProjectTaskModal
-        open={isTaskModalOpen}
-        onClose={() => {
-          setIsTaskModalOpen(false)
-          setSelectedTask(null)
-        }}
-        project={selectedProject}
-        task={selectedTask}
-        employees={employeeOptions}
-        onSaved={refetch}
-      />
+          <AddProjectTaskModal
+            open={isTaskModalOpen}
+            onClose={() => {
+              setIsTaskModalOpen(false)
+              setSelectedTask(null)
+            }}
+            project={selectedProject}
+            task={selectedTask}
+            employees={employeeOptions}
+            onSaved={refetch}
+          />
 
-      <AddEditProjectModal
-        open={isAddModalOpen || isEditModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false)
-          setIsEditModalOpen(false)
-          setSelectedProject(null)
-          resetCustomerStates()
-        }}
-        project={isEditModalOpen ? selectedProject : null}
-        refetch={refetch}
-        customersRes={customersRes}
-        custPage={custPage}
-        custOptions={custOptions}
-        setCustOptions={setCustOptions}
-        setCustPage={setCustPage}
-        setCustSearch={setCustSearch}
-        custLoading={custLoading}
-      />
+          <AddEditProjectModal
+            open={isAddModalOpen || isEditModalOpen}
+            onClose={() => {
+              setIsAddModalOpen(false)
+              setIsEditModalOpen(false)
+              setSelectedProject(null)
+              resetBuilderStates()
+            }}
+            project={isEditModalOpen ? selectedProject : null}
+            refetch={refetch}
+            buildersRes={buildersRes}
+            builderPage={builderPage}
+            builderOptions={builderOptions}
+            setBuilderOptions={setBuilderOptions}
+            setBuilderPage={setBuilderPage}
+            setBuilderSearch={setBuilderSearch}
+            builderLoading={builderLoading}
+          />
+
+          <ConfirmDialog
+            open={!!projectToDelete}
+            onClose={() => setProjectToDelete(null)}
+            onConfirm={handleConfirmDelete}
+            title={t('companyProjects.deleteProject')}
+            description={t('companyProjects.deleteProjectConfirm', {
+              name: projectToDelete?.projectName,
+            })}
+            confirmText={t('common.delete')}
+            variant="danger"
+            isLoading={isDeletingProject}
+          />
+        </>
+      )}
     </motion.div>
   )
 }

@@ -56,7 +56,21 @@ const employeeManageApi = baseApi.injectEndpoints({
                 }
             },
         }),
+
+        getBuilders: builder.query<any, { limit?: number, page?: number, search?: string }>({
+            query: ({ limit = 10, page = 1, search }) => {
+                return {
+                    url: '/builder',
+                    method: 'GET',
+                    params: {
+                        limit,
+                        page,
+                        search,
+                    },
+                }
+            },
+        }),
     }),
 })
 
-export const { useAllEmployeeManageQuery, useEmployeeManageOverviewQuery, useSingleEmployeeManageQuery, useAddEmployeeManageMutation, useUpdateEmployeeManageMutation, useDeleteEmployeeManageMutation } = employeeManageApi
+export const { useAllEmployeeManageQuery, useEmployeeManageOverviewQuery, useSingleEmployeeManageQuery, useAddEmployeeManageMutation, useUpdateEmployeeManageMutation, useDeleteEmployeeManageMutation, useGetBuildersQuery } = employeeManageApi

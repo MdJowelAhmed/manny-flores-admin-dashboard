@@ -16,6 +16,7 @@ import type { PaymentStatusUpdate } from '@/redux/api/paymentApi'
 
 import {
   formatPaymentMethod,
+  isFinancePayment,
   isRequestForCompleteStatus,
   type PaymentListItem,
 } from '../paymentsData'
@@ -111,8 +112,20 @@ export function PaymentsTableSection({
                       </td>
                       <td className="px-5 py-4 text-sm">{r.projectName || '—'}</td>
                       <td className="px-5 py-4 text-sm">{r.customerName || '—'}</td>
-                      <td className="px-5 py-4 text-sm font-medium">
-                        {formatPaymentMethod(r.method)}
+                      <td className="px-5 py-4 text-sm">
+                        <div className="font-medium">{formatPaymentMethod(r.method)}</div>
+                        {isFinancePayment(r.method) && (r.financeCompanyName || r.loanId) && (
+                          <div className="mt-1 space-y-0.5 text-xs text-slate-500">
+                            {r.financeCompanyName && (
+                              <div title={r.financeCompanyName}>{r.financeCompanyName}</div>
+                            )}
+                            {r.loanId && (
+                              <div>
+                                {t('payments.table.loanId')}: {r.loanId}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="px-5 py-4 text-sm font-medium text-right tabular-nums whitespace-nowrap">
                         {r.amount != null ? formatCurrency(r.amount) : '—'}

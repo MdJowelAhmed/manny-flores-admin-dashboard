@@ -22,7 +22,8 @@ export interface ResourceRequestListResponse<T> {
 
 export interface RequestMaterialApiDoc {
   id: string
-  materialName: string
+  materialName?: string
+  material?: { name?: string }
   quantityNeeded: number
   urgencyLevel: string
   reason: string
@@ -68,7 +69,8 @@ export interface UpdateResourceRequestStatusPayload {
 export function mapMaterialRequestFromApi(doc: RequestMaterialApiDoc): MaterialRequestItem {
   return {
     id: doc.id,
-    materialName: doc.materialName,
+    materialName: doc.material?.name ?? doc.materialName ?? '',
+    material: doc.material,
     quantityNeeded: doc.quantityNeeded,
     urgencyLevel: doc.urgencyLevel,
     reason: doc.reason,

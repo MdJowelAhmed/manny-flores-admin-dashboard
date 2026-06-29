@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react'
-import { formatCurrency, formatCompactNumber } from '@/utils/formatters'
 import { StatCard } from './StatCard'
 import { RevenueChart } from './RevenueChart'
 import { RecentActivityCard } from './RecentActivityCard'
-import { yearlyData } from './dashboardData'
+import { years } from './dashboardData'
 import { DollarSignIcon, FileCheck, ListOrdered, Users } from 'lucide-react'
 import { PieChartComponent } from './PieChart'
 import { Chatbot } from './Chatbot/Chatbot'
@@ -11,48 +10,53 @@ import { useTranslation } from 'react-i18next'
 import { useOverviewProjectStatusQuery, useOverviewRevenueExpenseQuery, useOverviewStatsQuery } from '@/redux/slices/super-admin/overviewApi'
 import Spinner from '@/components/common/Spinner'
 
+const currentYear = String(new Date().getFullYear())
+
 export default function Dashboard() {
-  const [selectedYear, setSelectedYear] = useState('2026')
+  const [selectedYear, setSelectedYear] = useState(
+    years.includes(currentYear) ? currentYear : years[0]
+  )
   const { t } = useTranslation()
 
-  // API CALLS
   const { data: overviewStatsApi, isLoading: statsLoading } = useOverviewStatsQuery()
   const { data: projectStatusApi, isLoading: projectStatusLoading } = useOverviewProjectStatusQuery()
-  const { data: revenueExpenseApi, isLoading: revenueExpenseLoading } = useOverviewRevenueExpenseQuery()
+  const { data: revenueExpenseApi, isLoading: revenueExpenseLoading } = useOverviewRevenueExpenseQuery({
+    year: selectedYear,
+  })
+
   const chartData = useMemo(() => {
     const apiMonths = revenueExpenseApi?.data?.months
-    if (apiMonths && Array.isArray(apiMonths)) {
-      return apiMonths.map((item: any) => ({
-        month: item.month,
-        revenue: Number(item.revenue || 0),
-        project: Number(item.project || 0),
-      }))
-    }
-    return yearlyData[selectedYear] || []
-  }, [revenueExpenseApi, selectedYear])
+    if (!apiMonths || !Array.isArray(apiMonths)) return []
+
+    return apiMonths.map((item) => ({
+      month: item.month,
+      revenue: item.revenue ?? 0,
+      project: item.project ?? 0,
+    }))
+  }, [revenueExpenseApi?.data?.months])
 
   const stats = [
     {
       title: t('dashboard.activeProjects'),
-      value: formatCompactNumber(overviewStatsApi?.data?.activeProjectCountLength || 0),
+      value: overviewStatsApi?.data?.activeProjectCountLength ?? 0,
       icon: ListOrdered,
       description: t('dashboard.vsLastMonth'),
     },
     {
       title: t('dashboard.totalEmployees'),
-      value: formatCompactNumber(overviewStatsApi?.data?.allUsersCount || 0),
+      value: overviewStatsApi?.data?.allUsersCount ?? 0,
       icon: Users,
       description: t('dashboard.vsLastMonth'),
     },
     {
       title: t('dashboard.totalRevenue'),
-      value: formatCurrency(overviewStatsApi?.data?.totalRevenue || 0),
+      value: overviewStatsApi?.data?.totalRevenue ?? 0,
       icon: DollarSignIcon,
       description: t('dashboard.vsLastMonth'),
     },
     {
       title: t('dashboard.pendingApprovals'),
-      value: formatCompactNumber((overviewStatsApi?.data?.estimateProjectCountLength || 0) - (overviewStatsApi?.data?.activeProjectCountLength || 0)),
+      value: overviewStatsApi?.data?.estimateProjectCountLength ?? 0,
       icon: FileCheck,
       description: t('dashboard.vsLastMonth'),
     },

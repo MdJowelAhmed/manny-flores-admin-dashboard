@@ -3,6 +3,7 @@ export type ResourceRequestTab = 'materials' | 'equipment' | 'vehicles'
 export interface MaterialRequestItem {
   id: string
   materialName: string
+  material?: { name?: string }
   quantityNeeded: number
   urgencyLevel: string
   reason: string

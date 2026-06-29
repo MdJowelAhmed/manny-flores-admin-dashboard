@@ -25,9 +25,11 @@ import {
   DollarSign,
   FileBarChart,
   ClipboardList,
+  // Receipt,
   // FolderKanban,
   Info,
   BadgeDollarSign,
+  HardHat,
 } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -97,6 +99,13 @@ const navItems: NavItem[] = [
     href: '/employee-management',
     icon: UserCog,
     feature: 'employee-management',
+  },
+  {
+    title: 'Builder Management',
+    titleKey: 'sidebar.builderManagement',
+    href: '/builder-management',
+    icon: HardHat,
+    feature: 'builder-management',
   },
   {
     title: 'Attendance',
@@ -179,6 +188,13 @@ const navItems: NavItem[] = [
     icon: ClipboardList,
     feature: 'change-orders',
   },
+  // {
+  //   title: 'Purchase Orders',
+  //   titleKey: 'sidebar.purchaseOrders',
+  //   href: '/purchase-orders',
+  //   icon: Receipt,
+  //   feature: 'purchase-orders',
+  // },
 
   {
     title: 'Review',

@@ -22,13 +22,16 @@ export interface AuthUserFromToken {
 }
 
 function mapApiRoleToUserRole(apiRole?: string): UserRoleValue {
-  switch (apiRole) {
+  const normalized = (apiRole ?? '').toUpperCase().replace(/-/g, '_')
+  switch (normalized) {
     case 'SUPER_ADMIN':
       return UserRole.SUPER_ADMIN
     case 'ADMIN':
       return UserRole.ADMIN
     case 'MARKETING':
       return UserRole.MARKETING
+    case 'BUILDER':
+      return UserRole.BUILDER
     default:
       return UserRole.SUPER_ADMIN
   }

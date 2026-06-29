@@ -4,6 +4,7 @@ import { Info, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { AttendanceRecord, AttendanceStatus } from "../attendanceData";
 import { STATUS_STYLES } from "../attendanceData";
+import { AttendanceMapLink } from "./AttendanceMapLink";
 import { cn } from "@/utils/cn";
 import { useNavigate } from "react-router-dom";
 
@@ -29,7 +30,7 @@ export function AttendanceTable({
 
   return (
     <div className="w-full overflow-auto">
-      <table className="w-full min-w-[800px]">
+      <table className="w-full min-w-[1000px]">
         <thead>
           <tr className="bg-secondary-foreground text-accent">
             <th className="px-4 py-4 text-left text-sm font-semibold">
@@ -44,6 +45,12 @@ export function AttendanceTable({
             </th>
             <th className="px-4 py-4 text-left text-sm font-semibold">
               {t("attendance.checkOut")}
+            </th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">
+              {t("attendance.checkInMap")}
+            </th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">
+              {t("attendance.checkOutMap")}
             </th>
             <th className="px-4 py-4 text-left text-sm font-semibold">
               {t("attendance.totalHours")}
@@ -94,6 +101,18 @@ export function AttendanceTable({
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-700">
                     {r.checkOut}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <AttendanceMapLink
+                      latitude={r.checkInLatitude}
+                      longitude={r.checkInLongitude}
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <AttendanceMapLink
+                      latitude={r.checkOutLatitude}
+                      longitude={r.checkOutLongitude}
+                    />
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-700">
                     {r.totalHours}

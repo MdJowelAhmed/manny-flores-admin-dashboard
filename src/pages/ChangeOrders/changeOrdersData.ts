@@ -1,11 +1,67 @@
 import { FileText, Info, DollarSign } from 'lucide-react'
 
 export type ChangeOrderStatus = 'Pending' | 'Approved'
+export type ChangeOrderProjectType = 'customer' | 'company'
+
+export interface ChangeOrderEstimate {
+  id?: string
+  projectName?: string
+  customerAddress?: string
+  customerEmail?: string
+  clientName?: string
+  phone?: string
+  email?: string
+  company?: string
+  siteAddress?: string
+}
+
+export interface ChangeOrderEstimateSchedule {
+  id?: string
+  estimateId?: string
+  signature?: string
+  projectStatus?: string
+  assignEmployee?: string[]
+  teamId?: string
+  projectStartDate?: string
+  projectEndDate?: string
+  estimate?: ChangeOrderEstimate | null
+}
+
+export interface ChangeOrderCompanyProject {
+  id: string
+  projectName?: string
+  builderId?: string
+  customerEmail?: string
+  paymentMethod?: string
+  companyName?: string
+  paymentType?: string
+  amountDue?: number
+  startDate?: string
+  endDate?: string
+  totalBudget?: number
+  payAmount?: number
+  documentation?: string[]
+  description?: string
+  teamIds?: string[]
+  projectStatus?: string
+  signatures?: string | null
+  createdBy?: string
+  createdAt?: string
+  updatedAt?: string
+  builder?: {
+    id?: string
+    name?: string
+    email?: string
+  } | null
+}
 
 export interface ChangeOrder {
   id: string
   projectId?: string | null
-  estimateScheduleId?: string
+  estimateScheduleId?: string | null
+  companyProjectId?: string | null
+  projectType?: ChangeOrderProjectType | string
+  type?: string | null
   userId: string
   reasonForChange: string
   description: string
@@ -13,31 +69,20 @@ export interface ChangeOrder {
   additionalCost: number
   totalCost: number
   status?: string
+  signature?: string | null
   documentation: string[]
   createdAt: string
   updatedAt: string
-  estimateSchedule?: {
-    id: string
-    estimateId: string
-    projectStatus?: string
-    estimate?: {
-      id: string
-      projectName?: string
-      customerAddress?: string
-      customerEmail?: string
-      clientName?: string
-      phone?: string
-      email?: string
-      company?: string
-      siteAddress?: string
-    }
-  }
+  estimateSchedule?: ChangeOrderEstimateSchedule | null
   user?: {
     id: string
     name?: string
     email?: string
     profile?: string
+    contact?: string
+    role?: string
   }
+  companyProject?: ChangeOrderCompanyProject | null
   project?: {
     id: string
     estimateId: string
@@ -79,6 +124,7 @@ export interface ChangeOrder {
   requestDate?: string
   projectStartDate?: string
   amountSpent?: number
+  
   totalBudget?: number
   duration?: string
   remaining?: number
@@ -134,17 +180,29 @@ export const changeReasonOptions = [
   { value: 'client_request', labelKey: 'changeOrders.reasonClientRequest' as const },
 ]
 
-export function getChangeOrderEstimate(order: ChangeOrder) {
-  return (
-    order.estimateSchedule?.estimate ??
-    order.project?.estimates ??
-    order.project?.estimate ??
-    null
-  )
+export function getChangeOrderType(order: ChangeOrder): ChangeOrderProjectType {
+  const explicit = (order.projectType ?? order.type ?? '').toLowerCase()
+  if (explicit === 'company' || explicit === 'customer') {
+    return explicit
+  }
+  if (order.companyProjectId || order.companyProject?.id) return 'company'
+  if (order.estimateScheduleId || order.estimateSchedule?.id) return 'customer'
+  return 'customer'
+}
+
+export function getChangeOrderEstimate(order: ChangeOrder): ChangeOrderEstimate | null {
+  const fromSchedule = order.estimateSchedule?.estimate
+  if (fromSchedule) return fromSchedule
+  return order.project?.estimates ?? order.project?.estimate ?? null
 }
 
 export function getChangeOrderProjectName(order: ChangeOrder): string {
-  return getChangeOrderEstimate(order)?.projectName ?? order.projectName ?? '—'
+  return (
+    order.companyProject?.projectName ??
+    getChangeOrderEstimate(order)?.projectName ??
+    order.projectName ??
+    '—'
+  )
 }
 
 export function getChangeOrderStatus(order: ChangeOrder): string {
@@ -162,12 +220,18 @@ export function getChangeOrderSiteAddress(order: ChangeOrder): string {
 }
 
 export function getChangeOrderCustomerName(order: ChangeOrder): string {
+  if (getChangeOrderType(order) === 'company') {
+    return order.companyProject?.companyName ?? order.companyProject?.builder?.name ?? '—'
+  }
   return getChangeOrderEstimate(order)?.clientName ?? '—'
 }
 
 export function getChangeOrderCustomerEmail(order: ChangeOrder): string {
+  if (getChangeOrderType(order) === 'company') {
+    return order.companyProject?.customerEmail ?? order.companyProject?.builder?.email ?? '—'
+  }
   const estimate = getChangeOrderEstimate(order)
-  return estimate?.email ?? estimate?.customerEmail ?? '—'
+  return estimate?.customerEmail ?? estimate?.email ?? '—'
 }
 
 export function getChangeOrderCustomerPhone(order: ChangeOrder): string {
@@ -175,6 +239,9 @@ export function getChangeOrderCustomerPhone(order: ChangeOrder): string {
 }
 
 export function getChangeOrderCompany(order: ChangeOrder): string {
+  if (getChangeOrderType(order) === 'company') {
+    return order.companyProject?.companyName ?? '—'
+  }
   return getChangeOrderEstimate(order)?.company ?? '—'
 }
 

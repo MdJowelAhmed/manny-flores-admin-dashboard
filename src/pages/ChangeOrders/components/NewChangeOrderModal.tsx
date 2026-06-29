@@ -11,59 +11,77 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { changeReasonOptions } from '../changeOrdersData'
+import { changeReasonOptions, type ChangeOrderProjectType } from '../changeOrdersData'
 import { toast } from '@/utils/toast'
 import { cn } from '@/utils/cn'
 import { useCreateChangeOrderMutation } from '@/redux/slices/super-admin/changeOrdersApi'
+import { useGetProjectsQuery } from '@/redux/slices/super-admin/documentsApprovalApi'
+import { useGetCompanyProjectsQuery } from '@/redux/api/companyProjectApi'
 
 const inputClass = 'rounded-lg bg-muted/40 border-gray-200/80 h-11'
 
-const getProjectEstimate = (project: any) => project?.estimate ?? project?.estimates ?? null
+const getProjectEstimate = (project: {
+  estimate?: { id?: string; projectName?: string }
+  estimates?: { id?: string; projectName?: string } | null
+}) => project?.estimate ?? project?.estimates ?? null
 
 interface NewChangeOrderModalProps {
   open: boolean
   onClose: () => void
   onCreate: () => void
-  projectLoading: boolean
-  projectFetching: boolean
-  projectRefetch: () => void
-  projectPage: number
-  setProjectPage: React.Dispatch<React.SetStateAction<number>>
-  projects: any[]
-  setProjects: React.Dispatch<React.SetStateAction<any[]>>
-  getProjectsApi: any
+  projectType: ChangeOrderProjectType
 }
 
 export function NewChangeOrderModal({
   open,
   onClose,
   onCreate,
-  projectLoading,
-  projectFetching,
-  projectRefetch,
-  projectPage,
-  setProjectPage,
-  projects,
-  setProjects,
-  getProjectsApi,
+  projectType,
 }: NewChangeOrderModalProps) {
   const { t } = useTranslation()
+  const isCompanyTab = projectType === 'company'
+
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [reasonKey, setReasonKey] = useState(changeReasonOptions[0]?.value ?? '')
   const [description, setDescription] = useState('')
   const [additionalCost, setAdditionalCost] = useState('0')
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
+  const [customerProjectPage, setCustomerProjectPage] = useState(1)
+  const [customerProjects, setCustomerProjects] = useState<any[]>([])
+
   const [createChangeOrder, { isLoading: isCreating }] = useCreateChangeOrderMutation()
 
-  // Accumulate pages — data is directly getProjectsApi?.data (flat array)
-  useEffect(() => {
-    const incoming = getProjectsApi?.data
-    if (!Array.isArray(incoming)) return
-    setProjects((prev: any) => (projectPage === 1 ? incoming : [...prev, ...incoming]))
-  }, [getProjectsApi?.data, projectPage, setProjects])
+  const {
+    data: customerProjectsApi,
+    isLoading: customerProjectLoading,
+    isFetching: customerProjectFetching,
+    refetch: customerProjectRefetch,
+  } = useGetProjectsQuery(
+    { page: customerProjectPage, limit: 40 },
+    { skip: !open || isCompanyTab }
+  )
 
-  // Reset state and trigger a fresh fetch on opening
+  const {
+    data: companyProjectsApi,
+    isLoading: companyProjectLoading,
+    isFetching: companyProjectFetching,
+    refetch: companyProjectRefetch,
+  } = useGetCompanyProjectsQuery(
+    { page: 1, limit: 100 },
+    { skip: !open || !isCompanyTab }
+  )
+
+  const projectLoading = isCompanyTab ? companyProjectLoading : customerProjectLoading
+
+  useEffect(() => {
+    const incoming = customerProjectsApi?.data
+    if (!Array.isArray(incoming) || isCompanyTab) return
+    setCustomerProjects((prev) =>
+      customerProjectPage === 1 ? incoming : [...prev, ...incoming]
+    )
+  }, [customerProjectsApi?.data, customerProjectPage, isCompanyTab])
+
   useEffect(() => {
     if (!open) return
     setSelectedProjectId('')
@@ -71,27 +89,36 @@ export function NewChangeOrderModal({
     setDescription('')
     setAdditionalCost('0')
     setSelectedFiles([])
-    setProjectPage(1)
+    setCustomerProjectPage(1)
+    setCustomerProjects([])
 
-    const incoming = getProjectsApi?.data
-    if (Array.isArray(incoming)) {
-      setProjects(incoming)
+    if (isCompanyTab) {
+      companyProjectRefetch()
     } else {
-      setProjects([])
+      const incoming = customerProjectsApi?.data
+      if (Array.isArray(incoming)) {
+        setCustomerProjects(incoming)
+      }
+      customerProjectRefetch()
     }
+  }, [open, projectType]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    projectRefetch()
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  const customerPagination = customerProjectsApi?.pagination
+  const customerHasMore = customerPagination
+    ? customerProjectPage < customerPagination.totalPage
+    : false
 
-  const pagination = getProjectsApi?.pagination
-  const hasMore = pagination ? projectPage < pagination.totalPage : false
-  const projectsWithEstimate = projects.filter((project) => getProjectEstimate(project)?.id)
+  const customerProjectsWithEstimate = customerProjects.filter((project) =>
+    getProjectEstimate(project)?.id
+  )
 
-  const handleDropdownScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  const companyProjects = companyProjectsApi?.data ?? []
+
+  const handleCustomerDropdownScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
     const nearBottom = scrollHeight - scrollTop <= clientHeight + 20
-    if (nearBottom && !projectFetching && hasMore) {
-      setProjectPage((p: any) => p + 1)
+    if (nearBottom && !customerProjectFetching && customerHasMore) {
+      setCustomerProjectPage((p) => p + 1)
     }
   }
 
@@ -120,12 +147,16 @@ export function NewChangeOrderModal({
     const cleanCost = Number.parseFloat(additionalCost.replace(/[^0-9.-]/g, '')) || 0
 
     const formData = new FormData()
-    formData.append('estimateScheduleId', selectedProjectId)
+    formData.append('projectType', projectType)
+    if (isCompanyTab) {
+      formData.append('companyProjectId', selectedProjectId)
+    } else {
+      formData.append('estimateScheduleId', selectedProjectId)
+    }
     formData.append('reasonForChange', reasonKey)
     formData.append('description', description.trim())
     formData.append('additionalCost', cleanCost.toString())
 
-    // Append multiple files
     selectedFiles.forEach((file) => {
       formData.append('documentation', file)
     })
@@ -139,11 +170,20 @@ export function NewChangeOrderModal({
       })
       onCreate()
       onClose()
-    } catch (err: any) {
-      console.error('Create Change Order Error:', err)
+    } catch (err: unknown) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'data' in err &&
+        err.data &&
+        typeof err.data === 'object' &&
+        'message' in err.data &&
+        typeof err.data.message === 'string'
+          ? err.data.message
+          : 'Failed to create Change Order'
       toast({
         title: t('common.error'),
-        description: err?.data?.message || 'Failed to create Change Order',
+        description: message,
         variant: 'destructive',
       })
     }
@@ -154,13 +194,21 @@ export function NewChangeOrderModal({
       open={open}
       onClose={onClose}
       title={t('changeOrders.newChangeOrder')}
+      description={
+        isCompanyTab
+          ? t('changeOrders.newChangeOrderCompanyDesc')
+          : t('changeOrders.newChangeOrderCustomerDesc')
+      }
       size="xl"
       className="max-w-3xl bg-white "
     >
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Select Project Dropdown */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">{t('changeOrders.selectProject')}</label>
+          <label className="text-sm font-medium">
+            {isCompanyTab
+              ? t('changeOrders.selectCompanyProject')
+              : t('changeOrders.selectProject')}
+          </label>
           <Select
             value={selectedProjectId}
             onValueChange={setSelectedProjectId}
@@ -173,49 +221,75 @@ export function NewChangeOrderModal({
                   {t('common.loading')}
                 </span>
               ) : (
-                <SelectValue placeholder={t('changeOrders.selectProjectPlaceholder')} />
+                <SelectValue
+                  placeholder={
+                    isCompanyTab
+                      ? t('changeOrders.selectCompanyProjectPlaceholder')
+                      : t('changeOrders.selectProjectPlaceholder')
+                  }
+                />
               )}
             </SelectTrigger>
             <SelectContent>
-              <div
-                className="max-h-52 overflow-y-auto"
-                onScroll={handleDropdownScroll}
-              >
-                {projectsWithEstimate.map((project: any) => {
-                  const estimate = getProjectEstimate(project)
-                  return (
+              {isCompanyTab ? (
+                <div className="max-h-52 overflow-y-auto">
+                  {companyProjects.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
-                      {estimate.projectName}
+                      {project.projectName}
+                      {project.companyName ? ` — ${project.companyName}` : ''}
                     </SelectItem>
-                  )
-                })}
+                  ))}
 
-                {/* Loading spinner */}
-                {projectFetching && (
-                  <div className="flex justify-center py-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  </div>
-                )}
+                  {companyProjectFetching && (
+                    <div className="flex justify-center py-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
 
-                {/* All loaded */}
-                {!hasMore && !projectFetching && projectsWithEstimate.length > 0 && (
-                  <p className="text-xs text-center text-muted-foreground py-2">
-                    {t('common.allLoaded')}
-                  </p>
-                )}
+                  {!companyProjectLoading && !companyProjectFetching && companyProjects.length === 0 && (
+                    <p className="text-xs text-center text-muted-foreground py-3">
+                      {t('common.noData')}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="max-h-52 overflow-y-auto" onScroll={handleCustomerDropdownScroll}>
+                  {customerProjectsWithEstimate.map((project) => {
+                    const estimate = getProjectEstimate(project)
+                    return (
+                      <SelectItem key={project.id} value={project.id}>
+                        {estimate?.projectName}
+                      </SelectItem>
+                    )
+                  })}
 
-                {/* Empty */}
-                {!projectLoading && !projectFetching && projectsWithEstimate.length === 0 && (
-                  <p className="text-xs text-center text-muted-foreground py-3">
-                    {t('common.noData')}
-                  </p>
-                )}
-              </div>
+                  {customerProjectFetching && (
+                    <div className="flex justify-center py-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+
+                  {!customerHasMore &&
+                    !customerProjectFetching &&
+                    customerProjectsWithEstimate.length > 0 && (
+                      <p className="text-xs text-center text-muted-foreground py-2">
+                        {t('common.allLoaded')}
+                      </p>
+                    )}
+
+                  {!customerProjectLoading &&
+                    !customerProjectFetching &&
+                    customerProjectsWithEstimate.length === 0 && (
+                      <p className="text-xs text-center text-muted-foreground py-3">
+                        {t('common.noData')}
+                      </p>
+                    )}
+                </div>
+              )}
             </SelectContent>
           </Select>
         </div>
 
-        {/* Reason for Change Dropdown */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium">{t('changeOrders.reasonForChangeSelect')}</label>
           <Select value={reasonKey} onValueChange={setReasonKey}>
@@ -232,7 +306,6 @@ export function NewChangeOrderModal({
           </Select>
         </div>
 
-        {/* Description of Work */}
         <FormTextarea
           label={t('changeOrders.descriptionOfWork')}
           placeholder={t('changeOrders.descriptionPlaceholder')}
@@ -242,7 +315,6 @@ export function NewChangeOrderModal({
           className="rounded-lg bg-muted/40 border-gray-200/80 min-h-[100px]"
         />
 
-        {/* Financial Impact / Additional Cost */}
         <div>
           <h4 className="text-sm font-semibold text-foreground mb-3">
             {t('changeOrders.financialImpactDetails')}
@@ -258,7 +330,6 @@ export function NewChangeOrderModal({
           </div>
         </div>
 
-        {/* File upload documentation (multiple) */}
         <div>
           <label className="text-sm font-medium block mb-2">{t('changeOrders.documentation')}</label>
           <div
@@ -283,7 +354,6 @@ export function NewChangeOrderModal({
             </label>
           </div>
 
-          {/* Selected files listing with remove capability */}
           {selectedFiles.length > 0 && (
             <div className="mt-3 space-y-2">
               <span className="text-xs font-semibold text-muted-foreground">

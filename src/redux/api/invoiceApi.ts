@@ -94,6 +94,8 @@ export interface InvoiceListResponse {
 export interface GetInvoicesParams {
   page?: number
   limit?: number
+  search?: string
+  status?: string
 }
 
 /** Resolve a signature/upload value to a relative `/uploads/...` path
@@ -236,6 +238,8 @@ const invoiceApi = baseApi.injectEndpoints({
         params: {
           page: params?.page ?? 1,
           limit: params?.limit ?? 10,
+          ...(params?.search && params.search.trim().length > 0 && { search: params.search }),
+          ...(params?.status && params.status.trim().length > 0 && { status: params.status }),
         },
       }),
       providesTags: ['Invoice'],

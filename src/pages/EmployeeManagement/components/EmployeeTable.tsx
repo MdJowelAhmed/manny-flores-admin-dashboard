@@ -29,7 +29,10 @@ export function EmployeeTable({
   const handelChat = async (id: string) => {
     await createInitialChat(id).then((res) => { 
       if (res?.data?.success) {
-        navigate("/communication")
+        console.log(res.data)
+        navigate(`/communication?chatId=${res.data.data.id}`, {
+          state: { pendingChat: res.data.data },
+        })
       }
     })
   };
@@ -42,7 +45,6 @@ export function EmployeeTable({
             <th className="px-6 py-4 text-left text-sm font-bold">ID</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Name</th>
             <th className="px-6 py-4 text-left text-sm font-bold">Email</th>
-            {/* <th className="px-6 py-4 text-left text-sm font-bold">Department</th> */}
             <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
             <th className="px-6 py-4 text-right text-sm font-bold">Action</th>
           </tr>

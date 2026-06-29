@@ -7,7 +7,7 @@ function isPlaceholderImage(path: string): boolean {
   return path === '/image.png' || path.endsWith('/image.png')
 }
 
-/** Full absolute URL — use as fallback when relative /uploads fails */
+/** Full absolute URL — only for opening files in new tab / last-resort fallback */
 export function imageUrlAbsolute(imageurl?: string | null): string {
   if (!imageurl) return ''
   const trimmed = imageurl.trim()
@@ -20,8 +20,11 @@ export function imageUrlAbsolute(imageurl?: string | null): string {
 }
 
 /**
- * Prefer relative /uploads paths in dev so Vite proxy can serve files without CORS.
- * In production, resolve to the API host because there is no dev proxy.
+ * Prefer relative `/uploads` (and `/image/...`) paths so the browser loads images
+ * from the SAME origin as the app (Vite dev/preview proxy or nginx on live).
+ *
+ * Loading `http://api-host:5000/uploads/...` directly from an app on another port
+ * is blocked by the API's `Cross-Origin-Resource-Policy: same-origin` header.
  */
 export function imageUrl(imageurl?: string | null): string {
   if (!imageurl) return ''
@@ -33,9 +36,8 @@ export function imageUrl(imageurl?: string | null): string {
 
   const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
 
-  if (path.startsWith('/uploads') || path.startsWith('/image')) {
-    if (import.meta.env.DEV) return path
-    return imageUrlAbsolute(path)
+  if (path.startsWith('/uploads') || path.startsWith('/image/')) {
+    return path
   }
 
   return imageUrlAbsolute(path)

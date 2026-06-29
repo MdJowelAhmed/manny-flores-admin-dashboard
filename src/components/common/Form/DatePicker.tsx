@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { Calendar as CalendarIcon } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, max, startOfDay } from 'date-fns'
 import { cn } from '@/utils/cn'
 
 export interface DatePickerProps {
@@ -17,6 +17,8 @@ export interface DatePickerProps {
   label?: string
   className?: string
   disabled?: boolean
+  disablePast?: boolean
+  minDate?: Date
   id?: string
 }
 
@@ -27,9 +29,21 @@ export function DatePicker({
   label,
   className,
   disabled = false,
+  disablePast = false,
+  minDate,
   id,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
+
+  const selectableFrom = React.useMemo(() => {
+    const today = startOfDay(new Date())
+    const minimum = minDate ? startOfDay(minDate) : undefined
+
+    if (disablePast && minimum) return max([today, minimum])
+    if (disablePast) return today
+    if (minimum) return minimum
+    return undefined
+  }, [disablePast, minDate])
 
   return (
     <div className={cn('space-y-1.5', className)}>
@@ -64,10 +78,11 @@ export function DatePicker({
               onChange(date)
               setOpen(false)
             }}
-            defaultMonth={value ?? new Date()}
+            defaultMonth={value ?? selectableFrom ?? new Date()}
             captionLayout="dropdown"
-            startMonth={new Date(2020, 0, 1)}
+            startMonth={selectableFrom ?? new Date(2020, 0, 1)}
             endMonth={new Date(2030, 11, 31)}
+            disabled={selectableFrom ? { before: selectableFrom } : undefined}
           />
         </PopoverContent>
       </Popover>

@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { loginStart, loginFailure } from "@/redux/slices/authSlice";
 import { useLoginMutation } from "@/redux/api/authApi";
+import { userFromToken } from "@/utils/jwt";
+import { getHomeRouteForRole } from "@/types/roles";
 import { cn } from "@/utils/cn";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -74,7 +76,11 @@ export default function Login() {
         return;
       }
 
-      navigate("/dashboard", { replace: true });
+      const accessToken = result.data.accessToken;
+      const user = userFromToken(accessToken, data.email);
+      const homeRoute = user ? getHomeRouteForRole(user.role) : "/dashboard";
+
+      navigate(homeRoute, { replace: true });
     } catch (err: unknown) {
       dispatch(loginFailure(getErrorMessage(err, t("auth.login.errorOccurred"))));
     }

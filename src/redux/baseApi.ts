@@ -48,6 +48,8 @@ export const baseApi = createApi({
   'Payment',
   'Notification',
   'CompanyProjects',
+  'PurchaseOrders',
+  'Settings',
 ],
   
    

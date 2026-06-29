@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Switch } from '@/components/ui/switch'
 import type { AttendanceRecord, AttendanceStatus } from './attendanceData'
 import { STATUS_STYLES } from './attendanceData'
+import { AttendanceMapLink } from './components/AttendanceMapLink'
 import { cn } from '@/utils/cn'
 
 interface AttendanceDetailTableProps {
@@ -22,23 +23,25 @@ export function AttendanceDetailTable({
 
   return (
     <div className="w-full overflow-auto">
-      <table className="w-full min-w-[600px]">
+      <table className="w-full min-w-[900px]">
         <thead>
           <tr className="bg-secondary-foreground text-accent ">
-            <th className="px-4 py-4 text-left text-sm font-semibold">Date</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Check In</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Check Out</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.date')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.checkIn')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.checkOut')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.checkInMap')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.checkOutMap')}</th>
             <th className="px-4 py-4 text-left text-sm font-semibold">{t('attendance.workingHours')}</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Attendance</th>
-            <th className="px-4 py-4 text-left text-sm font-semibold">Status</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.status')}</th>
+            <th className="px-4 py-4 text-left text-sm font-semibold">{t('common.active')}</th>
             {/* <th className="px-4 py-4 text-right text-sm font-semibold">Action</th> */}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {records.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground text-sm">
-                No records found
+              <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground text-sm">
+                {t('attendance.noRecordsFound')}
               </td>
             </tr>
           ) : (
@@ -55,6 +58,18 @@ export function AttendanceDetailTable({
                   <td className="px-4 py-3 text-sm text-slate-700">{r.date}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{r.checkIn}</td>
                   <td className="px-4 py-3 text-sm text-slate-700">{r.checkOut}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <AttendanceMapLink
+                      latitude={r.checkInLatitude}
+                      longitude={r.checkInLongitude}
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <AttendanceMapLink
+                      latitude={r.checkOutLatitude}
+                      longitude={r.checkOutLongitude}
+                    />
+                  </td>
                   <td className="px-4 py-3 text-sm text-slate-700">{r.totalHours}</td>
                   <td className="px-4 py-3">
                     <span

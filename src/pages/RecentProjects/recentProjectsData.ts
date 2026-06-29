@@ -19,8 +19,7 @@ export interface RecentProject {
   status: ProjectStatus
   progress: number
   value: string
-  startDate: string
-  endDate: string
+  totalDays?: number | string | null
   planFiles?: ProjectPlanFile[]
   // Extended fields for view details modal
   email?: string
@@ -37,8 +36,7 @@ export const recentProjectsData: RecentProject[] = [
     status: 'In Progress',
     progress: 92,
     value: '€12,560',
-    startDate: '12.08.26',
-    endDate: '24.10.26',
+    totalDays: 73,
     email: 'emily@email.com',
     company: 'Garden Design & Installation',
     projectName: 'Residential Backyard Renovation',
@@ -53,8 +51,7 @@ export const recentProjectsData: RecentProject[] = [
     status: 'Scheduled',
     progress: 0,
     value: '€12,560',
-    startDate: '01.09.26',
-    endDate: '15.11.26',
+    totalDays: 76,
     email: 'michael@email.com',
     company: 'Front Yard Landscaping',
     projectName: 'Front Yard Landscaping',
@@ -68,8 +65,7 @@ export const recentProjectsData: RecentProject[] = [
     status: 'Overdue',
     progress: 45,
     value: '€12,560',
-    startDate: '05.06.26',
-    endDate: '20.07.26',
+    totalDays: 46,
     email: 'sarah@email.com',
     company: 'Patio & Deck Construction',
     projectName: 'Patio & Deck Construction',
@@ -83,8 +79,7 @@ export const recentProjectsData: RecentProject[] = [
     status: 'In Progress',
     progress: 87,
     value: '€12,560',
-    startDate: '03.07.26',
-    endDate: '30.09.26',
+    totalDays: 89,
     email: 'lisa@email.com',
     company: 'Backyard Renovation Co',
     projectName: 'Backyard Renovation',
@@ -98,8 +93,7 @@ export const recentProjectsData: RecentProject[] = [
     status: 'In Progress',
     progress: 65,
     value: '€28,900',
-    startDate: '18.05.26',
-    endDate: '12.12.26',
+    totalDays: 208,
     email: 'john@email.com',
     company: 'Aqua Landscapes',
     projectName: 'Pool & Spa Design',
@@ -113,8 +107,7 @@ export const recentProjectsData: RecentProject[] = [
     status: 'Completed',
     progress: 100,
     value: '€45,200',
-    startDate: '10.01.26',
-    endDate: '28.03.26',
+    totalDays: 77,
     email: 'maria@email.com',
     company: 'Green Space Solutions',
     projectName: 'Office Park Landscaping',

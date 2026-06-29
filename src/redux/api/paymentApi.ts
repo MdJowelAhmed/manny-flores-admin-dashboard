@@ -42,6 +42,8 @@ export interface PaymentApiDoc {
   createdAt: string
   updatedAt: string
   resolverId: string | null
+  financeCompanyName?: string | null
+  loanId?: string | null
   estimate?: PaymentEstimateApiDoc
   user?: PaymentUserApiDoc
 }
@@ -95,6 +97,8 @@ export function mapPaymentFromApi(doc: PaymentApiDoc): PaymentListItem {
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     resolverId: doc.resolverId,
+    financeCompanyName: doc.financeCompanyName ?? null,
+    loanId: doc.loanId ?? null,
     projectName: doc.estimate?.projectName ?? '',
     estimateTotalCost: doc.estimate?.totalCost ?? 0,
     customerName: doc.user?.name ?? doc.estimate?.customerName ?? '',

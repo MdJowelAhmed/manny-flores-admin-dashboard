@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAppSelector } from '@/redux/hooks'
-import { UserRole } from '@/types/roles'
+import { UserRole, getHomeRouteForRole } from '@/types/roles'
 
 interface RoleBasedRouteProps {
   children: ReactNode
@@ -17,7 +17,7 @@ export function RoleBasedRoute({ children, allowedRoles }: RoleBasedRouteProps) 
   }
 
   if (!allowedRoles.includes(user.role as UserRole)) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={getHomeRouteForRole(user.role as UserRole)} replace />
   }
 
   return <>{children}</>

@@ -1,22 +1,52 @@
 import { baseApi } from "@/redux/baseApi";
+import type { ChangeOrder } from "@/pages/ChangeOrders/changeOrdersData";
+
+export interface ChangeOrderPagination {
+    total: number;
+    page: number;
+    limit: number;
+    totalPage: number;
+}
+
+export interface ChangeOrderListResponse {
+    success: boolean;
+    statusCode: number;
+    message: string;
+    pagination: ChangeOrderPagination;
+    data: ChangeOrder[];
+}
+
+export interface ChangeOrdersQueryParams {
+    search?: string;
+    page?: number;
+    limit?: number;
+    status?: string;
+}
+
+export interface CompanyChangeOrdersQueryParams {
+    search?: string;
+    page?: number;
+    limit?: number;
+    status?: string;
+}
 
 const changeOrdersApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        getChangeOrders: builder.query<any, { search?: string, page?: number, limit?: number }>({
-            query: ({ search, page = 1, limit = 10 }) => {
+        getChangeOrders: builder.query<ChangeOrderListResponse, ChangeOrdersQueryParams>({
+            query: ({ search, page = 1, limit = 10, status }) => {
                 return {
                     url: '/change-orders',
                     method: 'GET',
                     params: {
                         ...(search && search.trim().length > 0 && { search }),
-                        page: page,
-                        limit: limit
-                    }
-
+                        ...(status && status !== 'all' && { status: status.toUpperCase() }),
+                        page,
+                        limit,
+                    },
                 }
             },
         }),
-        createChangeOrder: builder.mutation<any, any>({
+        createChangeOrder: builder.mutation<any, FormData>({
             query: (data) => {
                 return {
                     url: '/change-orders',
@@ -33,7 +63,39 @@ const changeOrdersApi = baseApi.injectEndpoints({
                 }
             },
         }),
+
+        getCompanyChangeOrders: builder.query<ChangeOrderListResponse, CompanyChangeOrdersQueryParams>({
+            query: ({ search, page = 1, limit = 10, status }) => {
+                return {
+                    url: '/change-orders/company-project',
+                    method: 'GET',
+                    params: {
+                        ...(search && search.trim().length > 0 && { search }),
+                        ...(status && status !== 'all' && { status: status.toUpperCase() }),
+                        page,
+                        limit,
+                    },
+                }
+            },
+        }),
+
+        companyProjectBuilderSignature: builder.mutation<any, { id: string; data: FormData }>({
+            query: ({ id, data }) => {
+                return {
+                    url: `/change-orders/company-project/signature/${id}`,
+                    method: 'PATCH',
+                    body: data
+                }
+            },
+        }),
     })
 })
 
-export const { useGetChangeOrdersQuery, useCreateChangeOrderMutation, useGetOrderPdfByIdQuery, useLazyGetOrderPdfByIdQuery } = changeOrdersApi
+export const {
+    useGetChangeOrdersQuery,
+    useGetCompanyChangeOrdersQuery,
+    useCreateChangeOrderMutation,
+    useGetOrderPdfByIdQuery,
+    useLazyGetOrderPdfByIdQuery,
+    useCompanyProjectBuilderSignatureMutation,
+} = changeOrdersApi

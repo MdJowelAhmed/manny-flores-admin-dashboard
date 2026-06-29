@@ -8,6 +8,8 @@ export const projectCardActionClass = {
   projectDetails:
     'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:text-gray-700',
   edit: 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100 hover:text-rose-700',
+  delete:
+    'bg-red-50 text-red-600 border-red-100 hover:bg-red-100 hover:text-red-700',
 } as const
 
 export function getTaskPriorityClass(priority?: string): string {

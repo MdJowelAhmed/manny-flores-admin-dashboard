@@ -42,7 +42,7 @@ export const DEFAULT_PAGINATION = {
 export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   active: { bg: 'bg-success/10', text: 'text-success' },
   blocked: { bg: 'bg-destructive/10', text: 'text-destructive' },
-  pending: { bg: 'bg-warning/10', text: 'text-warning' },
+  pending: { bg: 'bg-amber-100', text: 'text-amber-700' },
   completed: { bg: 'bg-green-100', text: 'text-green-700' },
   rejected: { bg: 'bg-red-100', text: 'text-red-700' },
   request_for_complete: { bg: 'bg-amber-100', text: 'text-amber-700' },
@@ -54,6 +54,7 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   Failed: { bg: 'bg-red-100', text: 'text-red-800' },
   Cancelled: { bg: 'bg-gray-100', text: 'text-gray-800' },
   Active: { bg: 'bg-orange-100', text: 'text-orange-800' },
+  'In Progress': { bg: 'bg-blue-100', text: 'text-blue-800' },
   Leave: { bg: 'bg-orange-100', text: 'text-orange-600' },
   APPROVED: { bg: 'bg-green-100', text: 'text-green-700' },
   PENDING: { bg: 'bg-amber-100', text: 'text-amber-700' },
@@ -69,6 +70,25 @@ export const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
 
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
+
+export const ACCEPTED_DOCUMENT_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'application/zip',
+  'application/x-zip-compressed',
+]
+export const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024 // 10MB
 
 
 
