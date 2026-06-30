@@ -13,7 +13,7 @@ import { Pagination } from '@/components/common/Pagination'
 import { useDeleteDocumentMutation, useGetDocumentsApprovalsQuery, useGetDocumentsOverviewQuery, useGetProjectsQuery } from '@/redux/slices/super-admin/documentsApprovalApi.ts'
 import { useDebounce } from '@/hooks/useDebounce.ts'
 import Spinner from '@/components/common/Spinner.tsx'
-import { imageUrl } from '@/redux/baseApi'
+import { imageUrlAbsolute } from '@/components/common/getImageUrl'
 import { sonnerToast } from '@/utils/toast'
 
 export default function DocumentsApprovals() {
@@ -193,9 +193,7 @@ export default function DocumentsApprovals() {
                 </tr>
               ) : (
                 documents.map((doc: any, index: number) => {
-                  const fullDocUrl = doc.documentUrl?.startsWith('http')
-                    ? doc.documentUrl
-                    : `${imageUrl}${doc.documentUrl}`
+                  const fullDocUrl = imageUrlAbsolute(doc.documentUrl)
                   return (
                     <motion.tr
                       key={doc.id}
