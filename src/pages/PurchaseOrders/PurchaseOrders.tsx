@@ -17,7 +17,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { formatCurrency } from '@/utils/formatters'
 import { cn } from '@/utils/cn'
 import { toast } from '@/utils/toast'
-import { imageUrl } from '@/redux/baseApi'
+import { imageUrlAbsolute } from '@/components/common/getImageUrl'
 import { useAppSelector } from '@/redux/hooks'
 import { UserRole } from '@/types/roles'
 import {
@@ -103,7 +103,7 @@ export default function PurchaseOrders() {
       const response = await triggerGetPdf(order.id).unwrap()
       const downloadUrl = response?.data?.downloadUrl || response?.downloadUrl
       if (downloadUrl) {
-        const fullUrl = downloadUrl.startsWith('http') ? downloadUrl : `${imageUrl}${downloadUrl}`
+        const fullUrl = imageUrlAbsolute(downloadUrl)
         const a = document.createElement('a')
         a.href = fullUrl
         a.target = '_blank'

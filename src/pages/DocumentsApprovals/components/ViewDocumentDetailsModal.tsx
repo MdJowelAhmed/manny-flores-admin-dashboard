@@ -4,7 +4,7 @@ import { Download, FileText } from 'lucide-react'
 import { ModalWrapper } from '@/components/common'
 import { Button } from '@/components/ui/button'
 import Spinner from '@/components/common/Spinner.tsx'
-import { imageUrl } from '@/redux/baseApi'
+import { imageUrlAbsolute } from '@/components/common/getImageUrl'
 
 interface ViewDocumentDetailsModalProps {
   open: boolean
@@ -26,9 +26,7 @@ export function ViewDocumentDetailsModal({
   const isPdf = docType === 'PDF' || doc?.documentUrl?.toLowerCase().endsWith('.pdf')
   const isImage = docType === 'IMAGE' || doc?.documentUrl?.match(/\.(jpeg|jpg|gif|png|webp)$/i)
 
-  const fullDocUrl = doc?.documentUrl?.startsWith('http')
-    ? doc.documentUrl
-    : `${imageUrl}${doc?.documentUrl || ''}`
+  const fullDocUrl = imageUrlAbsolute(doc?.documentUrl)
 
   useEffect(() => {
     if (!open || !doc || (!isPdf && !isImage)) {

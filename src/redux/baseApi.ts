@@ -1,10 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { API_V1_URL } from '@/config/api'
 import type { RootState } from './store'
 
 export const baseApi = createApi({
     reducerPath: 'baseApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: import.meta.env.VITE_API_BASE_URL + '/api/v1',
+        baseUrl: API_V1_URL,
         prepareHeaders: (headers, { getState }) => {
             const stateToken = (getState() as RootState).auth.token
             const token =
@@ -55,6 +56,3 @@ export const baseApi = createApi({
    
     endpoints: () => ({}),
 })
-
-export const imageUrl = import.meta.env.VITE_API_BASE_URL
-export const socketUrl = import.meta.env.VITE_API_BASE_URL 

@@ -1,7 +1,4 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://10.10.7.28:5000').replace(
-  /\/$/,
-  ''
-)
+import { API_BASE_URL } from '@/config/api'
 
 function isPlaceholderImage(path: string): boolean {
   return path === '/image.png' || path.endsWith('/image.png')
@@ -16,7 +13,7 @@ export function imageUrlAbsolute(imageurl?: string | null): string {
     return trimmed
   }
   const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
-  return `${API_BASE}${path}`
+  return `${API_BASE_URL}${path}`
 }
 
 /**
