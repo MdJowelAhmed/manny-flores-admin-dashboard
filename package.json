@@ -8,7 +8,7 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "start": "vite --port 3000"
+    "start": "vite --port 4175"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
