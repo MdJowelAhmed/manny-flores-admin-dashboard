@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Menu, Bell, LogOut, User, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,15 +12,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ModalWrapper } from '@/components/common/ModalWrapper'
-import { useAppDispatch, } from '@/redux/hooks'
+import { useAppDispatch, useAppSelector } from '@/redux/hooks'
 import { toggleSidebar } from '@/redux/slices/uiSlice'
 import { logout } from '@/redux/slices/authSlice'
-import { SAMPLE_NOTIFICATIONS } from '@/pages/Notifications/notificationData'
-import type { Notification } from '@/types/notification'
 import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { useGetMyProfileQuery } from '@/redux/api/authApi'
 import { getImageUrl } from '@/utils/getImageUrl'
+import {
+  mapNotificationFromApi,
+  type NotificationItem,
+  useGetNotificationsQuery,
+} from '@/redux/api/notificationApi'
+import { useUser } from '@/provider/UserContext'
 
 const routeTitleKeys: Record<string, string> = {
   '/dashboard': 'header.routeTitles.dashboard',
@@ -63,7 +67,7 @@ const routeTitleKeys: Record<string, string> = {
 
 const RECENT_NOTIFICATIONS_COUNT = 3
 
-function NotificationItem({ notification }: { notification: Notification }) {
+function NotificationItem({ notification }: { notification: NotificationItem }) {
 
 
   return (
@@ -89,11 +93,41 @@ export function Header() {
   const location = useLocation()
   const titleKey = routeTitleKeys[location.pathname] || 'header.routeTitles.dashboard'
   const pageTitle = t(titleKey)
-  const recentNotifications = SAMPLE_NOTIFICATIONS.slice(0, RECENT_NOTIFICATIONS_COUNT)
   const currentLang = i18n.language
+  const { socket } = useUser() ?? { socket: null }
 
-  // api calls
-  const { data: userRes } = useGetMyProfileQuery()
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
+  const authUserId = useAppSelector((state) => state.auth.user?.id)
+  const { data: userRes } = useGetMyProfileQuery(undefined, {
+    skip: !isAuthenticated,
+  })
+  const { data: notificationsRes, isLoading: isNotificationsLoading, refetch } = useGetNotificationsQuery(
+    { page: 1, limit: 10 },
+    { skip: !isAuthenticated }
+  )
+
+  const notifications = useMemo<NotificationItem[]>(
+    () => (notificationsRes?.data ?? []).map(mapNotificationFromApi),
+    [notificationsRes?.data]
+  )
+  const recentNotifications = notifications.slice(0, RECENT_NOTIFICATIONS_COUNT)
+  const unreadCount = notifications.filter((n) => !n.isRead).length
+
+  useEffect(() => {
+    if (!socket || !authUserId || !isAuthenticated) return
+
+    const event = `get-notification::${authUserId}`
+    const handleNewNotification = () => {
+      void refetch()
+    }
+
+    socket.on(event, handleNewNotification)
+
+    return () => {
+      socket.off(event, handleNewNotification)
+    }
+  }, [socket, authUserId, isAuthenticated, refetch])
+
   const user = userRes?.data
   const handleViewAllNotifications = () => {
     setNotificationModalOpen(false)
@@ -162,7 +196,11 @@ export function Header() {
             onClick={() => setNotificationModalOpen(true)}
           >
             <Bell className="h-8 w-8 text-accent" />
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-white text-[10px] font-semibold flex items-center justify-center leading-none">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Button>
           <ModalWrapper
             open={notificationModalOpen}
@@ -181,9 +219,15 @@ export function Header() {
             }
           >
             <div className="space-y-0">
-              {recentNotifications.map((n) => (
-                <NotificationItem key={n.id} notification={n} />
-              ))}
+              {isNotificationsLoading ? (
+                <div className="py-8 text-center text-muted-foreground text-sm">Loading...</div>
+              ) : recentNotifications.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground text-sm">No notifications</div>
+              ) : (
+                recentNotifications.map((n) => (
+                  <NotificationItem key={n.id} notification={n} />
+                ))
+              )}
             </div>
           </ModalWrapper>
 
@@ -220,7 +264,7 @@ export function Header() {
                 {t('header.settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive ">
                 <LogOut className="h-4 w-4 mr-2" />
                 {t('header.logOut')}
               </DropdownMenuItem>

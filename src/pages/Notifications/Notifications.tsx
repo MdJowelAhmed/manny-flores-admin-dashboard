@@ -6,7 +6,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { toast } from '@/utils/toast'
 import {
   useGetNotificationsQuery,
-  useMarkAllNotificationsReadMutation,
+  // useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
   mapNotificationFromApi,
   type NotificationItem,
@@ -19,7 +19,7 @@ export default function Notifications() {
 
   const { data, isLoading, isFetching } = useGetNotificationsQuery({ page, limit })
   const [markRead, { isLoading: isMarkingOne }] = useMarkNotificationReadMutation()
-  const [markAllRead, { isLoading: isMarkingAll }] = useMarkAllNotificationsReadMutation()
+  // const [markAllRead, { isLoading: isMarkingAll }] = useMarkAllNotificationsReadMutation()
 
   const notifications = useMemo<NotificationItem[]>(
     () => (data?.data ?? []).map(mapNotificationFromApi),
@@ -38,7 +38,7 @@ export default function Notifications() {
 
   const totalPages = lastTotalPagesRef.current
   const totalItems = lastTotalItemsRef.current
-  const unreadCount = notifications.filter((n) => !n.isRead).length
+  // const unreadCount = notifications.filter((n) => !n.isRead).length
 
   const setPage = useCallback(
     (p: number) => {
@@ -59,15 +59,15 @@ export default function Notifications() {
     }
   }
 
-  const handleMarkAllAsRead = async () => {
-    try {
-      await markAllRead().unwrap()
-    } catch (err) {
-      const message =
-        (err as { data?: { message?: string } })?.data?.message ?? 'Failed to mark all as read'
-      toast({ title: 'Error', description: message, variant: 'destructive' })
-    }
-  }
+  // const handleMarkAllAsRead = async () => {
+  //   try {
+  //     await markAllRead().unwrap()
+  //   } catch (err) {
+  //     const message =
+  //       (err as { data?: { message?: string } })?.data?.message ?? 'Failed to mark all as read'
+  //     toast({ title: 'Error', description: message, variant: 'destructive' })
+  //   }
+  // }
 
   const showEmpty = !isLoading && !isFetching && notifications.length === 0
 
@@ -75,7 +75,7 @@ export default function Notifications() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-xl font-semibold text-accent">Notifications</h2>
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={handleMarkAllAsRead}
@@ -83,7 +83,7 @@ export default function Notifications() {
           className="sm:ml-auto"
         >
           Read All
-        </Button>
+        </Button> */}
       </div>
 
       <div className="rounded-lg border bg-card">

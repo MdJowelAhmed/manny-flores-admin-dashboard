@@ -13,6 +13,7 @@ import { toast } from '@/utils/toast'
 import { motion } from 'framer-motion'
 import { buildProfileFormData, useGetMyProfileQuery, useUpdateMyProfileMutation } from '@/redux/api/authApi'
 import { getImageUrl } from '@/utils/getImageUrl'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 
 
@@ -57,18 +58,6 @@ function profileToFormValues(profile: any): ProfileFormData {
     city: profile.city ?? '',
     country: profile.country ?? '',
   }
-}
-
-function getApiErrorMessage(err: unknown, fallback: string): string {
-  if (
-    typeof err === 'object' &&
-    err !== null &&
-    'data' in err &&
-    typeof (err as { data?: { message?: string } }).data?.message === 'string'
-  ) {
-    return (err as { data: { message: string } }).data.message
-  }
-  return fallback
 }
 
 export default function ProfileSettings() {

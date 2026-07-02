@@ -71,8 +71,8 @@ export function ViewScheduleDetailsModal({
       <div className="space-y-8 text-gray-900">
         <div className="flex flex-wrap items-start justify-between gap-6 border-b border-gray-100 pb-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#00AB41] text-lg font-bold text-white">
-              MF
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white">
+              <img src={'/logo3.png'} alt="logo" className="w-16 h-16 object-contain" />
             </div>
             <div>
               <p className="text-xl font-bold">{ESTIMATE_COMPANY.name}</p>

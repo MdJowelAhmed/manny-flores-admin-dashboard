@@ -10,7 +10,9 @@ import { Label } from "@/components/ui/label";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { loginStart, loginFailure } from "@/redux/slices/authSlice";
 import { useLoginMutation } from "@/redux/api/authApi";
+import { baseApi } from "@/redux/baseApi";
 import { userFromToken } from "@/utils/jwt";
+import { getApiErrorMessage } from "@/utils/apiError";
 import { getHomeRouteForRole } from "@/types/roles";
 import { cn } from "@/utils/cn";
 import { motion } from "framer-motion";
@@ -23,21 +25,6 @@ const loginSchema = z.object({
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
-
-function getErrorMessage(err: unknown, fallback: string): string {
-  if (
-    err &&
-    typeof err === "object" &&
-    "data" in err &&
-    err.data &&
-    typeof err.data === "object" &&
-    "message" in err.data &&
-    typeof err.data.message === "string"
-  ) {
-    return err.data.message;
-  }
-  return fallback;
-}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -80,9 +67,10 @@ export default function Login() {
       const user = userFromToken(accessToken, data.email);
       const homeRoute = user ? getHomeRouteForRole(user.role) : "/dashboard";
 
+      dispatch(baseApi.util.invalidateTags(["Auth"]));
       navigate(homeRoute, { replace: true });
     } catch (err: unknown) {
-      dispatch(loginFailure(getErrorMessage(err, t("auth.login.errorOccurred"))));
+      dispatch(loginFailure(getApiErrorMessage(err, t("auth.login.errorOccurred"))));
     }
   };
 
