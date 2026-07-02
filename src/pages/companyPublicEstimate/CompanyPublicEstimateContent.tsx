@@ -269,14 +269,14 @@ export function CompanyPublicEstimateContent({
   return (
     <div className="space-y-6">
       <div ref={printableRef} className="space-y-6 bg-white p-1 text-gray-900">
-      <div className="grid gap-8 sm:grid-cols-2">
-        <div className="space-y-3">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
               <img
-                src="/image3.svg"
+                src="/logo3.png"
                 alt={ESTIMATE_COMPANY.name}
-                className="h-10 w-10 object-contain"
+                className="h-16 w-16 object-contain"
               />
             </div>
             <div className="min-w-0">
@@ -286,7 +286,7 @@ export function CompanyPublicEstimateContent({
               <p className="mt-0.5 text-sm text-gray-500">{ESTIMATE_COMPANY.tagline}</p>
             </div>
           </div>
-          <div className="space-y-0.5 pl-[52px] text-xs leading-relaxed text-gray-500">
+          <div className="space-y-0.5 pl-[80px] text-xs leading-relaxed text-gray-500">
             <p>{ESTIMATE_COMPANY.address}</p>
             <p>
               {ESTIMATE_COMPANY.phone} · {ESTIMATE_COMPANY.email}
