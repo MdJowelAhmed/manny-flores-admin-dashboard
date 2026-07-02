@@ -1,26 +1,54 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import {
+    createApi,
+    fetchBaseQuery,
+    type BaseQueryFn,
+    type FetchArgs,
+    type FetchBaseQueryError,
+} from '@reduxjs/toolkit/query/react'
 import { API_V1_URL } from '@/config/api'
 import type { RootState } from './store'
+import {
+    getStoredToken,
+    handleSessionExpired,
+    isAuthPublicEndpoint,
+} from './sessionHandler'
+
+const rawBaseQuery = fetchBaseQuery({
+    baseUrl: API_V1_URL,
+    prepareHeaders: (headers, { getState }) => {
+        const stateToken = (getState() as RootState).auth.token
+        const token = stateToken ?? getStoredToken()
+        if (token) {
+            headers.set('authorization', `Bearer ${token}`)
+        }
+        return headers
+    },
+})
+
+const baseQueryWithGlobalErrors: BaseQueryFn<
+    string | FetchArgs,
+    unknown,
+    FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+    const result = await rawBaseQuery(args, api, extraOptions)
+
+    if (result.error?.status === 401) {
+        const requestUrl = typeof args === 'string' ? args : args.url
+        const hadToken = Boolean(
+            (api.getState() as RootState).auth.token ?? getStoredToken()
+        )
+
+        if (hadToken && !isAuthPublicEndpoint(requestUrl)) {
+            handleSessionExpired(api, () => api.dispatch(baseApi.util.resetApiState()))
+        }
+    }
+
+    return result
+}
 
 export const baseApi = createApi({
     reducerPath: 'baseApi',
-    baseQuery: fetchBaseQuery({
-        baseUrl: API_V1_URL,
-        prepareHeaders: (headers, { getState }) => {
-            const stateToken = (getState() as RootState).auth.token
-            const token =
-                stateToken ??
-                (typeof localStorage !== 'undefined'
-                    ? localStorage.getItem('token')
-                    : null)
-            if (token) {
-                headers.set('authorization', `Bearer ${token}`)
-            }
-            // Don't set Content-Type for FormData - browser will set it with boundary
-            // RTK Query will handle this automatically
-            return headers
-        },
-    }),
+    baseQuery: baseQueryWithGlobalErrors,
  tagTypes: [
   'Auth',
   'Category',

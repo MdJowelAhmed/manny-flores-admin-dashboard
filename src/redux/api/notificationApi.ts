@@ -75,7 +75,7 @@ const notificationApi = baseApi.injectEndpoints({
     }),
     markNotificationRead: builder.mutation<{ success?: boolean; message?: string }, string>({
       query: (id) => ({
-        url: `/notification/${id}/read`,
+        url: `/notification/${id}`,
         method: 'PATCH',
       }),
       invalidatesTags: ['Notification'],

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TiptapEditor } from '@/components/common'
 import { toast } from '@/utils/toast'
+import { getApiErrorMessage } from '@/utils/apiError'
 import { motion } from 'framer-motion'
 import {
   useGetSettingsQuery,
@@ -21,18 +22,6 @@ interface RuleSettingsPageProps {
   icon: LucideIcon
   translationKey: RuleTranslationKey
   defaultContent: string
-}
-
-function getApiErrorMessage(err: unknown, fallback: string): string {
-  if (
-    typeof err === 'object' &&
-    err !== null &&
-    'data' in err &&
-    typeof (err as { data?: { message?: string } }).data?.message === 'string'
-  ) {
-    return (err as { data: { message: string } }).data.message
-  }
-  return fallback
 }
 
 export default function RuleSettingsPage({
